@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: library-management-system
+  datasource:
+    # Notice how we replaced the hardcoded strings with the ENV variables
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+    database-platform: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+jwt:
+  # The secret is now safely pulled from the environment
+  secret: ${JWT_SECRET}
+  expiration: 86400000 # 1 day in milliseconds

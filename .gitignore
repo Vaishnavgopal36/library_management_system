@@ -1,0 +1,47 @@
+# Python
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+
+# Node / npm
+node_modules/
+dist/
+build/
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.DS_Store
+*.swp
+*.swo
+
+# Docker
+.docker
+
+# Logs
+*.log
+npm-debug.log*
