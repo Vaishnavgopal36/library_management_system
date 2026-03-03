@@ -163,7 +163,7 @@ public class TransactionService {
             throw new IllegalStateException("Borrow limit reached. Max 3 active borrowed books.");
         }
 
-        long activeReservations = reservationRepository.countByUserIdAndStatus(userId, "active");
+        long activeReservations = reservationRepository.countActiveByUserId(userId, LocalDateTime.now());
         if (activeBorrowed + activeReservations >= MAX_ACTIVE_ITEMS) {
             throw new IllegalStateException("Total active items limit reached. Max 3 borrowed/reserved books.");
         }

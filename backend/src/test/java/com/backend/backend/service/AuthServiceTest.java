@@ -68,4 +68,24 @@ class AuthServiceTest {
         verify(userRepository).save(userCaptor.capture());
         assertEquals(UserRole.member, userCaptor.getValue().getRole());
     }
+
+    @Test
+    void registerUserUsesEmailPrefixWhenFullNameMissing() {
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("member36@bookstop.com");
+        request.setPassword("securepassword");
+        request.setFullName(null);
+        request.setRole(null);
+
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("encoded-password");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        authService.registerUser(request);
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        assertEquals("member36", userCaptor.getValue().getFullName());
+        assertEquals(UserRole.member, userCaptor.getValue().getRole());
+    }
 }

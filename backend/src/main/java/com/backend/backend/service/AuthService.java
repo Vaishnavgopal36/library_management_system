@@ -31,7 +31,7 @@ public class AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .fullName(request.getFullName())
+                .fullName(resolveDisplayName(request))
                 .role(UserRole.member)
                 .isActive(true)
                 .build();
@@ -53,5 +53,20 @@ public class AuthService {
         }
 
         return user;
+    }
+
+    private String resolveDisplayName(RegisterRequest request) {
+        String fullName = request.getFullName();
+        if (fullName != null && !fullName.isBlank()) {
+            return fullName;
+        }
+
+        // Fallback keeps registration working for payloads without fullName.
+        String email = request.getEmail();
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        int atIndex = email.indexOf('@');
+        return atIndex > 0 ? email.substring(0, atIndex) : email;
     }
 }

@@ -4,7 +4,7 @@ info:
   description: Highly normalized, ROA-compliant Library Management System API utilizing payload-driven RBAC filtering.
   version: 1.0.0
 servers:
-  - url: http://localhost:8000/api/v1
+  - url: http://localhost:8080/api/v1
     description: Local development server
 
 components:
@@ -32,6 +32,14 @@ components:
         full_name: { type: string }
         role: { type: string, enum: [member, librarian, admin] }
         is_active: { type: boolean, default: true }
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+        fullName: { type: string, maxLength: 100 }
+        role: { type: string, enum: [member, librarian, admin], default: member }
     Transaction:
       type: object
       properties:
@@ -76,7 +84,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/RegisterRequest'
       responses:
         '201': { description: Created }
 

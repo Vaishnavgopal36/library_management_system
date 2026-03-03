@@ -105,7 +105,7 @@ public class ReservationService {
 
     @Transactional(readOnly = true)
     public List<ReservationResponse> getAllActiveHolds() {
-        return reservationRepository.findByStatus("active").stream()
+        return reservationRepository.findAllActive(LocalDateTime.now()).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -115,7 +115,7 @@ public class ReservationService {
         UUID userId = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"))
                 .getId();
-        return reservationRepository.findByUserIdAndStatus(userId, "active").stream()
+        return reservationRepository.findActiveByUserId(userId, LocalDateTime.now()).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -135,7 +135,7 @@ public class ReservationService {
     }
 
     private void enforceReservationLimits(UUID userId) {
-        long activeReservations = reservationRepository.countByUserIdAndStatus(userId, "active");
+        long activeReservations = reservationRepository.countActiveByUserId(userId, LocalDateTime.now());
         if (activeReservations >= MAX_ACTIVE_RESERVATIONS) {
             throw new IllegalStateException("Reservation limit reached. Max 3 active reservations.");
         }

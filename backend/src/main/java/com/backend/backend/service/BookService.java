@@ -1,4 +1,4 @@
-                   package com.backend.backend.service;
+ package com.backend.backend.service;
 
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Join;
@@ -39,10 +39,8 @@ public class BookService {
 
     @Transactional(readOnly = true)
     public Page<BookResponse> getAllActiveBooks(Pageable pageable) {
-        // This only fetches the requested page size (e.g., 20 books)
         Page<Book> bookPage = bookRepository.findByIsArchivedFalse(pageable);
         
-        // Safely fires the stock calculation only 20 times
         return bookPage.map(this::mapToResponse); 
     }
 
@@ -91,14 +89,12 @@ public class BookService {
             );
         }
         
-        // Soft delete: hide from active catalog
         book.setIsArchived(true);
         bookRepository.save(book);
     }
     
 
 
-    // Add this specification builder method to handle the dynamic filtering
 
 
     public Page<BookResponse> searchCatalog(
@@ -113,6 +109,9 @@ public class BookService {
         Specification<Book> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             query.distinct(true);
+
+            // Search endpoint should only expose active catalog entries.
+            predicates.add(cb.isFalse(root.get("isArchived")));
             
             if (title != null && !title.isBlank()) {
                 predicates.add(cb.like(cb.lower(root.get("title")), "%" + title.toLowerCase() + "%"));
@@ -124,14 +123,13 @@ public class BookService {
                 predicates.add(cb.equal(root.get("id"), bookId));
             }
             if (authorName != null && !authorName.isBlank()) {
-                // Join the many-to-many relationship
                 Join<Book, Author> authorJoin = root.join("authors", JoinType.INNER);
                 predicates.add(cb.like(cb.lower(authorJoin.get("name")), "%" + authorName.toLowerCase() + "%"));
             }
             if ((categoryName != null && !categoryName.isBlank()) || categoryId != null) {
                 Join<Book, Category> categoryJoin = root.join("categories", JoinType.INNER);
                 if (categoryName != null && !categoryName.isBlank()) {
-                    predicates.add(cb.like(cb.lower(categoryJoin.get("name")), "%" + categoryName.toLowerCase() + "%"));
+                    predicates.add(cb.like(cb.lower(categoryJoin.get("name")), "%" + categoryName.trim().toLowerCase() + "%"));
                 }
                 if (categoryId != null) {
                     predicates.add(cb.equal(categoryJoin.get("id"), categoryId));
@@ -147,7 +145,6 @@ public class BookService {
 
 
 
-    // Helper method to map Entity -> DTO and inject the dynamic stock
     private BookResponse mapToResponse(Book book) {
         Integer dynamicStock = bookRepository.getTrueAvailableStock(book.getId());
         List<AuthorResponse> authors = book.getAuthors() == null

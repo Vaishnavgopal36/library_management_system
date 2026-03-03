@@ -25,10 +25,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-        String defaultMessage = ex.getBindingResult().getFieldError() != null
-                ? ex.getBindingResult().getFieldError().getDefaultMessage()
-                : "Validation failed.";
-        return ResponseEntity.badRequest().body(Map.of("error", defaultMessage));
+        if (ex.getBindingResult().getFieldError() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Validation failed."));
+        }
+
+        String field = ex.getBindingResult().getFieldError().getField();
+        String defaultMessage = ex.getBindingResult().getFieldError().getDefaultMessage();
+        String message = (defaultMessage == null || defaultMessage.isBlank())
+                ? field + " is invalid"
+                : field + ": " + defaultMessage;
+        return ResponseEntity.badRequest().body(Map.of("error", message));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -41,4 +47,3 @@ public class GlobalExceptionHandler {
         return ex.getMessage() == null || ex.getMessage().isBlank() ? fallback : ex.getMessage();
     }
 }
-

@@ -33,17 +33,11 @@ public class LibraryAutomationEngine {
     private final FineRepository fineRepository;
     private final ReservationRepository reservationRepository;
 
-    /**
-     * FEATURE: Automated Fine Engine & Blacklist Automation
-     * Executes daily at 00:01 AM server time.
-     * Uses ACID transactions to ensure partial failures roll back cleanly.
-     */
     @Scheduled(cron = "0 1 0 * * *")
     @Transactional
     public void processDailyOverdueLedger() {
         log.info("Starting midnight automated overdue processing...");
         
-        // Fetch all non-returned transactions past due date.
         List<Transaction> overdueTransactions = transactionRepository
                 .findByStatusInAndDueDateBefore(OVERDUE_TRACKING_STATUSES, LocalDateTime.now());
 
@@ -56,7 +50,6 @@ public class LibraryAutomationEngine {
                 transactionRepository.save(t);
             }
             
-            // Reconcile total fine amount to match accrued days; this avoids duplicate charging.
             if (daysLate > 0L) {
                 BigDecimal expectedFineToDate = DAILY_OVERDUE_FINE.multiply(BigDecimal.valueOf(daysLate));
                 BigDecimal alreadyCharged = fineRepository.sumAmountByTransactionId(t.getId());
@@ -76,11 +69,10 @@ public class LibraryAutomationEngine {
                 }
             }
 
-            // 2. Blacklist Automation Logic: > 30 Days triggers account deactivation
             if (t.getDueDate().isBefore(thirtyDaysAgo)) {
                 User user = t.getUser();
                 if (user.getIsActive()) {
-                    user.setIsActive(false); // Soft Delete / Blacklist
+                    user.setIsActive(false); 
                     userRepository.save(user);
                     log.warn("User {} blacklisted due to severely overdue item {}", user.getId(), t.getBook().getId());
                 }
@@ -88,14 +80,9 @@ public class LibraryAutomationEngine {
         }
     }
 
-    /**
-     * FEATURE: Auto-Expire Holds
-     * Executes every 30 minutes to free up inventory stock dynamically.
-     */
     @Scheduled(fixedRate = 1800000)
     @Transactional
     public void expireStaleReservations() {
-        // Calls the custom @Modifying query already present in your ReservationRepository
         int expiredCount = reservationRepository.expireOldReservations();
         if (expiredCount > 0) {
             log.info("Automated Engine released {} expired reservations back into dynamic stock.", expiredCount);

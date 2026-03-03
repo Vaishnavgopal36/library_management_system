@@ -26,17 +26,19 @@ public class BookController {
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String category,
+            @RequestParam(name = "catagary", required = false) String legacyCategory,
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) String isbn,
             @RequestParam(required = false) UUID bookId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
-        // Pass the optional filters directly to your new Specification service method
+
+        String effectiveCategory = (category == null || category.isBlank()) ? legacyCategory : category;
+
         return ResponseEntity.ok(bookService.searchCatalog(
                 title,
                 author,
-                category,
+                effectiveCategory,
                 categoryId,
                 isbn,
                 bookId,
