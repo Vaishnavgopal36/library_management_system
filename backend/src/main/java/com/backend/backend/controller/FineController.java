@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,13 +20,37 @@ public class FineController {
     private final FineService fineService;
 
     @GetMapping
-    public ResponseEntity<List<FineResponse>> getLedger(Authentication authentication) {
+    public ResponseEntity<List<FineResponse>> getLedger(
+            Authentication authentication,
+            @RequestParam(required = false) UUID fineId,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) UUID transactionId,
+            @RequestParam(required = false) Boolean isPaid,
+            @RequestParam(required = false) BigDecimal minAmount,
+            @RequestParam(required = false) BigDecimal maxAmount
+    ) {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        return ResponseEntity.ok(isAdmin 
-                ? fineService.getGlobalLedger() 
-                : fineService.getUserLedger(authentication.getName()));
+        if (isAdmin) {
+            return ResponseEntity.ok(fineService.getGlobalLedger(
+                    fineId,
+                    userId,
+                    transactionId,
+                    isPaid,
+                    minAmount,
+                    maxAmount
+            ));
+        }
+
+        return ResponseEntity.ok(fineService.getUserLedger(
+                authentication.getName(),
+                fineId,
+                transactionId,
+                isPaid,
+                minAmount,
+                maxAmount
+        ));
     }
 
     @PutMapping("/{id}")

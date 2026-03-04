@@ -32,6 +32,7 @@ public class LibraryAutomationEngine {
     private final UserRepository userRepository;
     private final FineRepository fineRepository;
     private final ReservationRepository reservationRepository;
+    private final NotificationService notificationService;
 
     @Scheduled(cron = "0 1 0 * * *")
     @Transactional
@@ -66,6 +67,12 @@ public class LibraryAutomationEngine {
                         .isPaid(false)
                         .build();
                     fineRepository.save(dailyFine);
+                    BigDecimal outstanding = fineRepository.sumUnpaidAmountByUserId(t.getUser().getId());
+                    notificationService.notifyFineAccrued(
+                            t.getUser(),
+                            incrementalFine,
+                            outstanding != null ? outstanding : BigDecimal.ZERO
+                    );
                 }
             }
 

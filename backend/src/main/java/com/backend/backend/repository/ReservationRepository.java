@@ -2,6 +2,7 @@ package com.backend.backend.repository;
 
 import com.backend.backend.entity.Reservation;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface ReservationRepository extends JpaRepository<Reservation, UUID> {
+public interface ReservationRepository extends JpaRepository<Reservation, UUID>, JpaSpecificationExecutor<Reservation> {
     
     // Used by Admin to see all active queue holds
     List<Reservation> findByStatus(String status);

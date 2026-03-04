@@ -1,5 +1,5 @@
-# 1. Use an official Node runtime as a parent image
-FROM node:18-alpine
+# 1. Use a Node version compatible with Vite 7
+FROM node:22-alpine
 
 # 2. Set the working directory
 WORKDIR /app

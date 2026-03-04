@@ -20,7 +20,6 @@ public class ReportController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> getSystemAnalytics() {
-        // Only accessible by administrators to view aggregate system data
         return ResponseEntity.ok(reportService.generateSystemAnalytics());
     }
 }

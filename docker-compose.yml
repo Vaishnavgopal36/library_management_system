@@ -47,14 +47,15 @@ services:
   # Frontend (React + Vite)
   frontend:
     build: ./frontend
-    # In dev, we use 'npm run dev' and expose the port
-    command: npm run dev -- --host
+    # In dev, install deps into container volume before starting Vite.
+    command: sh -c "npm install && npm run dev -- --host"
     # Mount the frontend code and node_modules. The --host flag allows Vite to be accessible from outside the container.
     volumes:
       - ./frontend:/app
       - /app/node_modules # Prevent host node_modules from overriding container
     ports:
       - "5173:5173"
+      - "6006:6006"
     environment:
       - VITE_API_URL=http://localhost:8080 # Browser talks to localhost
     networks:

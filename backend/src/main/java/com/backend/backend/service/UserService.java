@@ -4,14 +4,22 @@ import com.backend.backend.dto.request.UserUpdateRequest;
 import com.backend.backend.dto.response.UserResponse;
 import com.backend.backend.entity.User;
 import com.backend.backend.entity.enums.TransactionStatus;
+import com.backend.backend.entity.enums.UserRole;
+import jakarta.persistence.criteria.Predicate;
 import com.backend.backend.repository.FineRepository;
 import com.backend.backend.repository.TransactionRepository;
 import com.backend.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -31,9 +39,80 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
-        return userRepository.findAll().stream()
+        return searchUsers(null, null, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> searchUsers(
+            UUID userId,
+            String email,
+            String fullName,
+            String role,
+            Boolean isActive
+    ) {
+        UserRole parsedRole = parseRole(role);
+        Specification<User> spec = buildUserSpecification(null, userId, email, fullName, parsedRole, isActive);
+        return userRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt")).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserResponse> searchUsers(
+            String search,
+            UUID userId,
+            String email,
+            String fullName,
+            String role,
+            Boolean isActive,
+            Pageable pageable
+    ) {
+        UserRole parsedRole = parseRole(role);
+        Specification<User> spec = buildUserSpecification(search, userId, email, fullName, parsedRole, isActive);
+
+        Pageable effectivePageable = pageable.getSort().isUnsorted()
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "createdAt"))
+                : pageable;
+
+        return userRepository.findAll(spec, effectivePageable).map(this::mapToResponse);
+    }
+
+    private Specification<User> buildUserSpecification(
+            String search,
+            UUID userId,
+            String email,
+            String fullName,
+            UserRole parsedRole,
+            Boolean isActive
+    ) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (userId != null) {
+                predicates.add(cb.equal(root.get("id"), userId));
+            }
+            if (search != null && !search.isBlank()) {
+                String keyword = "%" + search.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("email")), keyword),
+                        cb.like(cb.lower(root.get("fullName")), keyword)
+                ));
+            }
+            if (email != null && !email.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.trim().toLowerCase() + "%"));
+            }
+            if (fullName != null && !fullName.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("fullName")), "%" + fullName.trim().toLowerCase() + "%"));
+            }
+            if (parsedRole != null) {
+                predicates.add(cb.equal(root.get("role"), parsedRole));
+            }
+            if (isActive != null) {
+                predicates.add(cb.equal(root.get("isActive"), isActive));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
     @Transactional(readOnly = true)
@@ -45,6 +124,13 @@ public class UserService {
 
     @Transactional
     public UserResponse updateUser(UUID id, UserUpdateRequest request, String requesterEmail) {
+        User requester = userRepository.findByEmail(requesterEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Requester not found"));
+        boolean requesterIsAdmin = requester.getRole() == UserRole.admin;
+        if (!requesterIsAdmin && !requester.getId().equals(id)) {
+            throw new IllegalArgumentException("Members can update only their own profile.");
+        }
+
         User userToUpdate = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -98,8 +184,20 @@ public class UserService {
                 .id(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
-                .role(user.getRole().name())
+                .role(user.getRole() == null ? null : user.getRole().name())
                 .isActive(user.getIsActive())
                 .build();
+    }
+
+    private UserRole parseRole(String role) {
+        if (role == null || role.isBlank()) {
+            return null;
+        }
+
+        try {
+            return UserRole.valueOf(role.trim().toLowerCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid role filter. Allowed values: member, admin.");
+        }
     }
 }

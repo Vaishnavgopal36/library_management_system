@@ -6,11 +6,13 @@ import com.backend.backend.repository.UserRepository;
 import com.backend.backend.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,15 +26,48 @@ public class TransactionController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<List<TransactionResponse>> getCirculationHistory(Authentication authentication) {
+    public ResponseEntity<List<TransactionResponse>> getCirculationHistory(
+            Authentication authentication,
+            @RequestParam(required = false) UUID transactionId,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) UUID bookId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkoutAfter,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime checkoutBefore,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueAfter,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueBefore
+    ) {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         if (isAdmin) {
-            return ResponseEntity.ok(transactionService.getGlobalHistory());
-        } else {
-            return ResponseEntity.ok(transactionService.getUserHistory(authentication.getName()));
+            return ResponseEntity.ok(transactionService.getGlobalHistory(
+                    transactionId,
+                    userId,
+                    bookId,
+                    status,
+                    checkoutAfter,
+                    checkoutBefore,
+                    dueAfter,
+                    dueBefore
+            ));
         }
+
+        UUID currentUserId = getAuthenticatedUserId(authentication);
+        if (userId != null && !userId.equals(currentUserId)) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        return ResponseEntity.ok(transactionService.getUserHistory(
+                authentication.getName(),
+                transactionId,
+                bookId,
+                status,
+                checkoutAfter,
+                checkoutBefore,
+                dueAfter,
+                dueBefore
+        ));
     }
 
     @PostMapping
@@ -48,8 +83,12 @@ public class TransactionController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> returnAsset(@PathVariable UUID id, @RequestBody Map<String, String> payload) {
-        if ("returned".equalsIgnoreCase(payload.get("status"))) {
+        String status = payload.get("status");
+        if ("returned".equalsIgnoreCase(status)) {
             return ResponseEntity.ok(transactionService.returnBook(id));
+        }
+        if ("lost".equalsIgnoreCase(status)) {
+            return ResponseEntity.ok(transactionService.markLost(id));
         }
         return ResponseEntity.badRequest().body(Map.of("error", "Invalid status action."));
     }
@@ -61,6 +100,10 @@ public class TransactionController {
             return requestedUserId;
         }
 
+        return getAuthenticatedUserId(authentication);
+    }
+
+    private UUID getAuthenticatedUserId(Authentication authentication) {
         return userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"))
                 .getId();

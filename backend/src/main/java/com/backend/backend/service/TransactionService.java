@@ -12,13 +12,17 @@ import com.backend.backend.repository.FineRepository;
 import com.backend.backend.repository.ReservationRepository;
 import com.backend.backend.repository.TransactionRepository;
 import com.backend.backend.repository.UserRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,20 +42,109 @@ public class TransactionService {
     private final BookRepository bookRepository;
     private final FineRepository fineRepository;
     private final ReservationRepository reservationRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<TransactionResponse> getGlobalHistory() {
-        return transactionRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        return getGlobalHistory(null, null, null, null, null, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getGlobalHistory(
+            UUID transactionId,
+            UUID userId,
+            UUID bookId,
+            String status,
+            LocalDateTime checkoutAfter,
+            LocalDateTime checkoutBefore,
+            LocalDateTime dueAfter,
+            LocalDateTime dueBefore
+    ) {
+        return searchHistory(
+                transactionId,
+                userId,
+                bookId,
+                parseStatus(status),
+                checkoutAfter,
+                checkoutBefore,
+                dueAfter,
+                dueBefore
+        );
     }
 
     @Transactional(readOnly = true)
     public List<TransactionResponse> getUserHistory(String email) {
+        return getUserHistory(email, null, null, null, null, null, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> getUserHistory(
+            String email,
+            UUID transactionId,
+            UUID bookId,
+            String status,
+            LocalDateTime checkoutAfter,
+            LocalDateTime checkoutBefore,
+            LocalDateTime dueAfter,
+            LocalDateTime dueBefore
+    ) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-                
-        return transactionRepository.findByUserId(user.getId()).stream()
+
+        return searchHistory(
+                transactionId,
+                user.getId(),
+                bookId,
+                parseStatus(status),
+                checkoutAfter,
+                checkoutBefore,
+                dueAfter,
+                dueBefore
+        );
+    }
+
+    private List<TransactionResponse> searchHistory(
+            UUID transactionId,
+            UUID userId,
+            UUID bookId,
+            TransactionStatus status,
+            LocalDateTime checkoutAfter,
+            LocalDateTime checkoutBefore,
+            LocalDateTime dueAfter,
+            LocalDateTime dueBefore
+    ) {
+        Specification<Transaction> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (transactionId != null) {
+                predicates.add(cb.equal(root.get("id"), transactionId));
+            }
+            if (userId != null) {
+                predicates.add(cb.equal(root.get("user").get("id"), userId));
+            }
+            if (bookId != null) {
+                predicates.add(cb.equal(root.get("book").get("id"), bookId));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (checkoutAfter != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("checkoutDate"), checkoutAfter));
+            }
+            if (checkoutBefore != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("checkoutDate"), checkoutBefore));
+            }
+            if (dueAfter != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("dueDate"), dueAfter));
+            }
+            if (dueBefore != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("dueDate"), dueBefore));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return transactionRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "checkoutDate")).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -132,9 +225,31 @@ public class TransactionService {
                         .isPaid(false)
                         .build();
                 fineRepository.save(fine);
+                BigDecimal outstanding = fineRepository.sumUnpaidAmountByUserId(transaction.getUser().getId());
+                notificationService.notifyFineAccrued(
+                        transaction.getUser(),
+                        incrementalFine,
+                        outstanding != null ? outstanding : BigDecimal.ZERO
+                );
             }
         }
 
+        return mapToResponse(transactionRepository.save(transaction));
+    }
+
+    @Transactional
+    public TransactionResponse markLost(UUID transactionId) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+
+        if (transaction.getStatus() == TransactionStatus.lost) {
+            throw new IllegalStateException("Book is already marked as lost.");
+        }
+        if (transaction.getStatus() == TransactionStatus.returned) {
+            throw new IllegalStateException("Cannot mark a returned transaction as lost.");
+        }
+
+        transaction.setStatus(TransactionStatus.lost);
         return mapToResponse(transactionRepository.save(transaction));
     }
 
@@ -166,6 +281,18 @@ public class TransactionService {
         long activeReservations = reservationRepository.countActiveByUserId(userId, LocalDateTime.now());
         if (activeBorrowed + activeReservations >= MAX_ACTIVE_ITEMS) {
             throw new IllegalStateException("Total active items limit reached. Max 3 borrowed/reserved books.");
+        }
+    }
+
+    private TransactionStatus parseStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+
+        try {
+            return TransactionStatus.valueOf(status.trim().toLowerCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid transaction status filter. Allowed values: issued, returned, overdue, lost.");
         }
     }
 }

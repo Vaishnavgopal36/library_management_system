@@ -61,7 +61,6 @@ public class BookController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> archiveAsset(@PathVariable UUID id) {
-        // Service should execute: UPDATE books SET is_archived = true WHERE id = ?
         bookService.archiveBook(id);
         return ResponseEntity.noContent().build();
     }

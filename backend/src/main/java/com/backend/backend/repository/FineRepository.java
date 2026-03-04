@@ -2,6 +2,7 @@ package com.backend.backend.repository;
 
 import com.backend.backend.entity.Fine;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface FineRepository extends JpaRepository<Fine, UUID> {
+public interface FineRepository extends JpaRepository<Fine, UUID>, JpaSpecificationExecutor<Fine> {
     
     // Used by Member to view their specific fines
     List<Fine> findByUserId(UUID userId);
@@ -20,6 +21,9 @@ public interface FineRepository extends JpaRepository<Fine, UUID> {
     // Uses JPQL (Entity properties) rather than native SQL
     @Query("SELECT SUM(f.amount) FROM Fine f WHERE f.isPaid = false")
     BigDecimal sumAmountByIsPaidFalse();
+
+    @Query("SELECT SUM(f.amount) FROM Fine f WHERE f.isPaid = true")
+    BigDecimal sumAmountByIsPaidTrue();
 
     @Query("SELECT SUM(f.amount) FROM Fine f WHERE f.user.id = :userId AND f.isPaid = false")
     BigDecimal sumUnpaidAmountByUserId(@Param("userId") UUID userId);

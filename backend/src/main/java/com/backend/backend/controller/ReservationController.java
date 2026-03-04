@@ -6,12 +6,14 @@ import com.backend.backend.repository.UserRepository;
 import com.backend.backend.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,17 +27,55 @@ public class ReservationController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<List<ReservationResponse>> getHolds(Authentication authentication) {
+    public ResponseEntity<List<ReservationResponse>> getHolds(
+            Authentication authentication,
+            @RequestParam(required = false) UUID reservationId,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) UUID bookId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime reservedAfter,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime reservedBefore,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime expiresAfter,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime expiresBefore,
+            @RequestParam(required = false) Boolean includeExpired
+    ) {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        return ResponseEntity.ok(isAdmin 
-                ? reservationService.getAllActiveHolds() 
-                : reservationService.getUserHolds(authentication.getName()));
+        if (isAdmin) {
+            return ResponseEntity.ok(reservationService.getAllHolds(
+                    reservationId,
+                    userId,
+                    bookId,
+                    status,
+                    reservedAfter,
+                    reservedBefore,
+                    expiresAfter,
+                    expiresBefore,
+                    includeExpired
+            ));
+        }
+
+        UUID currentUserId = getAuthenticatedUserId(authentication);
+        if (userId != null && !userId.equals(currentUserId)) {
+            return ResponseEntity.ok(List.of());
+        }
+
+        return ResponseEntity.ok(reservationService.getUserHolds(
+                authentication.getName(),
+                reservationId,
+                bookId,
+                status,
+                reservedAfter,
+                reservedBefore,
+                expiresAfter,
+                expiresBefore,
+                includeExpired
+        ));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MEMBER')")
     public ResponseEntity<?> createHold(@Valid @RequestBody ReservationRequest request, Authentication authentication) {
         try {
             UUID effectiveUserId = resolveEffectiveUserId(authentication, request.getUserId());
@@ -76,6 +116,10 @@ public class ReservationController {
             return requestedUserId;
         }
 
+        return getAuthenticatedUserId(authentication);
+    }
+
+    private UUID getAuthenticatedUserId(Authentication authentication) {
         return userRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new IllegalArgumentException("Authenticated user not found"))
                 .getId();

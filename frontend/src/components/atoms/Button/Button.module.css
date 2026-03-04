@@ -1,0 +1,82 @@
+/* Base styles */
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-weight: 600; /* Bolder text for app buttons */
+  border: 1px solid transparent;
+  border-radius: 8px; /* App-like rounded corners */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  outline: none;
+}
+
+.base:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Sizes */
+.sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.md {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+}
+
+.lg {
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+}
+
+/* Variants (BookStop PDF Theme) */
+.primary {
+  background-color: #FA7C54; /* Vibrant interactive blue */
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25); /* Glow/depth effect */
+}
+
+.primary:hover:not(:disabled) {
+  background-color: #ee3a04;
+  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px); /* Slight lift on hover */
+}
+
+.secondary {
+  background-color: #ffffff;
+  color: #1f2937;
+  border-color: #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.secondary:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.danger {
+  background-color: #EF4444; /* Standard alert red */
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+}
+
+.danger:hover:not(:disabled) {
+  background-color: #DC2626;
+  transform: translateY(-1px);
+}
+
+.ghost {
+  background-color: transparent;
+  color: #6B7280;
+}
+
+.ghost:hover:not(:disabled) {
+  background-color: #F3F4F6;
+  color: #111827;
+}
