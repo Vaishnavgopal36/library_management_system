@@ -1,0 +1,92 @@
+import React from 'react';
+
+export interface DynamicBookCoverProps {
+  title: string;
+  author: string;
+  width?: string;
+  height?: string;
+  /** When false the cover renders as a pure colour block — no title or author text.
+   *  Recommended for widths below ~100 px or when the title is shown separately nearby.
+   *  Defaults to true for backward compatibility.
+   */
+  showText?: boolean;
+}
+
+// A simple hash function to generate a consistent number from a string
+const hashString = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+};
+
+// A palette of premium, modern gradients
+const gradients = [
+  'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)', // Soft Pink
+  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', // Purple/Pink
+  'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)', // Mint/Blue
+  'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)', // Orange/Purple
+  'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', // Lavender
+  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', // Deep Blue
+  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Vibrant Green
+  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Coral/Yellow
+];
+
+export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({ 
+  title, 
+  author, 
+  width = '140px', 
+  height = '200px',
+  showText = true,
+}) => {
+  // Pick a consistent gradient based on the book title
+  const gradientIndex = hashString(title) % gradients.length;
+  const background = gradients[gradientIndex];
+
+  return (
+    <div style={{
+      width,
+      height,
+      background,
+      borderRadius: '8px',
+      padding: '1rem',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      color: '#111827',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Decorative spine line */}
+      <div style={{ position: 'absolute', left: '10px', top: 0, bottom: 0, width: '2px', backgroundColor: 'rgba(255,255,255,0.4)' }} />
+      
+      {showText && (
+        <div style={{ paddingLeft: '8px' }}>
+          <h3 style={{ 
+            margin: 0, 
+            fontSize: '1.1rem', 
+            fontWeight: 800, 
+            lineHeight: 1.2,
+            letterSpacing: '-0.025em',
+            display: '-webkit-box',
+            WebkitLineClamp: 4,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden'
+          }}>
+            {title}
+          </h3>
+        </div>
+      )}
+
+      {showText && (
+        <div style={{ paddingLeft: '8px' }}>
+          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, opacity: 0.8 }}>
+            {author}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};

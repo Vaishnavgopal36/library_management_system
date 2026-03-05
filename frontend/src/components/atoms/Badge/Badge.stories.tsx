@@ -38,9 +38,9 @@ export const AdminUser: Story = {
   },
 };
 
-export const StudentUser: Story = {
+export const MemberUser: Story = {
   args: {
     variant: 'neutral',
-    children: 'Student',
+    children: 'Member',
   },
 };

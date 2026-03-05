@@ -1,0 +1,234 @@
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+.hero {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.heroIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.heroIconAdmin {
+  background: linear-gradient(135deg, #fee2e2, #fca5a5);
+  color: #991b1b;
+}
+
+.heroIconMember {
+  background: linear-gradient(135deg, #fdf2f8, #fbcfe8);
+  color: #9b2c5e;
+}
+
+.heroTitle {
+  margin: 0 0 0.4rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #111827;
+}
+
+.heroSub {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #6b7280;
+  line-height: 1.6;
+  max-width: 600px;
+}
+
+/* ── Role banner ──────────────────────────────────────────────────────────── */
+.roleBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  border-radius: 12px;
+  padding: 0.75rem 1.125rem;
+  border: 1px solid;
+}
+
+.roleBannerAdmin {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.roleBannerMember {
+  background: #fdf2f8;
+  border-color: #f3a8cc;
+}
+
+.roleLabel {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: #9b2c5e;
+  background: white;
+  border: 1px solid #f3a8cc;
+  border-radius: 50px;
+  padding: 0.2rem 0.75rem;
+}
+
+.roleBannerAdmin .roleLabel {
+  color: #92400e;
+  border-color: #fed7aa;
+}
+
+.roleNote {
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+/* ── Guide list ───────────────────────────────────────────────────────────── */
+.guideList {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── Guide section ────────────────────────────────────────────────────────── */
+.guideSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.categoryIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fdf2f8, #fbcfe8);
+  color: #9b2c5e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.categoryTitle {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: #111827;
+}
+
+.itemsCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding-left: 1rem;
+  border-left: 2px solid #f3f4f6;
+}
+
+/* ── Item card ────────────────────────────────────────────────────────────── */
+.itemCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.itemTitle {
+  margin: 0 0 0.875rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* ── Step list ────────────────────────────────────────────────────────────── */
+.stepList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.stepItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.stepNum {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #9b2c5e;
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.stepText {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.65;
+}
+
+/* ── Contact card ─────────────────────────────────────────────────────────── */
+.contactCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.contactIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fdf2f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contactTitle {
+  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.contactBody {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.6;
+}

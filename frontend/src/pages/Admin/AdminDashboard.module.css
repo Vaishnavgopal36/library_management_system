@@ -1,0 +1,164 @@
+.dashboardLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.pageTitle { margin: 0 0 0.25rem 0; font-size: 1.875rem; color: #111827; }
+.pageSubtitle { margin: 0; color: #6b7280; font-size: 1rem; }
+
+.quickActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.kpiLabel {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.kpiValue {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.tablesContainer {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.tableWrapper {
+  flex: 1;
+  min-width: 450px;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.tableTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+/* ── Modal shared styles ─────────────────────────────────────────────────── */
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.modalHint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+/* Notify fine card */
+.notifyCard {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notifyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notifyLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.notifyValue {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.notifyValueDanger {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #DC2626;
+}
+
+/* ── Fine action cell (two buttons side-by-side) ──────────────────── */
+.actionGroup {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* ── Confirmed / success state ───────────────────────────────── */
+.confirmedState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 0;
+  text-align: center;
+}
+
+.confirmedIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #d1fae5;
+  color: #059669;
+  font-size: 1.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmedTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.confirmedDetail {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #6b7280;
+}

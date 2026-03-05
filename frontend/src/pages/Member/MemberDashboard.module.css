@@ -1,0 +1,302 @@
+.dashboardLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.topRow {
+  display: flex;
+  gap: 1.5rem;
+  height: 290px;
+}
+
+.quoteCard {
+  flex: 1;
+  background: linear-gradient(135deg, #9b2c5e 0%, #6a2c70 100%);
+  border-radius: 12px;
+  padding: 2rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.quoteHeader { margin: 0 0 1rem 0; font-weight: 500; font-size: 1.25rem; }
+.quoteText { margin: 0; font-size: 1.25rem; line-height: 1.5; font-style: italic; }
+.quoteAuthor { margin: 1rem 0 0 0; text-align: right; font-weight: 500; opacity: 0.8; }
+
+.newArrivalsCard {
+  flex: 2;
+  display: flex !important;
+  flex-direction: row !important;
+  overflow: hidden;
+}
+
+.newArrivalsHeader {
+  background-color: #9b2c5e;
+  color: white;
+  padding: 1rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.verticalText {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.scrollContainer {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  overflow-x: auto;
+  align-items: flex-start;
+}
+
+.sectionTitle { margin: 0 0 0.5rem 0; font-size: 1.75rem; color: #111827; }
+.subTitle { margin: 0 0 1.5rem 0; font-size: 1.125rem; font-weight: 500; color: #4b5563; }
+
+.bookGrid {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.bookDisplay {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 130px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.bookDisplay:hover { transform: translateY(-4px); }
+
+.bookInfo { display: flex; flex-direction: column; gap: 0.25rem; }
+.bookTitle { margin: 0; font-size: 0.875rem; color: #111827; line-height: 1.3; font-weight: 600; }
+.bookAuthor { margin: 0; font-size: 0.75rem; color: #6b7280; }
+.bookRating { font-size: 0.75rem; color: #f59e0b; font-weight: 600; }
+
+.possessionCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Reserve button on recommended books */
+.reserveBtn {
+  margin-top: 0.5rem;
+  background: none;
+  border: 1px solid #9b2c5e;
+  color: #9b2c5e;
+  border-radius: 20px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  width: 100%;
+}
+.reserveBtn:hover {
+  background: #9b2c5e;
+  color: white;
+}
+
+/* Return button on possession cards */
+.returnBtn {
+  margin-top: 0.5rem !important;
+  font-size: 0.8125rem !important;
+  color: #6b7280 !important;
+  border-color: #e5e7eb !important;
+}
+.returnBtn:hover {
+  color: #111827 !important;
+  border-color: #9ca3af !important;
+}
+
+/* ── Modal shared styles ──────────────────────────────────────────────── */
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.modalBookPreview {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  background-color: #f9fafb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.modalBookMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.modalBookTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.modalBookAuthor {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.modalBookRating {
+  font-size: 0.8125rem;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.modalDivider {
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+.modalHint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+/* ── Outstanding fines section ────────────────────────────────── */
+.finesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 640px;
+}
+
+.fineCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.fineCardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fineCardBook {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.fineCardDetail {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #9a3412;
+}
+
+.fineCardRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fineCardAmount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #DC2626;
+}
+
+/* ── Pay Fine modal inner card ───────────────────────────────── */
+.fineModalCard {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.fineModalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fineModalLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.fineModalValue {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.fineModalValueDanger {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #DC2626;
+}
+
+/* ── Confirmed / success state ───────────────────────────────── */
+.confirmedState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 0;
+  text-align: center;
+}
+
+.confirmedIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #d1fae5;
+  color: #059669;
+  font-size: 1.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmedTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.confirmedDetail {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #6b7280;
+}

@@ -1,0 +1,128 @@
+.pageWrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9fafb;
+  padding: 2rem 1rem;
+  
+  background-image: 
+    radial-gradient(circle at 5% 30%, rgba(242, 106, 79, 0.9) 0%, transparent 60%),
+    radial-gradient(circle at 15% 80%, rgba(255, 140, 107, 0.8) 0%, transparent 55%),
+    radial-gradient(circle at -10% -10%, rgba(224, 90, 64, 0.8) 0%, transparent 40%);
+  
+  position: relative;
+  overflow: hidden;
+}
+
+.cornerLogo {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  z-index: 10;
+}
+
+.registerCard {
+  position: relative;
+  z-index: 1;
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 480px; /* Restored to the sleek 480px width */
+  padding: 3.5rem 4rem;
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.brand {
+  font-size: 3rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.welcome {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin: 0 0 0.5rem 0;
+}
+
+.subText {
+  font-size: 1.25rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+}
+
+.inputGroup {
+  margin-bottom: 0.25rem;
+}
+
+.eyeButton {
+  position: absolute;
+  right: 1rem;
+  top: 2.25rem; 
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.eyeButton:hover {
+  color: #4b5563;
+}
+
+.submitButton {
+  width: 100%;
+  background-color: #F26A4F !important;
+  border-color: #F26A4F !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  box-shadow: none !important;
+}
+
+.submitButton:hover {
+  background-color: #E05A40 !important;
+  border-color: #E05A40 !important;
+}
+
+.loginPrompt {
+  text-align: center;
+  font-size: 1rem;
+  color: #6b7280;
+  margin-top: 2rem;
+  margin-bottom: 0;
+}
+
+.loginLink {
+  color: #6b7280;
+  text-decoration: underline;
+  margin-left: 0.25rem;
+}
+
+.loginLink:hover {
+  color: #374151;
+}
+
+@media (max-width: 600px) {
+  .registerCard {
+    padding: 2.5rem 2rem;
+  }
+}

@@ -77,6 +77,6 @@
 }
 
 .ghost:hover:not(:disabled) {
-  background-color: #F3F4F6;
-  color: #111827;
+  background-color: #FA7C54;
+  color: #ffffff;
 }
