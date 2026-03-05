@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { AppRole } from '../../utils/types';
+import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './AdminSearchPage.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Button } from '../../components/atoms/Button/Button';
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
@@ -73,7 +75,7 @@ const mockCatalog: CatalogBook[] = [
 ];
 
 export interface SearchPageProps {
-  role?: 'admin' | 'member';
+  role?: AppRole;
 }
 
 // ── Skeleton placeholder for catalog list ──────────────────────────────────
@@ -115,11 +117,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   // ── Simulate loading (TODO: replace with actual API call to GET /api/v1/book) ──
   // params: title, author, category, isbn, bookId (UUID), page (0-based), size (20)
   //          → returns PageBookResponse { content: BookResponse[], totalElements, ... }
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(t);
-  }, []);
+  const isLoading = useMockDelay();
 
   // Derive unique categories from catalog
   const categories = ['All Categories', ...Array.from(new Set(mockCatalog.flatMap(b => b.categories.map(c => c.name))))];

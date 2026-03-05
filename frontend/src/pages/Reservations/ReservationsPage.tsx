@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { fmtDate } from '../../utils/dates';
+import { AppRole } from '../../utils/types';
+import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './ReservationsPage.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
@@ -101,10 +104,6 @@ const allReservations: Reservation[] = [
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-/** Format ISO datetime string → "28 Feb 2026" */
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
 const badgeVariant = (
   status: ResStatus
 ): 'success' | 'warning' | 'error' | 'info' | 'neutral' => {
@@ -148,7 +147,7 @@ const SkeletonTableRows: React.FC<{ rows?: number }> = ({ rows = 4 }) => (
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export interface ReservationsPageProps {
-  role?: 'admin' | 'member';
+  role?: AppRole;
 }
 
 // Admin view toggle type
@@ -158,15 +157,9 @@ type ResTabFilter = 'All' | ResStatus;
 export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'member' }) => {
   const isAdmin = role === 'admin';
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  // ── Simulate loading latency (replace with real API call later) ──
-  // TODO: Replace with actual API call to GET /api/v1/reservation
+  // ── Simulate loading (TODO: GET /api/v1/reservation) ──
   // params: reservationId, userId, bookId, status, reservedAfter/Before, expiresAfter/Before, includeExpired
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(t);
-  }, []);
+  const isLoading = useMockDelay();
 
   // ── Admin toggle: All Members | Mine ──
   const [adminView, setAdminView] = useState<AdminView>('all');

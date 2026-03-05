@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { AppRole } from '../../utils/types';
 import styles from './TermsPage.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 
 export interface TermsPageProps {
-  role?: 'admin' | 'member';
+  role?: AppRole;
 }
 
 interface Section {

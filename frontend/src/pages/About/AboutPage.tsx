@@ -1,9 +1,10 @@
 import React from 'react';
+import { AppRole } from '../../utils/types';
 import styles from './AboutPage.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 
 export interface AboutPageProps {
-  role?: 'admin' | 'member';
+  role?: AppRole;
 }
 
 const FEATURES = [

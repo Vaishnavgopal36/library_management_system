@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { FINE_RATE_PER_DAY } from '../../utils/constants';
 import styles from './MemberDashboard.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Card } from '../../components/molecules/Card/Card';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
 import { Badge } from '../../components/atoms/Badge/Badge';
@@ -30,7 +31,6 @@ const currentPossessions: PossessionData[] = [
   { title: 'The Design of Everyday Things', author: 'Don Norman', coverHash: 'Design', dueIn: '14 Days', dueVariant: 'success' },
 ];
 
-const FINE_RATE_PER_DAY = 10; // ₹10/day
 type FineData = { id: string; book: string; daysOverdue: number; amount: number };
 const initialMemberFines: FineData[] = [
   { id: 'f1', book: 'Clean Code', daysOverdue: 3, amount: 30 },

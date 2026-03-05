@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { fmtDate } from '../../utils/dates';
+import { FINE_RATE_PER_DAY } from '../../utils/constants';
+import { AppRole } from '../../utils/types';
+import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './HistoryPage.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
 import { Table, Column } from '../../components/molecules/Table/Table';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
-
-// ── Constants ────────────────────────────────────────────────────────────────
-const FINE_RATE_PER_DAY = 10; // ₹10 per day
 
 // ── Types ────────────────────────────────────────────────────────────────────
 // Note: 'Reserved' belongs to ReservationResponse (/api/v1/reservation), not TransactionResponse
@@ -85,11 +86,6 @@ const memberTransactions = allTransactions.filter(t => t.userName === 'Reinhard 
 
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-// ── Helpers ──────────────────────────────────────────────────────────────────
-/** Format ISO datetime string → "5 Mar 2026" */
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
 const badgeVariant = (
   status: TxStatus
 ): 'success' | 'warning' | 'error' | 'info' | 'neutral' => {
@@ -120,7 +116,7 @@ const SkeletonRows: React.FC<{ rows?: number }> = ({ rows = 5 }) => (
 );
 // ── Component ─────────────────────────────────────────────────────────────────
 export interface HistoryPageProps {
-  role?: 'admin' | 'member';
+  role?: AppRole;
 }
 
 export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => {
@@ -129,11 +125,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
 
   // ── Simulate loading (TODO: replace with actual API call to GET /api/v1/transaction) ──
   // params: transactionId, userId, bookId, status, checkoutAfter/Before, dueAfter/Before
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(t);
-  }, []);
+  const isLoading = useMockDelay();
 
   // ── Search filter ──
   const [searchQuery, setSearchQuery] = useState('');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styles from './AdminDashboard.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Card } from '../../components/molecules/Card/Card';
 import { Table, Column } from '../../components/molecules/Table/Table';
 import { Badge } from '../../components/atoms/Badge/Badge';

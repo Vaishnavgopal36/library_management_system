@@ -109,8 +109,22 @@
   align-items: start;
 }
 
+@media (max-width: 1024px) {
+  .heroBody { padding: 0 1.5rem 1.5rem; }
+  .heroName  { font-size: 1.25rem; }
+}
+
 @media (max-width: 768px) {
-  .columns { grid-template-columns: 1fr; }
+  .columns   { grid-template-columns: 1fr; }
+  .heroBody  { padding: 0 1rem 1.25rem; gap: 1rem; }
+  .heroName  { font-size: 1.125rem; }
+  .detailLabel { width: 90px; }
+}
+
+@media (max-width: 480px) {
+  .heroBody  { flex-direction: column; align-items: flex-start; }
+  .statsGrid { grid-template-columns: 1fr 1fr; }
+  .card      { padding: 1.125rem 1rem; }
 }
 
 /* ── Generic card ─────────────────────────────────────────────────────────── */

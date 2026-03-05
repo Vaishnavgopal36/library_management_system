@@ -1,10 +1,11 @@
 import React from 'react';
+import { AppRole } from '../../utils/types';
 import styles from './ProfilePage.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface ProfilePageProps {
-  role?: 'admin' | 'member';
+  role?: AppRole;
 }
 
 interface BadgeInfo {

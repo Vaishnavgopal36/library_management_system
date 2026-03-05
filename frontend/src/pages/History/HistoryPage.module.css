@@ -240,3 +240,19 @@
   gap: 0.75rem;
   padding-top: 0.25rem;
 }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .headerRow { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+}
+
+@media (max-width: 768px) {
+  .pageTitle    { font-size: 1.5rem; }
+  .summaryRow   { gap: 0.5rem; }
+  .tableCard    { border-radius: 12px; }
+}
+
+@media (max-width: 480px) {
+  .pageTitle { font-size: 1.25rem; }
+  .statChip  { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+}

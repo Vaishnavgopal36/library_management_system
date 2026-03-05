@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './MemberDirectoryPage.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -201,17 +202,13 @@ function DeleteModal({ memberName, onConfirm, onClose }: DeleteModalProps) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export function MemberDirectoryPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const isLoading = useMockDelay();
   const [members, setMembers] = useState<Member[]>(INITIAL_MEMBERS);
   const [activeFilter, setActiveFilter] = useState<MemberStatus>('Active');
   const [searchQuery, setSearchQuery] = useState('');
 
   // TODO: replace with GET /api/v1/user
   // params: search, userId, email, fullName, role, isActive, page, size
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(t);
-  }, []);
 
   const [editTarget, setEditTarget] = useState<Member | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);

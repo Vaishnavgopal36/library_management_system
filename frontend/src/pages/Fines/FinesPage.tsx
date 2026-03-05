@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { FINE_RATE_PER_DAY } from '../../utils/constants';
+import { AppRole } from '../../utils/types';
+import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './FinesPage.module.css';
-import { AppShell } from '../../components/layouts/AppShell/AppShell';
+import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
 import { Table, Column } from '../../components/molecules/Table/Table';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
-
-// ── Constants ────────────────────────────────────────────────────────────────
-const FINE_RATE_PER_DAY = 10; // ₹10/day
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type FineStatus = 'Unpaid' | 'Paid'; // UI-derived from Fine.isPaid for display and tab filtering
@@ -55,18 +55,14 @@ const SkeletonRows: React.FC<{ rows?: number }> = ({ rows = 4 }) => (
 );
 // ── Component ─────────────────────────────────────────────────────────────────
 export interface FinesPageProps {
-  role?: 'admin' | 'member';
+  role?: AppRole;
 }
 
 export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const isAdmin = role === 'admin';
 
   // ── Simulate loading (TODO: replace with actual API call to GET /api/v1/fine) ──
-  const [isLoading, setIsLoading] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(t);
-  }, []);
+  const isLoading = useMockDelay();
 
   // Local state so rows update after actions
   const [fines, setFines] = useState<Fine[]>(isAdmin ? allFines : memberFines);

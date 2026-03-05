@@ -2,9 +2,9 @@ import React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { MemoryRouter } from 'react-router-dom';
 import { AppShell } from './AppShell';
-import { Card } from '../../molecules/Card/Card';
-import { Table, Column } from '../../molecules/Table/Table';
-import { Badge } from '../../atoms/Badge/Badge';
+import { Card } from '../../components/molecules/Card/Card';
+import { Table, Column } from '../../components/molecules/Table/Table';
+import { Badge } from '../../components/atoms/Badge/Badge';
 
 const meta: Meta<typeof AppShell> = {
   title: 'Layouts/AppShell',

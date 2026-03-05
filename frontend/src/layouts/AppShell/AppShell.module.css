@@ -31,7 +31,7 @@
 
 .contentArea {
   flex: 1;
-  padding: 1rem 2.5rem 2.5rem 2.5rem;
+  padding: 0.75rem 2rem 2rem 2rem;
   overflow-y: auto;
   background-color: transparent;
 }
@@ -39,3 +39,19 @@
 .contentArea::-webkit-scrollbar { width: 8px; }
 .contentArea::-webkit-scrollbar-track { background: transparent; }
 .contentArea::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 20px; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .themeWrapper { padding: 0.5rem 0.75rem; }
+  .contentArea  { padding: 1rem 1.5rem 2rem; }
+}
+
+@media (max-width: 768px) {
+  .themeWrapper { padding: 0; }
+  .appShell     { border-radius: 0; }
+  .contentArea  { padding: 1rem 1rem 2rem; }
+}
+
+@media (max-width: 480px) {
+  .contentArea { padding: 0.75rem 0.75rem 1.5rem; }
+}
