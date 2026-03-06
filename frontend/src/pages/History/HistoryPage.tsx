@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { fmtDate } from '../../utils/dates';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
-import { AppRole } from '../../utils/types';
+import { AppRole, TxStatus, Transaction } from '../../utils/types';
+import { txBadgeVariant } from '../../utils/badges';
+import { useModal } from '../../hooks/useModal';
 import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './HistoryPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
@@ -14,23 +16,8 @@ import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 // Note: 'Reserved' belongs to ReservationResponse (/api/v1/reservation), not TransactionResponse
-type TxStatus = 'Issued' | 'Returned' | 'Overdue';
+// TxStatus and Transaction are imported from utils/types
 type TabFilter = 'All' | TxStatus;
-
-// Matches API TransactionResponse
-interface Transaction {
-  id: string;
-  bookId: string;          // UUID
-  userId: string;          // UUID
-  bookName: string;        // was: book (plain string)
-  userName: string;        // was: member (plain string)
-  checkoutDate: string;    // ISO datetime (was: issuedDate)
-  dueDate: string;         // ISO datetime
-  status: TxStatus;
-  // ── UI-only computed/helper fields (not from API) ───────────────────────────────
-  daysOverdue: number;     // computed: diff(today, dueDate) when status = Overdue
-  returnedDate?: string;   // not in TransactionResponse; displayed in Returned rows
-}
 
 // ── Mock Data ────────────────────────────────────────────────────────────────
 // Admin sees all; member only sees their own (filtered by "Rick" / "Reinhard Kenson")
@@ -84,15 +71,6 @@ const allTransactions: Transaction[] = [
 // Member-facing slice (current logged-in user = "Reinhard Kenson")
 const memberTransactions = allTransactions.filter(t => t.userName === 'Reinhard Kenson');
 
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const badgeVariant = (
-  status: TxStatus
-): 'success' | 'warning' | 'error' | 'info' | 'neutral' => {
-  if (status === 'Issued')   return 'info';
-  if (status === 'Returned') return 'success';
-  return 'error'; // Overdue
-};
 // ── Skeleton row placeholder for table loading state ─────────────────────────────────
 const SkeletonRows: React.FC<{ rows?: number }> = ({ rows = 5 }) => (
   <div className={styles.skeletonWrapper}>
@@ -141,22 +119,17 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
   const filtered = activeTab === 'All' ? searchFiltered : searchFiltered.filter(t => t.status === activeTab);
 
   // ── Return modal (admin only) ──
-  const [isReturnOpen, setIsReturnOpen] = useState(false);
-  const [returnTx, setReturnTx] = useState<Transaction | null>(null);
-  const [isReturning, setIsReturning] = useState(false);
-
-  const openReturnModal = (tx: Transaction) => { setReturnTx(tx); setIsReturnOpen(true); };
-  const closeReturnModal = () => { setIsReturnOpen(false); setReturnTx(null); };
+  const returnModal = useModal<Transaction>();
   const handleReturnConfirm = () => {
-    setIsReturning(true);
-    const fine = (returnTx?.daysOverdue ?? 0) * FINE_RATE_PER_DAY;
-    // TODO: PUT /api/v1/transaction/{id} — path param: transactionId (UUID); body: Map<String,String>
+    returnModal.setProcessing(true);
+    const fine = (returnModal.data?.daysOverdue ?? 0) * FINE_RATE_PER_DAY;
+    // TODO: PUT /api/v1/transaction/{id} — path param: transactionId; body: Map<String,String>
     // Note: fines are auto-generated server-side on overdue returns; no fineAmount needed in request body
-    console.log('Returning tx:', returnTx?.id, '| Fine: ₹', fine);
-    setTimeout(() => { setIsReturning(false); closeReturnModal(); }, 1000);
+    console.log('Returning tx:', returnModal.data?.id, '| Fine: ₹', fine);
+    setTimeout(() => { returnModal.close(); }, 1000);
   };
 
-  const fineAmount = (returnTx?.daysOverdue ?? 0) * FINE_RATE_PER_DAY;
+  const fineAmount = (returnModal.data?.daysOverdue ?? 0) * FINE_RATE_PER_DAY;
 
   // ── Stat counts for summary chips ──
   const counts = {
@@ -201,14 +174,14 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
   const statusCol: Column<Transaction> = {
     header: 'Status',
     accessor: 'status',
-    render: (row) => <Badge variant={badgeVariant(row.status)}>{row.status}</Badge>,
+    render: (row) => <Badge variant={txBadgeVariant(row.status)}>{row.status}</Badge>,
   };
   const actionCol: Column<Transaction> = {
     header: 'Action',
     accessor: 'id',
     render: (row) =>
       row.status === 'Issued' || row.status === 'Overdue' ? (
-        <Button size="sm" variant="secondary" onClick={() => openReturnModal(row)}>
+        <Button size="sm" variant="secondary" onClick={() => returnModal.open(row)}>
           Return
         </Button>
       ) : (
@@ -308,18 +281,18 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
       </div>
 
       {/* ── Return Modal (admin only) ─────────────────────────────────── */}
-      <Modal isOpen={isReturnOpen} onClose={closeReturnModal} title="Confirm Book Return">
-        {returnTx && (
+      <Modal isOpen={returnModal.isOpen} onClose={returnModal.close} title="Confirm Book Return">
+        {returnModal.data && (
           <div className={styles.returnModalBody}>
 
             {/* Book preview */}
             <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={returnTx.bookName} author="" width="72px" height="100px" showText={false} />
+              <DynamicBookCover title={returnModal.data.bookName} author="" width="72px" height="100px" showText={false} />
               <div className={styles.modalBookMeta}>
-                <p className={styles.modalBookTitle}>{returnTx.bookName}</p>
-                <p className={styles.modalBookAuthor}>{returnTx.userName}</p>
-                <Badge variant={badgeVariant(returnTx.status)} style={{ marginTop: '0.5rem' }}>
-                  {returnTx.status}
+                <p className={styles.modalBookTitle}>{returnModal.data.bookName}</p>
+                <p className={styles.modalBookAuthor}>{returnModal.data.userName}</p>
+                <Badge variant={txBadgeVariant(returnModal.data.status)} style={{ marginTop: '0.5rem' }}>
+                  {returnModal.data.status}
                 </Badge>
               </div>
             </div>
@@ -330,48 +303,48 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
             <div className={styles.infoBlock}>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Member</span>
-                <span className={styles.infoValue}>{returnTx.userName}</span>
+                <span className={styles.infoValue}>{returnModal.data.userName}</span>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Issued On</span>
-                <span className={styles.infoValue}>{fmtDate(returnTx.checkoutDate)}</span>
+                <span className={styles.infoValue}>{fmtDate(returnModal.data.checkoutDate)}</span>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Due Date</span>
-                <span className={styles.infoValue}>{fmtDate(returnTx.dueDate)}</span>
+                <span className={styles.infoValue}>{fmtDate(returnModal.data.dueDate)}</span>
               </div>
             </div>
 
             {/* Fine box — only shown if overdue */}
-            {returnTx.status === 'Overdue' && fineAmount > 0 && (
+            {returnModal.data.status === 'Overdue' && fineAmount > 0 && (
               <div className={styles.fineBox}>
                 <span className={styles.fineBoxTitle}>⚠ Overdue Fine Applicable</span>
                 <span className={styles.fineAmount}>₹{fineAmount}</span>
                 <span className={styles.fineRate}>
-                  ₹{FINE_RATE_PER_DAY}/day × {returnTx.daysOverdue} days
+                  ₹{FINE_RATE_PER_DAY}/day × {returnModal.data.daysOverdue} days
                 </span>
               </div>
             )}
 
             <p className={styles.modalHint}>
-              {returnTx.status === 'Overdue'
+              {returnModal.data.status === 'Overdue'
                 ? "Confirm the return and record the fine against this member's account."
                 : 'Confirm that the book has been physically received and is in good condition.'}
             </p>
 
             <div className={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={closeReturnModal} disabled={isReturning}>
+              <Button type="button" variant="ghost" onClick={returnModal.close} disabled={returnModal.isProcessing}>
                 Cancel
               </Button>
               <Button
                 type="button"
                 variant="primary"
                 onClick={handleReturnConfirm}
-                disabled={isReturning}
+                disabled={returnModal.isProcessing}
               >
-                {isReturning
+                {returnModal.isProcessing
                   ? 'Processing...'
-                  : returnTx.status === 'Overdue'
+                  : returnModal.data.status === 'Overdue'
                     ? 'Return & Record Fine'
                     : 'Confirm Return'}
               </Button>

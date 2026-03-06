@@ -1,12 +1,12 @@
-/* Base styles */
+
 .base {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: inherit;
-  font-weight: 600; /* Bolder text for app buttons */
+  font-weight: 600; 
   border: 1px solid transparent;
-  border-radius: 8px; /* App-like rounded corners */
+  border-radius: 8px; 
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   outline: none;
@@ -19,7 +19,7 @@
   transform: none;
 }
 
-/* Sizes */
+
 .sm {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
@@ -35,17 +35,17 @@
   font-size: 1.125rem;
 }
 
-/* Variants (BookStop PDF Theme) */
+
 .primary {
-  background-color: #FA7C54; /* Vibrant interactive blue */
+  background-color: #FA7C54; 
   color: #ffffff;
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25); /* Glow/depth effect */
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25); 
 }
 
 .primary:hover:not(:disabled) {
   background-color: #ee3a04;
   box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
-  transform: translateY(-1px); /* Slight lift on hover */
+  transform: translateY(-1px); 
 }
 
 .secondary {
@@ -61,7 +61,7 @@
 }
 
 .danger {
-  background-color: #EF4444; /* Standard alert red */
+  background-color: #EF4444; 
   color: #ffffff;
   box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
 }

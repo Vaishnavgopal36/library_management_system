@@ -18,7 +18,7 @@ export interface MemberBadge {
 // Matches API UserResponse fields (+ UI-only aggregate helpers)
 export interface Member {
   // API UserResponse fields:
-  id: string;                      // UUID (was: number)
+  id: string;
   email: string;
   fullName: string;                // was: name
   role: 'admin' | 'member';
@@ -307,7 +307,6 @@ export function MemberDirectoryPage() {
               <thead>
                 <tr>
                   <th className={styles.th}>Member</th>
-                  <th className={styles.th}>ID</th>
                   <th className={styles.th}>Role</th>
                   <th className={styles.th}>Status</th>
                   <th className={styles.th}>Badges</th>
@@ -327,10 +326,6 @@ export function MemberDirectoryPage() {
                           <div className={styles.memberEmail}>{member.email}</div>
                         </div>
                       </div>
-                    </td>
-                    {/* Member ID */}
-                    <td className={styles.td}>
-                      <span className={styles.memberIdChip}>{member.id}</span>
                     </td>
                     {/* Role */}
                     <td className={styles.td}>

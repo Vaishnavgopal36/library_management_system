@@ -1,7 +1,6 @@
 .skeleton {
   display: block;
-  background-color: #e5e7eb; /* Base gray */
-  /* Shimmer gradient */
+  background-color: #e5e7eb; 
   background-image: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0,
@@ -15,7 +14,7 @@
 
 .text {
   border-radius: 4px;
-  height: 1.2em; /* Approximates line height */
+  height: 1.2em; 
   margin-bottom: 0.5rem;
 }
 
@@ -24,7 +23,7 @@
 }
 
 .rectangular {
-  border-radius: 8px; /* Matches BookStop rounded corners */
+  border-radius: 8px; 
 }
 
 @keyframes shimmer {

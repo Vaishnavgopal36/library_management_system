@@ -17,7 +17,7 @@ interface BookPublisher { id: string; name: string; }
 
 // CatalogBook matches API BookResponse
 interface CatalogBook {
-  id: string;                    // UUID
+  id: string;
   title: string;
   isbn: string;
   stockQuantity: number;         // total copies in library
@@ -34,7 +34,7 @@ interface BookFormData {
   isbn: string;          // required in BookRequest
   stockQuantity: string; // string for <input>, parsed before submitting
   publishDate: string;
-  publisherId: string;   // UUID — optional
+  publisherName: string; // optional
 }
 
 // Mock catalog with BookResponse field shapes
@@ -115,7 +115,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   const isAdmin = role === 'admin';
 
   // ── Simulate loading (TODO: replace with actual API call to GET /api/v1/book) ──
-  // params: title, author, category, isbn, bookId (UUID), page (0-based), size (20)
+  // params: title, author, category, isbn, bookId, page (0-based), size (20)
   //          → returns PageBookResponse { content: BookResponse[], totalElements, ... }
   const isLoading = useMockDelay();
 
@@ -139,13 +139,13 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   // Issue modal state
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<CatalogBook | null>(null);
-  const [issueUserId, setIssueUserId] = useState(''); // UUID — optional; omit to issue to logged-in user
+  const [issueMemberEmail, setIssueMemberEmail] = useState('');
   const [isIssuing, setIsIssuing] = useState(false);
   const [issueError, setIssueError] = useState('');
 
   const openIssueModal = (book: CatalogBook) => {
     setSelectedBook(book);
-    setIssueUserId('');
+    setIssueMemberEmail('');
     setIssueError('');
     setIsIssueModalOpen(true);
   };
@@ -153,35 +153,35 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   const closeIssueModal = () => {
     setIsIssueModalOpen(false);
     setSelectedBook(null);
-    setIssueUserId('');
+    setIssueMemberEmail('');
     setIssueError('');
   };
 
   const handleIssueConfirm = (e: React.FormEvent) => {
     e.preventDefault();
-    // userId is optional — if empty, the backend issues to the currently authenticated user
+    // memberEmail is optional — if empty, the backend issues to the currently authenticated user
     setIsIssuing(true);
-    // TODO: POST /api/v1/transaction — body: TransactionRequest { bookId (UUID, required), userId (UUID, optional) }
-    console.log(`Issuing "${selectedBook?.title}" (bookId: ${selectedBook?.id}) to userId: ${issueUserId || '(logged-in user)'}`);
+    // TODO: POST /api/v1/transaction — body: { bookId (from selectedBook.id), memberEmail (optional) }
+    console.log(`Issuing "${selectedBook?.title}" to member: ${issueMemberEmail || '(logged-in user)'}`);
     setTimeout(() => { setIsIssuing(false); closeIssueModal(); }, 1200);
   };
 
   // ── Edit Book ────────────────────────────────────────────────────────────
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editBook, setEditBook] = useState<CatalogBook | null>(null);
-  const [editForm, setEditForm] = useState<BookFormData>({ title: '', isbn: '', stockQuantity: '', publishDate: '', publisherId: '' });
+  const [editForm, setEditForm] = useState<BookFormData>({ title: '', isbn: '', stockQuantity: '', publishDate: '', publisherName: '' });
   const [isSaving, setIsSaving] = useState(false);
 
   const openEditModal = (book: CatalogBook) => {
     setEditBook(book);
-    setEditForm({ title: book.title, isbn: book.isbn, stockQuantity: String(book.stockQuantity), publishDate: '', publisherId: book.publisher?.id ?? '' });
+    setEditForm({ title: book.title, isbn: book.isbn, stockQuantity: String(book.stockQuantity), publishDate: '', publisherName: book.publisher?.name ?? '' });
     setIsEditModalOpen(true);
   };
   const closeEditModal = () => { setIsEditModalOpen(false); setEditBook(null); };
   const handleEditSave = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    // TODO: PUT /api/v1/book/{id} — body: BookRequest { title*, isbn*, stockQuantity*(int ≥ 0), publishDate?, publisherId?(UUID) }
+    // TODO: PUT /api/v1/book/{id} — body: BookRequest { title*, isbn*, stockQuantity*, publishDate?, publisherName? }
     console.log('Updating book:', { id: editBook?.id, ...editForm });
     setTimeout(() => { setIsSaving(false); closeEditModal(); }, 1000);
   };
@@ -202,18 +202,18 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
 
   // ── Register New Asset ───────────────────────────────────────────────────
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [registerForm, setRegisterForm] = useState<BookFormData>({ title: '', isbn: '', stockQuantity: '', publishDate: '', publisherId: '' });
+  const [registerForm, setRegisterForm] = useState<BookFormData>({ title: '', isbn: '', stockQuantity: '', publishDate: '', publisherName: '' });
   const [isRegistering, setIsRegistering] = useState(false);
 
   const openRegisterModal = () => {
-    setRegisterForm({ title: '', isbn: '', stockQuantity: '', publishDate: '', publisherId: '' });
+    setRegisterForm({ title: '', isbn: '', stockQuantity: '', publishDate: '', publisherName: '' });
     setIsRegisterModalOpen(true);
   };
   const closeRegisterModal = () => setIsRegisterModalOpen(false);
   const handleRegisterSave = (e: React.FormEvent) => {
     e.preventDefault();
     setIsRegistering(true);
-    // TODO: POST /api/v1/book — body: BookRequest { title*, isbn*, stockQuantity*(int ≥ 0), publishDate?, publisherId?(UUID) }
+    // TODO: POST /api/v1/book — body: BookRequest { title*, isbn*, stockQuantity*, publishDate?, publisherName? }
     console.log('Registering new book:', registerForm);
     setTimeout(() => { setIsRegistering(false); closeRegisterModal(); }, 1000);
   };
@@ -227,7 +227,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   const closeReserveModal = () => { setIsReserveModalOpen(false); setReserveBook(null); };
   const handleReserveConfirm = () => {
     setIsReserving(true);
-    // TODO: POST /api/v1/reservation — body: ReservationRequest { bookId (UUID, required), userId (UUID, optional) }
+    // TODO: POST /api/v1/reservation — body: ReservationRequest { bookId (from reserveBook.id) }
     console.log('Reserving:', reserveBook?.title, '| bookId:', reserveBook?.id);
     setTimeout(() => { setIsReserving(false); closeReserveModal(); }, 1200);
   };
@@ -363,7 +363,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
               <InputField label="Publish Date" placeholder="e.g. 2024-01-01" value={editForm.publishDate} onChange={(e) => setEditForm(p => ({ ...p, publishDate: e.target.value }))} />
             </div>
             <div className={styles.formRow}>
-              <InputField label="Publisher ID (UUID)" placeholder="e.g. pub-0001-0001-0001" value={editForm.publisherId} onChange={(e) => setEditForm(p => ({ ...p, publisherId: e.target.value }))} />
+              <InputField label="Publisher Name" placeholder="e.g. O'Reilly Media" value={editForm.publisherName} onChange={(e) => setEditForm(p => ({ ...p, publisherName: e.target.value }))} />
             </div>
             <div className={styles.issueDivider} />
             <div className={styles.issueActions}>
@@ -407,7 +407,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
             <InputField label="Publish Date" placeholder="e.g. 2024-01-01" value={registerForm.publishDate} onChange={(e) => setRegisterForm(p => ({ ...p, publishDate: e.target.value }))} />
           </div>
           <div className={styles.formRow}>
-            <InputField label="Publisher ID (UUID)" placeholder="e.g. pub-0001-0001-0001" value={registerForm.publisherId} onChange={(e) => setRegisterForm(p => ({ ...p, publisherId: e.target.value }))} />
+            <InputField label="Publisher Name" placeholder="e.g. O'Reilly Media" value={registerForm.publisherName} onChange={(e) => setRegisterForm(p => ({ ...p, publisherName: e.target.value }))} />
           </div>
           <div className={styles.issueDivider} />
           <div className={styles.issueActions}>
@@ -470,13 +470,13 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
 
             <div className={styles.issueDivider} />
 
-            {/* Member User ID input (optional — leave empty to issue to logged-in user) */}
+            {/* Member Email input (optional — leave empty to issue to logged-in user) */}
             <InputField
-              label="Member User ID (UUID, optional)"
-              placeholder="e.g. usr-0001-0001-0001 — leave empty to issue to logged-in user"
-              value={issueUserId}
+              label="Member Email (optional)"
+              placeholder="e.g. alice@example.com — leave empty to issue to logged-in user"
+              value={issueMemberEmail}
               onChange={(e) => {
-                setIssueUserId(e.target.value);
+                setIssueMemberEmail(e.target.value);
                 if (issueError) setIssueError('');
               }}
               error={issueError}

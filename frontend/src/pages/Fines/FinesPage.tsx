@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
-import { AppRole } from '../../utils/types';
+import { AppRole, Fine, FineStatus } from '../../utils/types';
 import { useMockDelay } from '../../hooks/useMockDelay';
+import { useModal } from '../../hooks/useModal';
+import { useConfirmAction } from '../../hooks/useConfirmAction';
 import styles from './FinesPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Badge } from '../../components/atoms/Badge/Badge';
@@ -9,23 +11,6 @@ import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
 import { Table, Column } from '../../components/molecules/Table/Table';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
-
-// ── Types ────────────────────────────────────────────────────────────────────
-type FineStatus = 'Unpaid' | 'Paid'; // UI-derived from Fine.isPaid for display and tab filtering
-
-// Matches API FineResponse
-interface Fine {
-  id: string;
-  transactionId: string;   // UUID
-  bookId: string;           // UUID
-  userId: string;           // UUID
-  bookName: string;         // was: book
-  userName: string;         // was: member
-  amount: number;
-  isPaid: boolean;          // was: status: FineStatus
-  // ── UI-only computed field (not from API) ──────────────────────────────
-  daysOverdue: number;      // computed from linked transaction's dueDate
-}
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 // Mock data matches FineResponse field names
@@ -87,39 +72,28 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const totalUnpaid = fines.filter(f => !f.isPaid).reduce((s, f) => s + f.amount, 0);
 
   // ── Notify modal (admin only) ──
-  const [isNotifyOpen, setIsNotifyOpen] = useState(false);
-  const [notifyFine, setNotifyFine] = useState<Fine | null>(null);
-  const [isSendingNotify, setIsSendingNotify] = useState(false);
-
-  const openNotifyModal = (fine: Fine) => { setNotifyFine(fine); setIsNotifyOpen(true); };
-  const closeNotifyModal = () => { setIsNotifyOpen(false); setNotifyFine(null); };
+  const notifyModal = useModal<Fine>();
   const handleNotifyConfirm = () => {
-    setIsSendingNotify(true);
+    notifyModal.setProcessing(true);
     // TODO: No dedicated fine-notify endpoint in API — notification is triggered server-side via the Notification system
     // See GET /api/v1/notification for reading notifications
-    console.log('Notifying user for fine:', notifyFine?.id);
-    setTimeout(() => { setIsSendingNotify(false); closeNotifyModal(); }, 1000);
+    console.log('Notifying user for fine:', notifyModal.data?.id);
+    setTimeout(() => { notifyModal.close(); }, 1000);
   };
 
   // ── Mark Paid modal (admin) / Pay Fine modal (member) ──
-  const [isPayOpen, setIsPayOpen] = useState(false);
-  const [selectedFine, setSelectedFine] = useState<Fine | null>(null);
-  const [isPaying, setIsPaying] = useState(false);
-  const [payConfirmed, setPayConfirmed] = useState(false);
-
-  const openPayModal = (fine: Fine) => { setSelectedFine(fine); setIsPayOpen(true); };
-  const closePayModal = () => { setIsPayOpen(false); setSelectedFine(null); setPayConfirmed(false); };
+  const payAction = useConfirmAction<Fine>();
   const handlePay = () => {
-    setIsPaying(true);
+    payAction.startProcessing();
     // TODO: PUT /api/v1/fine/{id} — body: { isPaid: true } (Map<String,Boolean>)
-    console.log('Settling fine:', selectedFine?.id);
-    setTimeout(() => { setIsPaying(false); setPayConfirmed(true); }, 1000);
+    console.log('Settling fine:', payAction.data?.id);
+    setTimeout(() => { payAction.markConfirmed(); }, 1000);
   };
   const handlePayDone = () => {
     setFines(prev =>
-      prev.map(f => f.id === selectedFine?.id ? { ...f, isPaid: true } : f)
+      prev.map(f => f.id === payAction.data?.id ? { ...f, isPaid: true } : f)
     );
-    closePayModal();
+    payAction.dismiss();
   };
 
   // ── Table columns ──
@@ -153,8 +127,8 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
     render: (row) =>
       !row.isPaid ? (
         <div className={styles.actionGroup}>
-          <Button size="sm" variant="ghost" onClick={() => openNotifyModal(row)}>Notify</Button>
-          <Button size="sm" variant="primary" onClick={() => openPayModal(row)}>Mark Paid</Button>
+          <Button size="sm" variant="ghost" onClick={() => notifyModal.open(row)}>Notify</Button>
+          <Button size="sm" variant="primary" onClick={() => payAction.open(row)}>Mark Paid</Button>
         </div>
       ) : (
         <span style={{ color: '#9ca3af', fontSize: '0.8125rem' }}>Settled</span>
@@ -165,7 +139,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
     accessor: 'id',
     render: (row) =>
       !row.isPaid ? (
-        <Button size="sm" variant="primary" onClick={() => openPayModal(row)}>Pay Fine</Button>
+        <Button size="sm" variant="primary" onClick={() => payAction.open(row)}>Pay Fine</Button>
       ) : (
         <span style={{ color: '#9ca3af', fontSize: '0.8125rem' }}>Paid</span>
       ),
@@ -175,7 +149,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const memberColumns: Column<Fine>[] = [bookCol, rateCol, overdueCol, amountCol, statusCol, memberActionCol];
   const columns = isAdmin ? adminColumns : memberColumns;
 
-  const payModalTitle = payConfirmed
+  const payModalTitle = payAction.isConfirmed
     ? (isAdmin ? 'Fine Settled' : 'Payment Confirmed')
     : (isAdmin ? 'Mark Fine as Paid' : 'Pay Fine');
 
@@ -249,32 +223,32 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
       </div>
 
       {/* ── Notify Modal (admin only) ────────────────────────────────────── */}
-      <Modal isOpen={isNotifyOpen} onClose={closeNotifyModal} title="Send Fine Notification">
-        {notifyFine && (
+      <Modal isOpen={notifyModal.isOpen} onClose={notifyModal.close} title="Send Fine Notification">
+        {notifyModal.data && (
           <div className={styles.modalForm}>
             <div className={styles.infoCard}>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Member</span>
-              <span className={styles.infoValue}>{notifyFine.userName}</span>
+              <span className={styles.infoValue}>{notifyModal.data.userName}</span>
             </div>
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Book</span>
-              <span className={styles.infoValue}>{notifyFine.bookName}</span>
+              <span className={styles.infoValue}>{notifyModal.data.bookName}</span>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Days Overdue</span>
-                <span className={styles.infoValueDanger}>{notifyFine.daysOverdue} days</span>
+                <span className={styles.infoValueDanger}>{notifyModal.data.daysOverdue} days</span>
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Amount Due</span>
-                <span className={styles.infoValueDanger}>₹{notifyFine.amount}</span>
+                <span className={styles.infoValueDanger}>₹{notifyModal.data.amount}</span>
               </div>
             </div>
             <p className={styles.modalHint}>An email reminder will be sent to the member asking them to settle the fine.</p>
             <div className={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={closeNotifyModal} disabled={isSendingNotify}>Cancel</Button>
-              <Button type="button" variant="primary" onClick={handleNotifyConfirm} disabled={isSendingNotify}>
-                {isSendingNotify ? 'Sending...' : 'Send Notification'}
+              <Button type="button" variant="ghost" onClick={notifyModal.close} disabled={notifyModal.isProcessing}>Cancel</Button>
+              <Button type="button" variant="primary" onClick={handleNotifyConfirm} disabled={notifyModal.isProcessing}>
+                {notifyModal.isProcessing ? 'Sending...' : 'Send Notification'}
               </Button>
             </div>
           </div>
@@ -282,15 +256,15 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
       </Modal>
 
       {/* ── Pay / Mark Paid Modal ─────────────────────────────────────────── */}
-      <Modal isOpen={isPayOpen} onClose={closePayModal} title={payModalTitle}>
-        {selectedFine && (
+      <Modal isOpen={payAction.isOpen} onClose={payAction.close} title={payModalTitle}>
+        {payAction.data && (
           <div className={styles.modalForm}>
-            {payConfirmed ? (
+            {payAction.isConfirmed ? (
               <div className={styles.confirmedState}>
                 <div className={styles.confirmedIcon}>✓</div>
                 <p className={styles.confirmedTitle}>Confirmed</p>
                 <p className={styles.confirmedDetail}>
-                  ₹{selectedFine.amount} {isAdmin ? 'marked as paid' : 'paid'} for <strong>{selectedFine.bookName}</strong>
+                  ₹{payAction.data.amount} {isAdmin ? 'marked as paid' : 'paid'} for <strong>{payAction.data.bookName}</strong>
                 </p>
                 <div className={styles.modalActions}>
                   <Button type="button" variant="primary" onClick={handlePayDone}>Done</Button>
@@ -302,20 +276,20 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
                   {isAdmin && (
                     <div className={styles.infoRow}>
                       <span className={styles.infoLabel}>Member</span>
-                      <span className={styles.infoValue}>{selectedFine.userName}</span>
+                      <span className={styles.infoValue}>{payAction.data.userName}</span>
                     </div>
                   )}
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Book</span>
-                    <span className={styles.infoValue}>{selectedFine.bookName}</span>
+                    <span className={styles.infoValue}>{payAction.data.bookName}</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Days Overdue</span>
-                    <span className={styles.infoValueDanger}>{selectedFine.daysOverdue} days</span>
+                    <span className={styles.infoValueDanger}>{payAction.data.daysOverdue} days</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Fine Amount</span>
-                    <span className={styles.infoValueDanger}>₹{selectedFine.amount}</span>
+                    <span className={styles.infoValueDanger}>₹{payAction.data.amount}</span>
                   </div>
                 </div>
                 <p className={styles.modalHint}>
@@ -324,9 +298,9 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
                     : 'No card details needed — a cashier will process this at the counter. Your borrowing privileges will be restored immediately.'}
                 </p>
                 <div className={styles.modalActions}>
-                  <Button type="button" variant="ghost" onClick={closePayModal} disabled={isPaying}>Cancel</Button>
-                  <Button type="button" variant="primary" onClick={handlePay} disabled={isPaying}>
-                    {isPaying ? 'Processing...' : isAdmin ? 'Confirm Payment Received' : 'Confirm Payment'}
+                  <Button type="button" variant="ghost" onClick={payAction.close} disabled={payAction.isProcessing}>Cancel</Button>
+                  <Button type="button" variant="primary" onClick={handlePay} disabled={payAction.isProcessing}>
+                    {payAction.isProcessing ? 'Processing...' : isAdmin ? 'Confirm Payment Received' : 'Confirm Payment'}
                   </Button>
                 </div>
               </>

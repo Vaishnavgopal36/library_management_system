@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
+import { useModal } from '../../hooks/useModal';
+import { useConfirmAction } from '../../hooks/useConfirmAction';
 import styles from './MemberDashboard.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Card } from '../../components/molecules/Card/Card';
@@ -61,52 +63,36 @@ const BookDisplay = ({
 
 export const MemberDashboard: React.FC = () => {
 
-  // ── Reserve Book modal ────────────────────────────────────────────────────
-  const [isReserveOpen, setIsReserveOpen] = useState(false);
-  const [reserveBook, setReserveBook] = useState<BookData | null>(null);
-  const [isReserving, setIsReserving] = useState(false);
-
-  const openReserveModal = (book: BookData) => { setReserveBook(book); setIsReserveOpen(true); };
-  const closeReserveModal = () => { setIsReserveOpen(false); setReserveBook(null); };
+  // ── Reserve Book modal ───────────────────────────────────────────────────
+  const reserveModal = useModal<BookData>();
   const handleReserveConfirm = () => {
-    setIsReserving(true);
-    // TODO: POST /api/v1/reservation — body: ReservationRequest { bookId (UUID, required), userId (UUID, optional) }
-    console.log('Reserving:', reserveBook?.title);
-    setTimeout(() => { setIsReserving(false); closeReserveModal(); }, 1200);
+    reserveModal.setProcessing(true);
+    // TODO: POST /api/v1/reservation — body: ReservationRequest { bookId (from selected book) }
+    console.log('Reserving:', reserveModal.data?.title);
+    setTimeout(() => { reserveModal.close(); }, 1200);
   };
 
   // ── Return Book modal ─────────────────────────────────────────────────────
-  const [isReturnOpen, setIsReturnOpen] = useState(false);
-  const [returnBook, setReturnBook] = useState<PossessionData | null>(null);
-  const [isReturning, setIsReturning] = useState(false);
-
-  const openReturnModal = (book: PossessionData) => { setReturnBook(book); setIsReturnOpen(true); };
-  const closeReturnModal = () => { setIsReturnOpen(false); setReturnBook(null); };
+  const returnModal = useModal<PossessionData>();
   const handleReturnConfirm = () => {
-    setIsReturning(true);
-    // TODO: PUT /api/v1/transaction/{id} — path param: transactionId (UUID); body: Map<String,String>
-    console.log('Returning:', returnBook?.title);
-    setTimeout(() => { setIsReturning(false); closeReturnModal(); }, 1000);
+    returnModal.setProcessing(true);
+    // TODO: PUT /api/v1/transaction/{id} — path param: transactionId; body: Map<String,String>
+    console.log('Returning:', returnModal.data?.title);
+    setTimeout(() => { returnModal.close(); }, 1000);
   };
 
   // ── Pay Fine modal ────────────────────────────────────────────────────────
   const [memberFines, setMemberFines] = useState<FineData[]>(initialMemberFines);
-  const [isPayFineOpen, setIsPayFineOpen] = useState(false);
-  const [selectedFine, setSelectedFine] = useState<FineData | null>(null);
-  const [isPayingFine, setIsPayingFine] = useState(false);
-  const [finePayConfirmed, setFinePayConfirmed] = useState(false);
-
-  const openPayFineModal = (fine: FineData) => { setSelectedFine(fine); setIsPayFineOpen(true); };
-  const closePayFineModal = () => { setIsPayFineOpen(false); setSelectedFine(null); setFinePayConfirmed(false); };
+  const payFineAction = useConfirmAction<FineData>();
   const handlePayFine = () => {
-    setIsPayingFine(true);
+    payFineAction.startProcessing();
     // TODO: PUT /api/v1/fine/{id} — body: { isPaid: true } (Map<String,Boolean>)
-    console.log('Paying fine:', selectedFine?.id);
-    setTimeout(() => { setIsPayingFine(false); setFinePayConfirmed(true); }, 1000);
+    console.log('Paying fine:', payFineAction.data?.id);
+    setTimeout(() => { payFineAction.markConfirmed(); }, 1000);
   };
   const handleFinePaidDone = () => {
-    setMemberFines(prev => prev.filter(f => f.id !== selectedFine?.id));
-    closePayFineModal();
+    setMemberFines(prev => prev.filter(f => f.id !== payFineAction.data?.id));
+    payFineAction.dismiss();
   };
 
   return (
@@ -132,7 +118,7 @@ export const MemberDashboard: React.FC = () => {
             </div>
             <div className={styles.scrollContainer}>
               {newArrivals.map((book) => (
-                <BookDisplay key={book.coverHash} {...book} onReserve={() => openReserveModal(book)} />
+                <BookDisplay key={book.coverHash} {...book} onReserve={() => reserveModal.open(book)} />
               ))}
             </div>
           </Card>
@@ -144,7 +130,7 @@ export const MemberDashboard: React.FC = () => {
           <h3 className={styles.subTitle}>Recommended for You</h3>
           <div className={styles.bookGrid}>
             {recommendedBooks.map((book) => (
-              <BookDisplay key={book.coverHash} {...book} onReserve={() => openReserveModal(book)} showReserveButton />
+              <BookDisplay key={book.coverHash} {...book} onReserve={() => reserveModal.open(book)} showReserveButton />
             ))}
           </div>
         </div>
@@ -161,7 +147,7 @@ export const MemberDashboard: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   className={styles.returnBtn}
-                  onClick={() => openReturnModal(book)}
+                  onClick={() => returnModal.open(book)}
                 >
                   Return Book
                 </Button>
@@ -173,15 +159,15 @@ export const MemberDashboard: React.FC = () => {
       </div>
 
       {/* ── Reserve Book Modal ───────────────────────────────────────────── */}
-      <Modal isOpen={isReserveOpen} onClose={closeReserveModal} title="Reserve Book">
-        {reserveBook && (
+      <Modal isOpen={reserveModal.isOpen} onClose={reserveModal.close} title="Reserve Book">
+        {reserveModal.data && (
           <div className={styles.modalBody}>
             <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={reserveBook.coverHash} author="" width="80px" height="112px" showText={false} />
+              <DynamicBookCover title={reserveModal.data.coverHash} author="" width="80px" height="112px" showText={false} />
               <div className={styles.modalBookMeta}>
-                <p className={styles.modalBookTitle}>{reserveBook.title}</p>
-                <p className={styles.modalBookAuthor}>{reserveBook.author}</p>
-                {reserveBook.rating && <span className={styles.modalBookRating}>★ {reserveBook.rating}</span>}
+                <p className={styles.modalBookTitle}>{reserveModal.data.title}</p>
+                <p className={styles.modalBookAuthor}>{reserveModal.data.author}</p>
+                {reserveModal.data.rating && <span className={styles.modalBookRating}>★ {reserveModal.data.rating}</span>}
               </div>
             </div>
             <div className={styles.modalDivider} />
@@ -189,9 +175,9 @@ export const MemberDashboard: React.FC = () => {
               Reserving this book will hold an available copy for you. You will be notified when it is ready for pickup.
             </p>
             <div className={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={closeReserveModal} disabled={isReserving}>Cancel</Button>
-              <Button type="button" variant="primary" onClick={handleReserveConfirm} disabled={isReserving}>
-                {isReserving ? 'Reserving...' : 'Confirm Reservation'}
+              <Button type="button" variant="ghost" onClick={reserveModal.close} disabled={reserveModal.isProcessing}>Cancel</Button>
+              <Button type="button" variant="primary" onClick={handleReserveConfirm} disabled={reserveModal.isProcessing}>
+                {reserveModal.isProcessing ? 'Reserving...' : 'Confirm Reservation'}
               </Button>
             </div>
           </div>
@@ -199,15 +185,15 @@ export const MemberDashboard: React.FC = () => {
       </Modal>
 
       {/* ── Return Book Modal ─────────────────────────────────────────────── */}
-      <Modal isOpen={isReturnOpen} onClose={closeReturnModal} title="Return Book">
-        {returnBook && (
+      <Modal isOpen={returnModal.isOpen} onClose={returnModal.close} title="Return Book">
+        {returnModal.data && (
           <div className={styles.modalBody}>
             <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={returnBook.coverHash} author="" width="80px" height="112px" showText={false} />
+              <DynamicBookCover title={returnModal.data.coverHash} author="" width="80px" height="112px" showText={false} />
               <div className={styles.modalBookMeta}>
-                <p className={styles.modalBookTitle}>{returnBook.title}</p>
-                <p className={styles.modalBookAuthor}>{returnBook.author}</p>
-                <Badge variant={returnBook.dueVariant} style={{ marginTop: '0.5rem' }}>Due in {returnBook.dueIn}</Badge>
+                <p className={styles.modalBookTitle}>{returnModal.data.title}</p>
+                <p className={styles.modalBookAuthor}>{returnModal.data.author}</p>
+                <Badge variant={returnModal.data.dueVariant} style={{ marginTop: '0.5rem' }}>Due in {returnModal.data.dueIn}</Badge>
               </div>
             </div>
             <div className={styles.modalDivider} />
@@ -215,9 +201,9 @@ export const MemberDashboard: React.FC = () => {
               Please ensure the book is in good condition. Any damage may result in a fine being applied to your account.
             </p>
             <div className={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={closeReturnModal} disabled={isReturning}>Cancel</Button>
-              <Button type="button" variant="secondary" onClick={handleReturnConfirm} disabled={isReturning}>
-                {isReturning ? 'Processing...' : 'Confirm Return'}
+              <Button type="button" variant="ghost" onClick={returnModal.close} disabled={returnModal.isProcessing}>Cancel</Button>
+              <Button type="button" variant="secondary" onClick={handleReturnConfirm} disabled={returnModal.isProcessing}>
+                {returnModal.isProcessing ? 'Processing...' : 'Confirm Return'}
               </Button>
             </div>
           </div>
@@ -225,14 +211,14 @@ export const MemberDashboard: React.FC = () => {
       </Modal>
 
       {/* ── Pay Fine Modal ────────────────────────────────────────────────── */}
-      <Modal isOpen={isPayFineOpen} onClose={closePayFineModal} title={finePayConfirmed ? 'Payment Confirmed' : 'Pay Fine'}>
-        {selectedFine && (
+      <Modal isOpen={payFineAction.isOpen} onClose={payFineAction.close} title={payFineAction.isConfirmed ? 'Payment Confirmed' : 'Pay Fine'}>
+        {payFineAction.data && (
           <div className={styles.modalBody}>
-            {finePayConfirmed ? (
+            {payFineAction.isConfirmed ? (
               <div className={styles.confirmedState}>
                 <div className={styles.confirmedIcon}>✓</div>
                 <p className={styles.confirmedTitle}>Confirmed</p>
-                <p className={styles.confirmedDetail}>₹{selectedFine.amount} paid for <strong>{selectedFine.book}</strong></p>
+                <p className={styles.confirmedDetail}>₹{payFineAction.data.amount} paid for <strong>{payFineAction.data.book}</strong></p>
                 <div className={styles.modalActions}>
                   <Button type="button" variant="primary" onClick={handleFinePaidDone}>Done</Button>
                 </div>
@@ -242,22 +228,22 @@ export const MemberDashboard: React.FC = () => {
                 <div className={styles.fineModalCard}>
                   <div className={styles.fineModalRow}>
                     <span className={styles.fineModalLabel}>Book</span>
-                    <span className={styles.fineModalValue}>{selectedFine.book}</span>
+                    <span className={styles.fineModalValue}>{payFineAction.data.book}</span>
                   </div>
                   <div className={styles.fineModalRow}>
                     <span className={styles.fineModalLabel}>Days Overdue</span>
-                    <span className={styles.fineModalValueDanger}>{selectedFine.daysOverdue} days</span>
+                    <span className={styles.fineModalValueDanger}>{payFineAction.data.daysOverdue} days</span>
                   </div>
                   <div className={styles.fineModalRow}>
                     <span className={styles.fineModalLabel}>Fine Amount</span>
-                    <span className={styles.fineModalValueDanger}>₹{selectedFine.amount}</span>
+                    <span className={styles.fineModalValueDanger}>₹{payFineAction.data.amount}</span>
                   </div>
                 </div>
                 <p className={styles.modalHint}>Settle this fine to keep your borrowing privileges. No card details needed — a cashier will process this at the counter.</p>
                 <div className={styles.modalActions}>
-                  <Button type="button" variant="ghost" onClick={closePayFineModal} disabled={isPayingFine}>Cancel</Button>
-                  <Button type="button" variant="primary" onClick={handlePayFine} disabled={isPayingFine}>
-                    {isPayingFine ? 'Processing...' : 'Confirm Payment'}
+                  <Button type="button" variant="ghost" onClick={payFineAction.close} disabled={payFineAction.isProcessing}>Cancel</Button>
+                  <Button type="button" variant="primary" onClick={handlePayFine} disabled={payFineAction.isProcessing}>
+                    {payFineAction.isProcessing ? 'Processing...' : 'Confirm Payment'}
                   </Button>
                 </div>
               </>

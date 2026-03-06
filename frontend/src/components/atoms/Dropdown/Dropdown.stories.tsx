@@ -10,7 +10,6 @@ const meta: Meta<typeof Dropdown> = {
 
 export default meta;
 
-// A wrapper to handle the state inside Storybook
 const DropdownWithState = (args: DropdownProps) => {
   const [selectedValue, setSelectedValue] = useState<string | undefined>(args.value);
   return (

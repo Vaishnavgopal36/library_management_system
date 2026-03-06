@@ -27,7 +27,6 @@ export const router = createBrowserRouter([
     path: '/register',
     element: <RegisterPage />,
   },
-  // We will eventually wrap these in a <ProtectedRoute> component!
   {
     path: '/member/dashboard',
     element: <MemberDashboard />,

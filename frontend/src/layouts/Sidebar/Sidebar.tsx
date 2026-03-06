@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
+/**
+ * Module-level variable so the collapsed state survives component remounts
+ * (each page creates its own AppShell → Sidebar, resetting local state).
+ */
+let persistedCollapsed = false;
+
 export interface SidebarProps {
   activeItem?: string;
   role?: 'admin' | 'member'; // 1. Add the role prop
@@ -13,8 +19,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   role = 'member', // Default to member for safety
   onNavigate 
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(persistedCollapsed);
   const navigate = useNavigate();
+
+  const toggleCollapsed = () => {
+    const next = !isCollapsed;
+    persistedCollapsed = next;
+    setIsCollapsed(next);
+  };
 
   // 2. Dynamically inject the role into the paths!
   const navItems = [
@@ -62,9 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       <div className={styles.footer}>
-        {isCollapsed ? (
-           <button className={styles.iconWrapper} style={{ margin: '0 auto', border: 'none', background: 'transparent', cursor: 'pointer', color: '#6b7280' }}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
-        ) : (
+        {!isCollapsed && (
           <ul className={styles.footerList}>
             {footerNavItems.map((item) => (
               <li key={item.name} className={styles.footerItem}>

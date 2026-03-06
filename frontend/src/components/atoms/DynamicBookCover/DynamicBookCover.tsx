@@ -5,14 +5,10 @@ export interface DynamicBookCoverProps {
   author: string;
   width?: string;
   height?: string;
-  /** When false the cover renders as a pure colour block — no title or author text.
-   *  Recommended for widths below ~100 px or when the title is shown separately nearby.
-   *  Defaults to true for backward compatibility.
-   */
+  
   showText?: boolean;
 }
 
-// A simple hash function to generate a consistent number from a string
 const hashString = (str: string) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -21,7 +17,6 @@ const hashString = (str: string) => {
   return Math.abs(hash);
 };
 
-// A palette of premium, modern gradients
 const gradients = [
   'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)', // Soft Pink
   'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', // Purple/Pink
@@ -40,7 +35,6 @@ export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({
   height = '200px',
   showText = true,
 }) => {
-  // Pick a consistent gradient based on the book title
   const gradientIndex = hashString(title) % gradients.length;
   const background = gradients[gradientIndex];
 

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { fmtDate } from '../../utils/dates';
-import { AppRole } from '../../utils/types';
+import { AppRole, ResStatus, Reservation, ReservationUser, ReservationBook } from '../../utils/types';
+import { resBadgeVariant } from '../../utils/badges';
+import { useModal } from '../../hooks/useModal';
 import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './ReservationsPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
@@ -12,37 +14,6 @@ import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type ResStatus = 'Pending' | 'Ready' | 'Cancelled' | 'Expired';
-
-// Nested sub-types matching API UserResponse and BookResponse
-interface ReservationUser { id: string; email: string; fullName: string; role: string; isActive: boolean; }
-interface ReservationAuthor { id: string; name: string; }
-interface ReservationCategory { id: string; name: string; }
-interface ReservationPublisher { id: string; name: string; }
-interface ReservationBook {
-  id: string;
-  title: string;
-  isbn: string;
-  stockQuantity: number;
-  trueAvailableStock: number;
-  isArchived: boolean;
-  publisher?: ReservationPublisher;
-  authors: ReservationAuthor[];
-  categories: ReservationCategory[];
-}
-
-// Matches API ReservationResponse
-interface Reservation {
-  id: string;
-  user: ReservationUser;       // was: member (plain string)
-  book: ReservationBook;       // was: book/author/coverHash (plain strings)
-  reservedAt: string;          // ISO datetime (was: reservedDate)
-  expiresAt: string;           // ISO datetime (was: expiryDate)
-  status: ResStatus;
-  // ── UI-only helper (not from API) ────────────────────────────────────────────
-  readyDate?: string;          // not in ReservationResponse; set locally when status = Ready
-}
-
 // ── Mock Data ─────────────────────────────────────────────────────────────────
 // Current logged-in user (member = "Reinhard Kenson", admin = "System Admin")
 const CURRENT_MEMBER = 'Reinhard Kenson';
@@ -102,16 +73,6 @@ const allReservations: Reservation[] = [
     status: 'Cancelled',
   },
 ];
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const badgeVariant = (
-  status: ResStatus
-): 'success' | 'warning' | 'error' | 'info' | 'neutral' => {
-  if (status === 'Ready')     return 'success';
-  if (status === 'Pending')   return 'warning';
-  if (status === 'Expired')   return 'error';
-  return 'neutral'; // Cancelled
-};
 
 // ── Skeleton Row ─────────────────────────────────────────────────────────────
 const SkeletonTableRows: React.FC<{ rows?: number }> = ({ rows = 4 }) => (
@@ -174,46 +135,34 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
   const [reservations, setReservations] = useState(allReservations);
 
   // ── Cancel modal ──
-  const [isCancelOpen, setIsCancelOpen] = useState(false);
-  const [cancelRes, setCancelRes] = useState<Reservation | null>(null);
-  const [isCancelling, setIsCancelling] = useState(false);
-
-  const openCancelModal = (res: Reservation) => { setCancelRes(res); setIsCancelOpen(true); };
-  const closeCancelModal = () => { setIsCancelOpen(false); setCancelRes(null); };
+  const cancelModal = useModal<Reservation>();
   const handleCancelConfirm = () => {
-    setIsCancelling(true);
+    cancelModal.setProcessing(true);
     // TODO: DELETE /api/v1/reservation/{id}
-    console.log('Cancelling reservation:', cancelRes?.id);
+    console.log('Cancelling reservation:', cancelModal.data?.id);
     setTimeout(() => {
       setReservations(prev =>
-        prev.map(r => r.id === cancelRes?.id ? { ...r, status: 'Cancelled' as ResStatus } : r)
+        prev.map(r => r.id === cancelModal.data?.id ? { ...r, status: 'Cancelled' as ResStatus } : r)
       );
-      setIsCancelling(false);
-      closeCancelModal();
+      cancelModal.close();
     }, 1000);
   };
 
   // ── Mark Ready modal (admin only) ──
-  const [isReadyOpen, setIsReadyOpen] = useState(false);
-  const [readyRes, setReadyRes] = useState<Reservation | null>(null);
-  const [isMarkingReady, setIsMarkingReady] = useState(false);
-
-  const openReadyModal = (res: Reservation) => { setReadyRes(res); setIsReadyOpen(true); };
-  const closeReadyModal = () => { setIsReadyOpen(false); setReadyRes(null); };
+  const readyModal = useModal<Reservation>();
   const handleMarkReady = () => {
-    setIsMarkingReady(true);
+    readyModal.setProcessing(true);
     // TODO: PUT /api/v1/reservation/{id} — body: Map<String,String> to resolve/mark hold as ready
-    console.log('Marking reservation ready:', readyRes?.id);
+    console.log('Marking reservation ready:', readyModal.data?.id);
     setTimeout(() => {
       setReservations(prev =>
         prev.map(r =>
-          r.id === readyRes?.id
+          r.id === readyModal.data?.id
             ? { ...r, status: 'Ready' as ResStatus, readyDate: '05 Mar 2026' }
             : r
         )
       );
-      setIsMarkingReady(false);
-      closeReadyModal();
+      readyModal.close();
     }, 1000);
   };
 
@@ -292,7 +241,7 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
   const statusCol: Column<Reservation> = {
     header: 'Status',
     accessor: 'status',
-    render: (row) => <Badge variant={badgeVariant(row.status)}>{row.status}</Badge>,
+    render: (row) => <Badge variant={resBadgeVariant(row.status)}>{row.status}</Badge>,
   };
 
   const adminActionCol: Column<Reservation> = {
@@ -302,8 +251,8 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
       if (row.status === 'Pending') {
         return (
           <div className={styles.actionGroup}>
-            <Button size="sm" variant="primary" onClick={() => openReadyModal(row)}>Mark Ready</Button>
-            <Button size="sm" variant="ghost" onClick={() => openCancelModal(row)}>Cancel</Button>
+            <Button size="sm" variant="primary" onClick={() => readyModal.open(row)}>Mark Ready</Button>
+            <Button size="sm" variant="ghost" onClick={() => cancelModal.open(row)}>Cancel</Button>
           </div>
         );
       }
@@ -319,7 +268,7 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
     accessor: 'id',
     render: (row) =>
       row.status === 'Pending' ? (
-        <Button size="sm" variant="ghost" onClick={() => openCancelModal(row)}>Cancel</Button>
+        <Button size="sm" variant="ghost" onClick={() => cancelModal.open(row)}>Cancel</Button>
       ) : row.status === 'Ready' ? (
         <span style={{ color: '#059669', fontSize: '0.8125rem', fontWeight: 600 }}>Ready for Pickup</span>
       ) : (
@@ -427,16 +376,16 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
       </div>
 
       {/* ── Cancel Reservation Modal ──────────────────────────────────── */}
-      <Modal isOpen={isCancelOpen} onClose={closeCancelModal} title="Cancel Reservation">
-        {cancelRes && (
+      <Modal isOpen={cancelModal.isOpen} onClose={cancelModal.close} title="Cancel Reservation">
+        {cancelModal.data && (
           <div className={styles.modalForm}>
             <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={cancelRes.book.title} author="" width="64px" height="88px" showText={false} />
+              <DynamicBookCover title={cancelModal.data.book.title} author="" width="64px" height="88px" showText={false} />
               <div className={styles.modalBookMeta}>
-                <p className={styles.modalBookTitle}>{cancelRes.book.title}</p>
-                <p className={styles.modalBookAuthor}>{cancelRes.book.authors[0]?.name ?? '—'}</p>
+                <p className={styles.modalBookTitle}>{cancelModal.data.book.title}</p>
+                <p className={styles.modalBookAuthor}>{cancelModal.data.book.authors[0]?.name ?? '—'}</p>
                 {isAdmin && (
-                  <p className={styles.modalMember}>For: <strong>{cancelRes.user.fullName}</strong></p>
+                  <p className={styles.modalMember}>For: <strong>{cancelModal.data.user.fullName}</strong></p>
                 )}
               </div>
             </div>
@@ -447,9 +396,9 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
                 : 'Cancelling will release your hold. The book will become available to others.'}
             </p>
             <div className={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={closeCancelModal} disabled={isCancelling}>Keep</Button>
-              <Button type="button" variant="danger" onClick={handleCancelConfirm} disabled={isCancelling}>
-                {isCancelling ? 'Cancelling…' : 'Yes, Cancel'}
+              <Button type="button" variant="ghost" onClick={cancelModal.close} disabled={cancelModal.isProcessing}>Keep</Button>
+              <Button type="button" variant="danger" onClick={handleCancelConfirm} disabled={cancelModal.isProcessing}>
+                {cancelModal.isProcessing ? 'Cancelling…' : 'Yes, Cancel'}
               </Button>
             </div>
           </div>
@@ -457,15 +406,15 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
       </Modal>
 
       {/* ── Mark Ready Modal (admin only) ────────────────────────────── */}
-      <Modal isOpen={isReadyOpen} onClose={closeReadyModal} title="Mark Reservation as Ready">
-        {readyRes && (
+      <Modal isOpen={readyModal.isOpen} onClose={readyModal.close} title="Mark Reservation as Ready">
+        {readyModal.data && (
           <div className={styles.modalForm}>
             <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={readyRes.book.title} author="" width="64px" height="88px" showText={false} />
+              <DynamicBookCover title={readyModal.data.book.title} author="" width="64px" height="88px" showText={false} />
               <div className={styles.modalBookMeta}>
-                <p className={styles.modalBookTitle}>{readyRes.book.title}</p>
-                <p className={styles.modalBookAuthor}>{readyRes.book.authors[0]?.name ?? '—'}</p>
-                <p className={styles.modalMember}>For: <strong>{readyRes.user.fullName}</strong></p>
+                <p className={styles.modalBookTitle}>{readyModal.data.book.title}</p>
+                <p className={styles.modalBookAuthor}>{readyModal.data.book.authors[0]?.name ?? '—'}</p>
+                <p className={styles.modalMember}>For: <strong>{readyModal.data.user.fullName}</strong></p>
               </div>
             </div>
             <div className={styles.modalDivider} />
@@ -473,9 +422,9 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
               Confirm that a copy has been set aside at the counter. The member will receive a pickup notification.
             </p>
             <div className={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={closeReadyModal} disabled={isMarkingReady}>Cancel</Button>
-              <Button type="button" variant="primary" onClick={handleMarkReady} disabled={isMarkingReady}>
-                {isMarkingReady ? 'Updating…' : 'Mark as Ready'}
+              <Button type="button" variant="ghost" onClick={readyModal.close} disabled={readyModal.isProcessing}>Cancel</Button>
+              <Button type="button" variant="primary" onClick={handleMarkReady} disabled={readyModal.isProcessing}>
+                {readyModal.isProcessing ? 'Updating…' : 'Mark as Ready'}
               </Button>
             </div>
           </div>

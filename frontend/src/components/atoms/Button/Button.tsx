@@ -13,7 +13,6 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   ...props
 }) => {
-  // Combine base styles, variant styles, and size styles dynamically
   const buttonClasses = [
     styles.base,
     styles[variant],
