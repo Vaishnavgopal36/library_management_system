@@ -2,7 +2,14 @@ import React from 'react';
 import { AppRole } from '../../utils/types';
 import styles from './ProfilePage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
-
+/*
+  1. This is a static mockup page to design the profile layout and UI.
+  2. The profile data is hardcoded at the bottom of this file for now.
+      - Once the backend is ready, replace the mock data with real API calls.
+  3. The `role` prop is used to conditionally render admin vs member views.
+      - In a real app, the role would come from the authentication context (e.g. JWT token) rather than being passed as a prop.
+  4. The badges are purely cosmetic and meant to demonstrate how we can display user achievements/status.
+*/
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface ProfilePageProps {
   role?: AppRole;

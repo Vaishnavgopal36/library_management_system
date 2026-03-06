@@ -3,7 +3,12 @@ import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './MemberDirectoryPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
-
+/*
+  1. This page is built with static mock data to design the member directory layout and UI.
+  2. The member data is hardcoded at the bottom of this file for now.
+      - Once the backend is ready, replace the mock data with real API calls.
+  3. The `booksActive` and `finesOwed` fields are UI helpers that require additional API calls to /api/v1/transaction and /api/v1/fine respectively.  
+*/
 // ── Types ─────────────────────────────────────────────────────────────────────
 // Derived display status: isActive=true → 'Active', isActive=false → 'Blacklisted'
 export type MemberStatus = 'Active' | 'Blacklisted';

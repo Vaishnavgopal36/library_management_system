@@ -14,11 +14,11 @@ type BookData = { title: string; author: string; coverHash: string; rating?: str
 type PossessionData = { title: string; author: string; coverHash: string; dueIn: string; dueVariant: 'warning' | 'success' };
 
 const recommendedBooks: BookData[] = [
-  { title: "Don't Make Me Think", author: 'Steve Krug, 2000', rating: '4.5/5', coverHash: 'Think' },
-  { title: 'The Road to React', author: 'Robin Wieruch', rating: '4.8/5', coverHash: 'React' },
-  { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki', rating: '5/5', coverHash: 'Rich' },
-  { title: 'Harry Potter', author: 'J.K. Rowling', rating: '4.9/5', coverHash: 'Potter' },
-  { title: "You Don't Know JS", author: 'Kyle Simpson', rating: '4.9/5', coverHash: 'JS' },
+  { title: "Don't Make Me Think", author: 'Steve Krug, 2000', coverHash: 'Think' },
+  { title: 'The Road to React', author: 'Robin Wieruch',  coverHash: 'React' },
+  { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki',  coverHash: 'Rich' },
+  { title: 'Harry Potter', author: 'J.K. Rowling',  coverHash: 'Potter' },
+  { title: "You Don't Know JS", author: 'Kyle Simpson',  coverHash: 'JS' },
 ];
 
 const newArrivals: BookData[] = [
