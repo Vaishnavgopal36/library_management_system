@@ -3,8 +3,8 @@
   flex-direction: column;
   width: 240px;
   height: 100%;
-  background-color: #ffffff; /* Pure white */
-  /* border-right: 1px solid #e5e7eb;  <-- REMOVE THIS LINE */
+  background-color: var(--color-surface);
+  /* border-right: 1px solid var(--color-border-default);  <-- REMOVE THIS LINE */
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   z-index: 50;
@@ -33,22 +33,22 @@
   border-radius: 50%; /* Gemini circular hover effect */
   border: none;
   background: transparent;
-  color: #4b5563;
+  color: var(--color-text-body);
   cursor: pointer;
   transition: background-color 0.2s;
   flex-shrink: 0;
 }
 
 .hamburger:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--color-surface-100);
+  color: var(--color-text-primary);
 }
 
 .logoText {
   margin: 0;
   font-size: 1.35rem;
   font-weight: 800;
-  color: #111827;
+  color: var(--color-text-primary);
   letter-spacing: -0.025em;
   white-space: nowrap;
   transition: opacity 0.2s, visibility 0.2s;
@@ -87,26 +87,26 @@
   font-family: inherit;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--color-text-body);
   cursor: pointer;
   transition: background-color 0.2s ease, color 0.2s ease;
   overflow: hidden;
 }
 
 .navButton:hover {
-  background-color: #f3f4f6;
-  color: #111827;
+  background-color: var(--color-surface-100);
+  color: var(--color-text-primary);
 }
 
 /* Active State matching BookStop PDF */
 .navButton.active {
   background-color: transparent;
-  color: #111827; /* Solid Black */
+  color: var(--color-text-primary);
   font-weight: 700;
 }
 
 .navButton.active svg {
-  stroke: #111827; /* Makes the active icon black */
+  stroke: var(--color-text-primary);
 }
 
 .iconWrapper {
@@ -132,7 +132,7 @@
 
 .footer {
   padding: 1.5rem 1.25rem;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--color-surface-100);
   white-space: nowrap;
 }
 
@@ -144,13 +144,13 @@
   padding: 0.375rem 0.5rem;
   font-family: inherit;
   font-size: 0.8125rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
 .footerButton:hover {
-  color: #4b5563;
+  color: var(--color-text-body);
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
@@ -159,13 +159,30 @@
 }
 
 @media (max-width: 768px) {
-  .sidebar   { width: 190px; }
-  .collapsed { width: 56px; }
+  /* Sidebar becomes a fixed overlay drawer on mobile */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+  }
+  .sidebar.mobileOpen {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  }
+  /* On mobile, collapsed state is ignored — always show full sidebar */
+  .collapsed { width: 260px; }
+  .collapsed .navText { opacity: 1; display: inline; }
+  .collapsed .logoText { opacity: 1; visibility: visible; }
   .iconWrapper { width: 28px; height: 28px; }
 }
 
 @media (max-width: 480px) {
-  .sidebar   { width: 170px; }
-  .collapsed { width: 52px; }
-  .logoText  { font-size: 1.15rem; }
+  .sidebar, .collapsed { width: 240px; }
+  .logoText { font-size: 1.15rem; }
 }

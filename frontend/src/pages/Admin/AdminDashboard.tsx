@@ -102,7 +102,7 @@ export const AdminDashboard: React.FC = () => {
 
   const fineColumns: Column<FineRow>[] = [
     { header: 'User', accessor: 'user' },
-    { header: 'Days Overdue', accessor: 'daysOverdue', render: (row) => <span style={{ color: '#EF4444', fontWeight: 600 }}>{row.daysOverdue} Days</span> },
+    { header: 'Days Overdue', accessor: 'daysOverdue', render: (row) => <span className="text-danger font-semibold">{row.daysOverdue} Days</span> },
     { header: 'Amount', accessor: 'amount', render: (row) => <span style={{ fontWeight: 600 }}>₹{row.amount}</span> },
     { header: 'Action', accessor: 'id', render: (row) => (
       <div className={styles.actionGroup}>
@@ -144,7 +144,7 @@ export const AdminDashboard: React.FC = () => {
           </Card>
           <Card padding="md">
             <h4 className={styles.kpiLabel}>Overdue Fines</h4>
-            <span className={styles.kpiValue} style={{ color: '#EF4444' }}>₹4,250</span>
+            <span className={`${styles.kpiValue} text-danger`}>₹4,250</span>
           </Card>
         </div>
 

@@ -1,8 +1,8 @@
 .tableWrapper {
   width: 100%;
   overflow-x: auto; /* Enables horizontal scrolling on small screens */
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-surface-200);
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -16,19 +16,19 @@
 
 .th {
   padding: 0.75rem 1rem;
-  background-color: #f9fafb; /* Light gray to separate headers */
-  color: #4b5563;
+  background-color: var(--color-surface-50); /* Light gray to separate headers */
+  color: var(--color-text-body);
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-surface-200);
 }
 
 .td {
   padding: 1rem;
-  color: #1f2937;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--color-text-dark);
+  border-bottom: 1px solid var(--color-surface-200);
   vertical-align: middle;
 }
 
@@ -38,22 +38,22 @@
 }
 
 .tr {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
 }
 
 .trInteractive {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   transition: background-color 0.15s ease;
   cursor: pointer;
 }
 
 .trInteractive:hover {
-  background-color: #f3f4f6; /* Subtle hover effect */
+  background-color: var(--color-surface-100); /* Subtle hover effect */
 }
 
 .emptyState {
   padding: 2rem;
   text-align: center;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-style: italic;
 }

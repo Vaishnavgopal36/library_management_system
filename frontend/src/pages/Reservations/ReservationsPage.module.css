@@ -19,12 +19,12 @@
   margin: 0 0 0.25rem 0;
   font-size: 1.875rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .pageSubtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 1rem;
 }
 
@@ -32,7 +32,7 @@
 .viewToggle {
   display: flex;
   gap: 0.25rem;
-  background: #f3f4f6;
+  background: var(--color-surface-100);
   border-radius: 50px;
   padding: 0.25rem;
 }
@@ -44,19 +44,19 @@
   padding: 0.4rem 1.125rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
 .toggleBtn:hover {
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .toggleBtnActive {
   background: white;
-  color: #111827;
+  color: var(--color-text-primary);
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -71,12 +71,12 @@
 
 .statChip {
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 50px;
   padding: 0.4rem 1rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-label);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -86,13 +86,13 @@
 }
 
 .statChip:hover:not(.statChipActive) {
-  border-color: #d1d5db;
-  background-color: #f9fafb;
+  border-color: var(--color-surface-300);
+  background-color: var(--color-surface-50);
 }
 
 .statChipActive {
-  background-color: #9b2c5e !important;
-  border-color: #9b2c5e !important;
+  background-color: var(--color-brand) !important;
+  border-color: var(--color-brand) !important;
   color: white !important;
 }
 
@@ -115,15 +115,15 @@
 }
 
 .statChipDanger {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-  color: #dc2626;
+  background-color: var(--color-danger-50);
+  border-color: var(--color-danger-200);
+  color: var(--color-danger-600);
 }
 
 .statChipNeutral {
-  background-color: #f9fafb;
-  border-color: #e5e7eb;
-  color: #6b7280;
+  background-color: var(--color-surface-50);
+  border-color: var(--color-surface-200);
+  color: var(--color-text-secondary);
 }
 
 .statDot {
@@ -133,14 +133,14 @@
   flex-shrink: 0;
 }
 
-.dotPending { background-color: #f59e0b; }
-.dotReady   { background-color: #22c55e; }
+.dotPending { background-color: var(--color-warning); }
+.dotReady   { background-color: var(--color-success); }
 
 /* ── Table card ──────────────────────────────────────────────────────────── */
 .tableCard {
   background: white;
   border-radius: 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
@@ -163,28 +163,23 @@
   margin: 0;
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #111827;
-  white-space: nowrap;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .bookCellAuthor {
   margin: 0;
   font-size: 0.8125rem;
-  color: #6b7280;
-}
-
-/* ── Action group ────────────────────────────────────────────────────────── */
-.actionGroup {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
+  color: var(--color-text-secondary);
 }
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
 .emptyState {
   text-align: center;
   padding: 3rem 1rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.9375rem;
 }
 
@@ -201,7 +196,7 @@
   display: flex;
   align-items: center;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-surface-100);
   gap: 0.75rem;
 }
 
@@ -231,7 +226,7 @@
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
-  background-color: #f9fafb;
+  background-color: var(--color-surface-50);
   border-radius: 12px;
   padding: 1rem;
 }
@@ -246,30 +241,30 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .modalBookAuthor {
   margin: 0;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--color-text-body);
 }
 
 .modalMember {
   margin: 0.25rem 0 0;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .modalDivider {
   height: 1px;
-  background-color: #e5e7eb;
+  background-color: var(--color-surface-200);
 }
 
 .modalHint {
   margin: 0;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.6;
 }
 
@@ -286,12 +281,15 @@
 }
 
 @media (max-width: 768px) {
-  .pageTitle   { font-size: 1.5rem; }
-  .summaryRow  { gap: 0.5rem; }
-  .tableCard   { border-radius: 12px; }
+  .pageTitle     { font-size: 1.5rem; }
+  .summaryRow    { gap: 0.5rem; }
+  .tableCard     { border-radius: 12px; }
+  .bookCellTitle { max-width: 140px; }
 }
 
 @media (max-width: 480px) {
-  .pageTitle { font-size: 1.25rem; }
-  .statChip  { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+  .pageTitle     { font-size: 1.25rem; }
+  .statChip      { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+  .bookCellTitle { max-width: 90px; font-size: 0.875rem; }
+  .bookCell > *:first-child { display: none; }
 }

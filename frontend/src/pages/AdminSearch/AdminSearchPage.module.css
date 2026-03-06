@@ -23,13 +23,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-surface-200);
   border-radius: 50px;
   padding: 0.5rem 1.25rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-label);
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
@@ -39,7 +39,7 @@
   top: calc(100% + 0.5rem);
   left: 0;
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 12px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   min-width: 180px;
@@ -47,9 +47,9 @@
 }
 
 .dropdownMenu ul { list-style: none; padding: 0.5rem 0; margin: 0; }
-.dropdownMenu li { padding: 0.75rem 1.25rem; font-size: 0.875rem; color: #4b5563; cursor: pointer; }
-.dropdownMenu li:hover { background-color: #f9fafb; color: #111827; }
-.dropdownItemActive { background-color: #f3f4f6 !important; color: #111827 !important; font-weight: 600; }
+.dropdownMenu li { padding: 0.75rem 1.25rem; font-size: 0.875rem; color: var(--color-text-body); cursor: pointer; }
+.dropdownMenu li:hover { background-color: var(--color-surface-50); color: var(--color-text-primary); }
+.dropdownItemActive { background-color: var(--color-surface-100) !important; color: var(--color-text-primary) !important; font-weight: 600; }
 
 /* Controls left group */
 .controlsLeft {
@@ -71,17 +71,17 @@
   left: 0.875rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: var(--color-text-muted);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
   padding: 0.6rem 2.5rem 0.6rem 2.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 50px;
   font-size: 0.875rem;
-  color: #111827;
+  color: var(--color-text-primary);
   background: white;
   outline: none;
   transition: border-color 0.15s;
@@ -89,11 +89,11 @@
 }
 
 .searchInput::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .searchInput:focus {
-  border-color: #9b2c5e;
+  border-color: var(--color-brand);
   box-shadow: 0 0 0 3px rgba(155, 44, 94, 0.08);
 }
 
@@ -104,7 +104,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 0.125rem;
   display: flex;
@@ -112,14 +112,14 @@
 }
 
 .clearBtn:hover {
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 /* Empty state */
 .emptyState {
   text-align: center;
   padding: 3rem 1rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.9375rem;
 }
 
@@ -131,7 +131,7 @@
   padding: 0 2rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-label);
   margin-bottom: -0.5rem;
 }
 
@@ -149,7 +149,7 @@
 /* Individual Book Card Row */
 .bookRow {
   display: flex;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 16px;
   padding: 1.25rem 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -158,7 +158,7 @@
 }
 
 .bookRow:hover {
-  border-color: #fca5a5;
+  border-color: var(--color-danger-300);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
@@ -175,17 +175,17 @@
   gap: 0.35rem;
 }
 
-.bookTitle { margin: 0; font-size: 1.125rem; font-weight: 600; color: #111827; }
-.bookAuthor { margin: 0; font-size: 0.9375rem; color: #4b5563; }
-.bookEdition { margin: 0; font-size: 0.8125rem; color: #9ca3af; }
+.bookTitle { margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary); }
+.bookAuthor { margin: 0; font-size: 0.9375rem; color: var(--color-text-body); }
+.bookEdition { margin: 0; font-size: 0.8125rem; color: var(--color-text-muted); }
 
 /* Text Styles */
-.categoryText { font-size: 1rem; font-weight: 500; color: #374151; margin-bottom: 0.25rem; }
-.subCategoryText { font-size: 0.875rem; color: #6b7280; }
+.categoryText { font-size: 1rem; font-weight: 500; color: var(--color-text-label); margin-bottom: 0.25rem; }
+.subCategoryText { font-size: 0.875rem; color: var(--color-text-secondary); }
 
 .stockText {
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--color-text-body);
   font-weight: 500;
   margin-top: 0.25rem;
 }
@@ -199,7 +199,7 @@
 
 .iconButton {
   background: transparent;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 8px;
   width: 40px;
   height: 40px;
@@ -210,10 +210,10 @@
   transition: all 0.2s;
 }
 
-.iconButton:hover { background-color: #f3f4f6; border-color: #d1d5db; }
+.iconButton:hover { background-color: var(--color-surface-100); border-color: var(--color-surface-300); }
 
-.deleteBtn { color: #EF4444; }
-.deleteBtn:hover { background-color: #FEF2F2; border-color: #FCA5A5; color: #DC2626; }
+.deleteBtn { color: var(--color-danger); }
+.deleteBtn:hover { background-color: #FEF2F2; border-color: #FCA5A5; color: var(--color-danger-600); }
 .deleteBtn svg { stroke: currentColor; }
 
 /* ── Issue Modal ─────────────────────────────────────────────────────────── */
@@ -227,7 +227,7 @@
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
-  background-color: #f9fafb;
+  background-color: var(--color-surface-50);
   border-radius: 12px;
   padding: 1rem;
 }
@@ -242,24 +242,24 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .issueBookAuthor {
   margin: 0;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--color-text-body);
 }
 
 .issueBookEdition {
   margin: 0;
   font-size: 0.8125rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .issueDivider {
   height: 1px;
-  background-color: #e5e7eb;
+  background-color: var(--color-surface-200);
   margin: 0.25rem 0;
 }
 
@@ -290,7 +290,7 @@
 .deleteIcon {
   width: 56px;
   height: 56px;
-  background-color: #FEF2F2;
+  background-color: var(--color-danger-50);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -300,21 +300,21 @@
 .deleteWarningText {
   margin: 0;
   font-size: 0.9375rem;
-  color: #374151;
+  color: var(--color-text-label);
   line-height: 1.6;
 }
 
 .deleteWarningSubtext {
   margin: 0;
   font-size: 0.8125rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 /* Reserve hint text inside member reserve modal */
 .reserveHint {
   margin: 0;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.6;
 }
 

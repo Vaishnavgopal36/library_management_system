@@ -9,7 +9,7 @@
 /* ── Hero card ────────────────────────────────────────────────────────────── */
 .heroCard {
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
@@ -17,7 +17,7 @@
 
 .heroBg {
   height: 100px;
-  background: linear-gradient(135deg, #9b2c5e 0%, #c0507e 50%, #e0789c 100%);
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-500) 50%, #e0789c 100%);
 }
 
 .heroBody {
@@ -47,13 +47,13 @@
 }
 
 .bigAvatarMember {
-  background: linear-gradient(135deg, #bfdbfe, #60a5fa);
-  color: #1e40af;
+  background: linear-gradient(135deg, var(--color-info-200, #bfdbfe), var(--color-info-400, #60a5fa));
+  color: var(--color-info-800);
 }
 
 .bigAvatarAdmin {
-  background: linear-gradient(135deg, #fca5a5, #f87171);
-  color: #991b1b;
+  background: linear-gradient(135deg, var(--color-danger-300), var(--color-danger-400, #f87171));
+  color: var(--color-danger-800);
 }
 
 .heroMeta {
@@ -67,7 +67,7 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 800;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .rolePill {
@@ -83,21 +83,21 @@
 }
 
 .rolePillMember {
-  background: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #93c5fd;
+  background: var(--color-info-100);
+  color: var(--color-info-800);
+  border: 1px solid var(--color-info-300, #93c5fd);
 }
 
 .rolePillAdmin {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
+  background: var(--color-danger-100);
+  color: var(--color-danger-800);
+  border: 1px solid var(--color-danger-300);
 }
 
 .heroId {
   margin: 0;
   font-size: 0.8125rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-family: 'Courier New', monospace;
 }
 
@@ -130,7 +130,7 @@
 /* ── Generic card ─────────────────────────────────────────────────────────── */
 .card {
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
@@ -140,7 +140,7 @@
   margin: 0 0 1.25rem;
   font-size: 1rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
 }
@@ -157,7 +157,7 @@
   align-items: center;
   gap: 0.875rem;
   padding: 0.75rem 0;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-surface-100);
 }
 
 .detailRow:last-child {
@@ -165,7 +165,7 @@
 }
 
 .detailIcon {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -173,7 +173,7 @@
 
 .detailLabel {
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   width: 110px;
   flex-shrink: 0;
 }
@@ -181,7 +181,7 @@
 .detailValue {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 /* ── Right column ─────────────────────────────────────────────────────────── */
@@ -199,8 +199,8 @@
 }
 
 .statCell {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface-50);
+  border: 1px solid var(--color-surface-200);
   border-radius: 12px;
   padding: 1rem 1.125rem;
   display: flex;
@@ -211,13 +211,13 @@
 .statValue {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #111827;
+  color: var(--color-text-primary);
   line-height: 1;
 }
 
 .statLabel {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
@@ -257,5 +257,5 @@
 
 .badgeDesc {
   font-size: 0.75rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }

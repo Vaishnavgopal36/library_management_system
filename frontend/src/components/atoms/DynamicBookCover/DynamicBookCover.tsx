@@ -49,7 +49,7 @@ export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({
       flexDirection: 'column',
       justifyContent: 'space-between',
       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      color: '#111827',
+      color: 'var(--color-text-primary)',
       position: 'relative',
       overflow: 'hidden'
     }}>

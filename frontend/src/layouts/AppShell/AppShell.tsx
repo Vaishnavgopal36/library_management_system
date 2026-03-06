@@ -33,18 +33,33 @@ export const AppShell: React.FC<AppShellProps> = ({
   children,
 }) => {
   const [currentNav, setCurrentNav] = useState(activeNavItem);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
     <div className={styles.themeWrapper}>
       <div className={styles.appShell}>
-        <Sidebar activeItem={currentNav} role={role} onNavigate={setCurrentNav} />
+        <Sidebar
+          activeItem={currentNav}
+          role={role}
+          isMobileOpen={mobileSidebarOpen}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
+          onNavigate={setCurrentNav}
+        />
         <div className={styles.mainContainer}>
-          <Topbar userName={userName} role={role} searchConfig={searchConfig} />
+          <Topbar
+            userName={userName}
+            role={role}
+            searchConfig={searchConfig}
+            onMenuClick={() => setMobileSidebarOpen(true)}
+          />
           <main className={styles.contentArea}>
             {children}
           </main>
         </div>
       </div>
+      {mobileSidebarOpen && (
+        <div className={styles.backdrop} onClick={() => setMobileSidebarOpen(false)} />
+      )}
     </div>
   );
 };

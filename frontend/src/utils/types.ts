@@ -75,7 +75,8 @@ export interface Fine {
 }
 
 // ── Reservation types ─────────────────────────────────────────────────────────
-export type ResStatus = 'Pending' | 'Ready' | 'Cancelled' | 'Expired';
+// Status is auto-resolved by stock scheduler: Ready (stock available) or Expired (1-day window passed)
+export type ResStatus = 'Ready' | 'Expired';
 
 export interface ReservationUser {
   id: string;
@@ -103,10 +104,10 @@ export interface Reservation {
   user: ReservationUser;
   book: ReservationBook;
   reservedAt: string;
+  /** One day after reservedAt — auto-expired by scheduler */
   expiresAt: string;
+  /** Auto-resolved by stock scheduler; never set manually */
   status: ResStatus;
-  /** UI-only helper (not from API) */
-  readyDate?: string;
 }
 
 // ── Member types (Member Directory) ──────────────────────────────────────────

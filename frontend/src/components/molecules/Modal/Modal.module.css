@@ -15,7 +15,7 @@
 }
 
 .modalContent {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 12px;
   width: 100%;
   max-width: 500px;
@@ -31,13 +31,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-surface-200);
 }
 
 .title {
   margin: 0;
   font-size: 1.25rem;
-  color: #111827;
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 
@@ -46,14 +46,14 @@
   border: none;
   font-size: 1.75rem;
   line-height: 1;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   cursor: pointer;
   padding: 0;
   transition: color 0.2s;
 }
 
 .closeButton:hover {
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .body {

@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f9fafb;
+  background-color: var(--color-surface-50);
   padding: 2rem 1rem;
   
   background-image: 
@@ -25,7 +25,7 @@
 .registerCard {
   position: relative;
   z-index: 1;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   width: 100%;
   max-width: 480px; /* Restored to the sleek 480px width */
   padding: 3.5rem 4rem;
@@ -41,23 +41,23 @@
 }
 
 .brand {
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-label);
   margin: 0 0 1.5rem 0;
   letter-spacing: -0.02em;
 }
 
 .welcome {
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--color-text-body);
   margin: 0 0 0.5rem 0;
 }
 
 .subText {
-  font-size: 1.25rem;
-  color: #9ca3af;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -76,7 +76,7 @@
   top: 2.25rem; 
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -86,43 +86,43 @@
 }
 
 .eyeButton:hover {
-  color: #4b5563;
+  color: var(--color-text-body);
 }
 
 .submitButton {
   width: 100%;
-  background-color: #F26A4F !important;
-  border-color: #F26A4F !important;
+  background-color: var(--color-coral) !important;
+  border-color: var(--color-coral) !important;
   border-radius: 6px !important;
   font-weight: 500 !important;
   box-shadow: none !important;
 }
 
 .submitButton:hover {
-  background-color: #E05A40 !important;
-  border-color: #E05A40 !important;
+  background-color: var(--color-coral-hover) !important;
+  border-color: var(--color-coral-hover) !important;
 }
 
 .loginPrompt {
   text-align: center;
   font-size: 1rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-top: 2rem;
   margin-bottom: 0;
 }
 
 .loginLink {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   text-decoration: underline;
   margin-left: 0.25rem;
 }
 
 .loginLink:hover {
-  color: #374151;
+  color: var(--color-text-label);
 }
 
 @media (max-width: 600px) {
-  .registerCard { padding: 2.5rem 2rem; }
+  .registerCard { padding: 2.5rem 2rem; max-width: 100%; margin: 1rem; }
 }
 
 @media (max-width: 420px) {
@@ -130,8 +130,9 @@
     padding: 2rem 1.25rem;
     border-radius: 6px;
   }
-  .brand   { font-size: 2.25rem; }
-  .welcome { font-size: 1.25rem; }
-  .subText { font-size: 1rem; }
+  .brand      { font-size: 1.625rem; }
+  .welcome    { font-size: 0.9375rem; }
+  .subText    { font-size: 0.8125rem; }
   .cornerLogo { display: none; }
+  .loginPrompt { font-size: 0.875rem; }
 }

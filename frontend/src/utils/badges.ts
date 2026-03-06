@@ -16,11 +16,9 @@ export const txBadgeVariant = (status: TxStatus): BadgeVariant => {
  */
 export const resBadgeVariant = (status: ResStatus): BadgeVariant => {
   switch (status) {
-    case 'Ready':     return 'success';
-    case 'Pending':   return 'warning';
-    case 'Expired':   return 'error';
-    case 'Cancelled': return 'neutral';
-    default:          return 'neutral';
+    case 'Ready':   return 'success';
+    case 'Expired': return 'error';
+    default:        return 'neutral';
   }
 };
 

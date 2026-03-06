@@ -2,7 +2,7 @@
 .themeWrapper {
   height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #F26A4F 0%, #FF8C6B 100%);
+  background: linear-gradient(135deg, var(--color-coral) 0%, var(--color-coral-soft) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,7 +15,7 @@
   display: flex;
   height: 100%;
   width: 100%;
-  background-color: #f5f6f8; /* Soft background from the mockup */
+  background-color: var(--color-app-bg); /* Soft background from the mockup */
   border-radius: 16px; /* Smooth rounded corners */
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   overflow: hidden;
@@ -38,7 +38,12 @@
 
 .contentArea::-webkit-scrollbar { width: 8px; }
 .contentArea::-webkit-scrollbar-track { background: transparent; }
-.contentArea::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 20px; }
+.contentArea::-webkit-scrollbar-thumb { background-color: var(--color-surface-300); border-radius: 20px; }
+
+/* Backdrop overlay for mobile sidebar */
+.backdrop {
+  display: none;
+}
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
@@ -50,8 +55,25 @@
   .themeWrapper { padding: 0; }
   .appShell     { border-radius: 0; }
   .contentArea  { padding: 1rem 1rem 2rem; }
+
+  /* Sidebar uses position:fixed + translateX to slide in/out — no display:none needed */
+
+  /* Show backdrop when sidebar is open */
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.45);
+    z-index: 150;
+    animation: fadeIn 0.2s ease-out;
+  }
 }
 
 @media (max-width: 480px) {
   .contentArea { padding: 0.75rem 0.75rem 1.5rem; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

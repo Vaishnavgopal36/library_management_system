@@ -14,7 +14,7 @@
 
 .quoteCard {
   flex: 1;
-  background: linear-gradient(135deg, #9b2c5e 0%, #6a2c70 100%);
+  background: linear-gradient(135deg, var(--color-brand) 0%, #6a2c70 100%);
   border-radius: 12px;
   padding: 2rem;
   color: white;
@@ -36,7 +36,7 @@
 }
 
 .newArrivalsHeader {
-  background-color: #9b2c5e;
+  background-color: var(--color-brand);
   color: white;
   padding: 1rem 0.5rem;
   display: flex;
@@ -59,8 +59,8 @@
   align-items: flex-start;
 }
 
-.sectionTitle { margin: 0 0 0.5rem 0; font-size: 1.75rem; color: #111827; }
-.subTitle { margin: 0 0 1.5rem 0; font-size: 1.125rem; font-weight: 500; color: #4b5563; }
+.sectionTitle { margin: 0 0 0.5rem 0; font-size: 1.75rem; color: var(--color-text-primary); }
+.subTitle { margin: 0 0 1.5rem 0; font-size: 1.125rem; font-weight: 500; color: var(--color-text-body); }
 
 .bookGrid {
   display: flex;
@@ -80,9 +80,9 @@
 .bookDisplay:hover { transform: translateY(-4px); }
 
 .bookInfo { display: flex; flex-direction: column; gap: 0.25rem; }
-.bookTitle { margin: 0; font-size: 0.875rem; color: #111827; line-height: 1.3; font-weight: 600; }
-.bookAuthor { margin: 0; font-size: 0.75rem; color: #6b7280; }
-.bookRating { font-size: 0.75rem; color: #f59e0b; font-weight: 600; }
+.bookTitle { margin: 0; font-size: 0.875rem; color: var(--color-text-primary); line-height: 1.3; font-weight: 600; }
+.bookAuthor { margin: 0; font-size: 0.75rem; color: var(--color-text-secondary); }
+.bookRating { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; }
 
 .possessionCard {
   display: flex;
@@ -94,8 +94,8 @@
 .reserveBtn {
   margin-top: 0.5rem;
   background: none;
-  border: 1px solid #9b2c5e;
-  color: #9b2c5e;
+  border: 1px solid var(--color-brand);
+  color: var(--color-brand);
   border-radius: 20px;
   padding: 0.25rem 0.75rem;
   font-size: 0.75rem;
@@ -105,7 +105,7 @@
   width: 100%;
 }
 .reserveBtn:hover {
-  background: #9b2c5e;
+  background: var(--color-brand);
   color: white;
 }
 
@@ -113,12 +113,12 @@
 .returnBtn {
   margin-top: 0.5rem !important;
   font-size: 0.8125rem !important;
-  color: #6b7280 !important;
-  border-color: #e5e7eb !important;
+  color: var(--color-text-secondary) !important;
+  border-color: var(--color-surface-200) !important;
 }
 .returnBtn:hover {
-  color: #111827 !important;
-  border-color: #9ca3af !important;
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-text-muted) !important;
 }
 
 /* ── Modal shared styles ──────────────────────────────────────────────── */
@@ -132,7 +132,7 @@
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
-  background-color: #f9fafb;
+  background-color: var(--color-surface-50);
   border-radius: 12px;
   padding: 1rem;
 }
@@ -147,30 +147,30 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .modalBookAuthor {
   margin: 0;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--color-text-body);
 }
 
 .modalBookRating {
   font-size: 0.8125rem;
-  color: #f59e0b;
+  color: var(--color-warning);
   font-weight: 600;
 }
 
 .modalDivider {
   height: 1px;
-  background-color: #e5e7eb;
+  background-color: var(--color-surface-200);
 }
 
 .modalHint {
   margin: 0;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.6;
 }
 
@@ -193,8 +193,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #fff7ed;
-  border: 1px solid #fed7aa;
+  background-color: var(--color-orange-50);
+  border: 1px solid var(--color-orange-200);
   border-radius: 10px;
   padding: 1rem 1.25rem;
 }
@@ -209,13 +209,13 @@
   margin: 0;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .fineCardDetail {
   margin: 0;
   font-size: 0.8125rem;
-  color: #9a3412;
+  color: var(--color-orange-800);
 }
 
 .fineCardRight {
@@ -227,13 +227,13 @@
 .fineCardAmount {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #DC2626;
+  color: var(--color-danger-600);
 }
 
 /* ── Pay Fine modal inner card ───────────────────────────────── */
 .fineModalCard {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background-color: var(--color-surface-50);
+  border: 1px solid var(--color-surface-200);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   display: flex;
@@ -249,20 +249,20 @@
 
 .fineModalLabel {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .fineModalValue {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .fineModalValueDanger {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #DC2626;
+  color: var(--color-danger-600);
 }
 
 /* ── Confirmed / success state ───────────────────────────────── */
@@ -279,8 +279,8 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #d1fae5;
-  color: #059669;
+  background-color: var(--color-success-200);
+  color: var(--color-success-600);
   font-size: 1.875rem;
   font-weight: 700;
   display: flex;
@@ -292,13 +292,13 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .confirmedDetail {
   margin: 0;
   font-size: 0.9375rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
@@ -312,11 +312,19 @@
   .quoteCard      { min-height: 140px; }
   .newArrivalsCard { min-height: 200px; }
   .bookGrid       { flex-wrap: wrap; }
+  .finesList      { max-width: 100%; }
+  .fineCard       { padding: 0.875rem 1rem; }
 }
 
 @media (max-width: 480px) {
   .topRow         { gap: 0.75rem; }
+  .dashboardLayout { gap: 1.5rem; }
   .sectionTitle   { font-size: 1.375rem; }
   .subTitle       { font-size: 0.9375rem; }
   .bookDisplay    { width: 110px; }
+  .fineCard       { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .fineCardRight  { width: 100%; justify-content: space-between; }
+  .fineCardAmount { font-size: 1.125rem; }
+  .quoteHeader    { font-size: 1rem; }
+  .quoteText      { font-size: 1rem; }
 }

@@ -8,6 +8,8 @@ import { Badge } from '../../components/atoms/Badge/Badge';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
 import { Modal } from '../../components/molecules/Modal/Modal';
 import { InputField } from '../../components/atoms/InputField/InputField';
+import { Pagination } from '../../components/molecules/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 
 // ── API response sub-types (matching BookResponse from Swagger) ───────────────
@@ -135,6 +137,9 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
       book.categories.some(c => c.name.toLowerCase().includes(query));
     return matchesCategory && matchesSearch;
   });
+
+  // ── Pagination ──
+  const pagination = usePagination(filteredCatalog, { pageSize: 5 });
 
   // Issue modal state
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
@@ -274,7 +279,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
               <p>No books found matching your search.</p>
             </div>
           ) : (
-          filteredCatalog.map((book) => (
+          <>
+          {pagination.pageData.map((book) => (
             <div key={book.id} className={styles.bookRow}>
               
               {/* Column 1: Book Info */}
@@ -321,7 +327,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
                       
                       {/* Edit Icon Button */}
                       <button className={styles.iconButton} aria-label="Edit" onClick={() => openEditModal(book)}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-body)" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                       </button>
                       
                       {/* Delete Icon Button */}
@@ -344,6 +350,16 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
 
             </div>
           ))
+          }
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            startIndex={pagination.startIndex}
+            endIndex={pagination.endIndex}
+            onPageChange={pagination.setPage}
+          />
+          </>
           )}
         </div>
         )}
@@ -380,7 +396,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
           <div className={styles.issueForm}>
             <div className={styles.deleteWarning}>
               <div className={styles.deleteIcon}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               </div>
               <p className={styles.deleteWarningText}>
                 Are you sure you want to permanently delete <strong>"{deleteBook.title}"</strong>? This will remove all <strong>{deleteBook.totalCopies} copies</strong> from the inventory.

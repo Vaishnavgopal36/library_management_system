@@ -12,8 +12,8 @@
   align-items: flex-end;
 }
 
-.pageTitle { margin: 0 0 0.25rem 0; font-size: 1.875rem; color: #111827; }
-.pageSubtitle { margin: 0; color: #6b7280; font-size: 1rem; }
+.pageTitle { margin: 0 0 0.25rem 0; font-size: 1.875rem; color: var(--color-text-primary); }
+.pageSubtitle { margin: 0; color: var(--color-text-secondary); font-size: 1rem; }
 
 .quickActions {
   display: flex;
@@ -29,7 +29,7 @@
 .kpiLabel {
   margin: 0 0 0.5rem 0;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 600;
@@ -38,7 +38,7 @@
 .kpiValue {
   font-size: 2.25rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .tablesContainer {
@@ -50,18 +50,19 @@
 
 .tableWrapper {
   flex: 1;
-  min-width: 450px;
+  min-width: 300px;
   background-color: white;
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow-x: auto;
 }
 
 .tableTitle {
   margin: 0;
   font-size: 1.25rem;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 /* ── Modal shared styles ─────────────────────────────────────────────────── */
@@ -81,14 +82,14 @@
 .modalHint {
   margin: 0;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
 /* Notify fine card */
 .notifyCard {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background-color: var(--color-surface-50);
+  border: 1px solid var(--color-surface-200);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   display: flex;
@@ -104,20 +105,20 @@
 
 .notifyLabel {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .notifyValue {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .notifyValueDanger {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #DC2626;
+  color: var(--color-danger-600);
 }
 
 /* ── Fine action cell (two buttons side-by-side) ──────────────────── */
@@ -141,8 +142,8 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #d1fae5;
-  color: #059669;
+  background-color: var(--color-success-200);
+  color: var(--color-success-600);
   font-size: 1.875rem;
   font-weight: 700;
   display: flex;
@@ -154,30 +155,32 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .confirmedDetail {
   margin: 0;
   font-size: 0.9375rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .headerRow { flex-direction: column; align-items: flex-start; gap: 1rem; }
-  .tableWrapper { min-width: 0; }
+  .headerRow    { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .tableWrapper { min-width: 0; padding: 1.25rem; }
 }
 
 @media (max-width: 768px) {
   .pageTitle    { font-size: 1.5rem; }
   .kpiGrid      { grid-template-columns: repeat(2, 1fr); }
   .quickActions { flex-wrap: wrap; }
-  .tablesContainer { gap: 1.25rem; }
+  .tablesContainer { gap: 1.25rem; flex-direction: column; }
 }
 
 @media (max-width: 480px) {
   .pageTitle { font-size: 1.25rem; }
   .kpiGrid   { grid-template-columns: 1fr 1fr; gap: 1rem; }
   .kpiValue  { font-size: 1.75rem; }
+  .quickActions { gap: 0.5rem; }
+  .tableWrapper { padding: 1rem 0.875rem; }
 }

@@ -39,16 +39,16 @@ export interface Member {
 // ── Mock data ─────────────────────────────────────────────────────────────────
 const ACTIVE_BADGE: MemberBadge = {
   label: 'Active Member',
-  color: '#065f46',
-  bg: '#d1fae5',
-  border: '#6ee7b7',
+  color: 'var(--color-success-900)',
+  bg: 'var(--color-success-200)',
+  border: 'var(--color-success-300)',
 };
 
 const BLACKLISTED_BADGE: MemberBadge = {
   label: 'Blacklisted',
-  color: '#991b1b',
-  bg: '#fee2e2',
-  border: '#fca5a5',
+  color: 'var(--color-danger-800)',
+  bg: 'var(--color-danger-100)',
+  border: 'var(--color-danger-300)',
 };
 
 // Mock data matches UserResponse field names
@@ -298,7 +298,7 @@ export function MemberDirectoryPage() {
           <SkeletonRows rows={5} />
         ) : filtered.length === 0 ? (
           <div className={styles.emptyState}>
-            <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth={1.5}>
+            <svg width={48} height={48} viewBox="0 0 24 24" fill="none" stroke="var(--color-surface-300)" strokeWidth={1.5}>
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -312,9 +312,9 @@ export function MemberDirectoryPage() {
               <thead>
                 <tr>
                   <th className={styles.th}>Member</th>
-                  <th className={styles.th}>Role</th>
+                  <th className={`${styles.th} ${styles.colHideXs}`}>Role</th>
                   <th className={styles.th}>Status</th>
-                  <th className={styles.th}>Badges</th>
+                  <th className={`${styles.th} ${styles.colHideXs}`}>Badges</th>
                   <th className={styles.th}>Books / Fines</th>
                   <th className={styles.th}>Actions</th>
                 </tr>
@@ -333,7 +333,7 @@ export function MemberDirectoryPage() {
                       </div>
                     </td>
                     {/* Role */}
-                    <td className={styles.td}>
+                    <td className={`${styles.td} ${styles.colHideXs}`}>
                       <span className={styles.dept}>{member.role}</span>
                     </td>
                     {/* Status toggle */}
@@ -348,7 +348,7 @@ export function MemberDirectoryPage() {
                       </button>
                     </td>
                     {/* Badges */}
-                    <td className={styles.td}>
+                    <td className={`${styles.td} ${styles.colHideXs}`}>
                       <div className={styles.badgeRow}>
                         {member.badges.map(b => (
                           <span

@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { fmtDate } from '../../utils/dates';
 import { AppRole, ResStatus, Reservation, ReservationUser, ReservationBook } from '../../utils/types';
 import { resBadgeVariant } from '../../utils/badges';
-import { useModal } from '../../hooks/useModal';
 import { useMockDelay } from '../../hooks/useMockDelay';
 import styles from './ReservationsPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Badge } from '../../components/atoms/Badge/Badge';
-import { Button } from '../../components/atoms/Button/Button';
-import { Modal } from '../../components/molecules/Modal/Modal';
 import { Table, Column } from '../../components/molecules/Table/Table';
+import { Pagination } from '../../components/molecules/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
 
@@ -29,48 +28,49 @@ const mockBook = (id: string, title: string, authorName: string, isbn: string): 
   categories: [{ id: 'cat-001',    name: 'General'   }],
 });
 
+// Each reservation is valid for exactly 1 day; status auto-resolved by stock scheduler
 const allReservations: Reservation[] = [
   {
     id: 'r1',
     user: mockUser('usr-001', 'Reinhard Kenson'),
-    book: mockBook('bk-001', "Don't Make Me Think", 'Steve Krug', '9780321965516'),
-    reservedAt: '2026-02-28T08:00:00Z', expiresAt: '2026-03-21T08:00:00Z',
-    status: 'Pending',
+    book: { ...mockBook('bk-001', "Don't Make Me Think", 'Steve Krug', '9780321965516'), trueAvailableStock: 0 },
+    reservedAt: '2026-03-05T08:00:00Z', expiresAt: '2026-03-06T08:00:00Z',
+    status: 'Expired',
   },
   {
     id: 'r2',
     user: mockUser('usr-002', 'Alice Smith'),
-    book: mockBook('bk-002', 'Clean Code', 'Robert C. Martin', '9780132350884'),
-    reservedAt: '2026-03-01T09:00:00Z', expiresAt: '2026-03-20T09:00:00Z',
-    readyDate: '2026-03-05T09:00:00Z', status: 'Ready',
+    book: { ...mockBook('bk-002', 'Clean Code', 'Robert C. Martin', '9780132350884'), trueAvailableStock: 2 },
+    reservedAt: '2026-03-06T09:00:00Z', expiresAt: '2026-03-07T09:00:00Z',
+    status: 'Ready',
   },
   {
     id: 'r3',
     user: mockUser('usr-003', 'Bob Johnson'),
-    book: mockBook('bk-003', 'The Pragmatic Programmer', 'Hunt & Thomas', '9780135957059'),
-    reservedAt: '2026-02-15T10:00:00Z', expiresAt: '2026-02-22T10:00:00Z',
+    book: { ...mockBook('bk-003', 'The Pragmatic Programmer', 'Hunt & Thomas', '9780135957059'), trueAvailableStock: 0 },
+    reservedAt: '2026-03-04T10:00:00Z', expiresAt: '2026-03-05T10:00:00Z',
     status: 'Expired',
   },
   {
     id: 'r4',
     user: mockUser('usr-001', 'Reinhard Kenson'),
-    book: mockBook('bk-004', 'Rich Dad Poor Dad', 'Robert Kiyosaki', '9781612680194'),
-    reservedAt: '2026-03-02T11:00:00Z', expiresAt: '2026-03-18T11:00:00Z',
-    readyDate: '2026-03-05T11:00:00Z', status: 'Ready',
+    book: { ...mockBook('bk-004', 'Rich Dad Poor Dad', 'Robert Kiyosaki', '9781612680194'), trueAvailableStock: 1 },
+    reservedAt: '2026-03-06T11:00:00Z', expiresAt: '2026-03-07T11:00:00Z',
+    status: 'Ready',
   },
   {
     id: 'r5',
     user: mockUser('usr-002', 'Alice Smith'),
-    book: mockBook('bk-005', 'Sprint', 'Jake Knapp', '9781501121746'),
-    reservedAt: '2026-03-03T12:00:00Z', expiresAt: '2026-03-17T12:00:00Z',
-    status: 'Pending',
+    book: { ...mockBook('bk-005', 'Sprint', 'Jake Knapp', '9781501121746'), trueAvailableStock: 0 },
+    reservedAt: '2026-03-05T12:00:00Z', expiresAt: '2026-03-06T12:00:00Z',
+    status: 'Expired',
   },
   {
     id: 'r6',
     user: mockUser('usr-003', 'Bob Johnson'),
-    book: mockBook('bk-006', 'Lean UX', 'Jeff Gothelf', '9781492073840'),
-    reservedAt: '2026-03-01T13:00:00Z', expiresAt: '2026-03-15T13:00:00Z',
-    status: 'Cancelled',
+    book: { ...mockBook('bk-006', 'Lean UX', 'Jeff Gothelf', '9781492073840'), trueAvailableStock: 3 },
+    reservedAt: '2026-03-06T13:00:00Z', expiresAt: '2026-03-07T13:00:00Z',
+    status: 'Ready',
   },
 ];
 
@@ -92,14 +92,8 @@ const SkeletonTableRows: React.FC<{ rows?: number }> = ({ rows = 4 }) => (
         <div className={styles.skeletonCell} style={{ flex: 2 }}>
           <Skeleton variant="text" width="80px" height="14px" />
         </div>
-        <div className={styles.skeletonCell} style={{ flex: 2 }}>
-          <Skeleton variant="text" width="70px" height="14px" />
-        </div>
         <div className={styles.skeletonCell} style={{ flex: 1.5 }}>
           <Skeleton variant="rectangular" width="68px" height="28px" style={{ borderRadius: '50px' }} />
-        </div>
-        <div className={styles.skeletonCell} style={{ flex: 1.5 }}>
-          <Skeleton variant="rectangular" width="72px" height="32px" style={{ borderRadius: '8px' }} />
         </div>
       </div>
     ))}
@@ -131,54 +125,17 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
   // ── Status tab filter ──
   const [activeTab, setActiveTab] = useState<ResTabFilter>('All');
 
-  // ── Live reservations state (updated on actions) ──
-  const [reservations, setReservations] = useState(allReservations);
-
-  // ── Cancel modal ──
-  const cancelModal = useModal<Reservation>();
-  const handleCancelConfirm = () => {
-    cancelModal.setProcessing(true);
-    // TODO: DELETE /api/v1/reservation/{id}
-    console.log('Cancelling reservation:', cancelModal.data?.id);
-    setTimeout(() => {
-      setReservations(prev =>
-        prev.map(r => r.id === cancelModal.data?.id ? { ...r, status: 'Cancelled' as ResStatus } : r)
-      );
-      cancelModal.close();
-    }, 1000);
-  };
-
-  // ── Mark Ready modal (admin only) ──
-  const readyModal = useModal<Reservation>();
-  const handleMarkReady = () => {
-    readyModal.setProcessing(true);
-    // TODO: PUT /api/v1/reservation/{id} — body: Map<String,String> to resolve/mark hold as ready
-    console.log('Marking reservation ready:', readyModal.data?.id);
-    setTimeout(() => {
-      setReservations(prev =>
-        prev.map(r =>
-          r.id === readyModal.data?.id
-            ? { ...r, status: 'Ready' as ResStatus, readyDate: '05 Mar 2026' }
-            : r
-        )
-      );
-      readyModal.close();
-    }, 1000);
-  };
-
   // ── Derive display data ──
   const liveBase: Reservation[] = isAdmin
     ? adminView === 'all'
-      ? reservations
-      : reservations.filter(r => r.user.fullName === CURRENT_MEMBER)
-    : reservations.filter(r => r.user.fullName === CURRENT_MEMBER);
+      ? allReservations
+      : allReservations.filter(r => r.user.fullName === CURRENT_MEMBER)
+    : allReservations.filter(r => r.user.fullName === CURRENT_MEMBER);
 
-  // ── Summary counts (from live state) ──
-  const counts: Record<ResStatus, number> = {
-    Pending:   liveBase.filter(r => r.status === 'Pending').length,
-    Ready:     liveBase.filter(r => r.status === 'Ready').length,
-    Cancelled: liveBase.filter(r => r.status === 'Cancelled').length,
-    Expired:   liveBase.filter(r => r.status === 'Expired').length,
+  // ── Summary counts ──
+  const counts = {
+    Ready:   liveBase.filter(r => r.status === 'Ready').length,
+    Expired: liveBase.filter(r => r.status === 'Expired').length,
   };
 
   const tabFiltered = activeTab === 'All' ? liveBase : liveBase.filter(r => r.status === activeTab);
@@ -189,6 +146,9 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
         r.book.authors.some(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : tabFiltered;
+
+  // ── Pagination ──
+  const pagination = usePagination(liveDisplay, { pageSize: 5 });
 
   // ── Table columns ──
   const bookCol: Column<Reservation> = {
@@ -221,19 +181,8 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
     header: 'Expires',
     accessor: 'expiresAt',
     render: (row) => (
-      <span style={{ color: row.status === 'Expired' ? '#dc2626' : '#374151' }}>
+      <span className={row.status === 'Expired' ? 'text-danger-600' : 'text-text-label'}>
         {fmtDate(row.expiresAt)}
-      </span>
-    ),
-  };
-
-  // readyDate is a UI-only helper field; not returned by ReservationResponse
-  const readyCol: Column<Reservation> = {
-    header: 'Ready Date',
-    accessor: 'readyDate',
-    render: (row) => (
-      <span style={{ color: row.readyDate ? '#059669' : '#9ca3af' }}>
-        {row.readyDate ? fmtDate(row.readyDate) : '—'}
       </span>
     ),
   };
@@ -244,40 +193,8 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
     render: (row) => <Badge variant={resBadgeVariant(row.status)}>{row.status}</Badge>,
   };
 
-  const adminActionCol: Column<Reservation> = {
-    header: 'Actions',
-    accessor: 'id',
-    render: (row) => {
-      if (row.status === 'Pending') {
-        return (
-          <div className={styles.actionGroup}>
-            <Button size="sm" variant="primary" onClick={() => readyModal.open(row)}>Mark Ready</Button>
-            <Button size="sm" variant="ghost" onClick={() => cancelModal.open(row)}>Cancel</Button>
-          </div>
-        );
-      }
-      if (row.status === 'Ready') {
-        return <span style={{ color: '#059669', fontSize: '0.8125rem', fontWeight: 600 }}>Awaiting Pickup</span>;
-      }
-      return <span style={{ color: '#9ca3af', fontSize: '0.8125rem' }}>—</span>;
-    },
-  };
-
-  const memberActionCol: Column<Reservation> = {
-    header: 'Action',
-    accessor: 'id',
-    render: (row) =>
-      row.status === 'Pending' ? (
-        <Button size="sm" variant="ghost" onClick={() => cancelModal.open(row)}>Cancel</Button>
-      ) : row.status === 'Ready' ? (
-        <span style={{ color: '#059669', fontSize: '0.8125rem', fontWeight: 600 }}>Ready for Pickup</span>
-      ) : (
-        <span style={{ color: '#9ca3af', fontSize: '0.8125rem' }}>—</span>
-      ),
-  };
-
-  const adminColumns: Column<Reservation>[] = [bookCol, memberCol, reservedCol, readyCol, expiryCol, statusCol, adminActionCol];
-  const memberColumns: Column<Reservation>[] = [bookCol, reservedCol, readyCol, expiryCol, statusCol, memberActionCol];
+  const adminColumns: Column<Reservation>[] = [bookCol, memberCol, reservedCol, expiryCol, statusCol];
+  const memberColumns: Column<Reservation>[] = [bookCol, reservedCol, expiryCol, statusCol];
   const columns = isAdmin ? adminColumns : memberColumns;
 
   return (
@@ -332,13 +249,6 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
             All <span className={styles.chipCount}>{liveBase.length}</span>
           </button>
           <button
-            className={`${styles.statChip} ${activeTab === 'Pending' ? styles.statChipActive : ''}`}
-            onClick={() => setActiveTab('Pending')}
-          >
-            <span className={`${styles.statDot} ${styles.dotPending}`} />
-            {counts.Pending} Pending
-          </button>
-          <button
             className={`${styles.statChip} ${activeTab === 'Ready' ? styles.statChipActive : ''}`}
             onClick={() => setActiveTab('Ready')}
           >
@@ -350,12 +260,6 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
             onClick={() => setActiveTab('Expired')}
           >
             {counts.Expired} Expired
-          </button>
-          <button
-            className={`${styles.statChip} ${styles.statChipNeutral} ${activeTab === 'Cancelled' ? styles.statChipActive : ''}`}
-            onClick={() => setActiveTab('Cancelled')}
-          >
-            {counts.Cancelled} Cancelled
           </button>
         </div>
 
@@ -369,67 +273,21 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
               <p>No reservations found{searchQuery ? ` matching "${searchQuery}"` : ''}.</p>
             </div>
           ) : (
-            <Table columns={columns} data={liveDisplay} />
+            <>
+              <Table columns={columns} data={pagination.pageData} />
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.totalItems}
+                startIndex={pagination.startIndex}
+                endIndex={pagination.endIndex}
+                onPageChange={pagination.setPage}
+              />
+            </>
           )}
         </div>
 
       </div>
-
-      {/* ── Cancel Reservation Modal ──────────────────────────────────── */}
-      <Modal isOpen={cancelModal.isOpen} onClose={cancelModal.close} title="Cancel Reservation">
-        {cancelModal.data && (
-          <div className={styles.modalForm}>
-            <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={cancelModal.data.book.title} author="" width="64px" height="88px" showText={false} />
-              <div className={styles.modalBookMeta}>
-                <p className={styles.modalBookTitle}>{cancelModal.data.book.title}</p>
-                <p className={styles.modalBookAuthor}>{cancelModal.data.book.authors[0]?.name ?? '—'}</p>
-                {isAdmin && (
-                  <p className={styles.modalMember}>For: <strong>{cancelModal.data.user.fullName}</strong></p>
-                )}
-              </div>
-            </div>
-            <div className={styles.modalDivider} />
-            <p className={styles.modalHint}>
-              {isAdmin
-                ? "This will cancel the member's hold. They will be notified by email."
-                : 'Cancelling will release your hold. The book will become available to others.'}
-            </p>
-            <div className={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={cancelModal.close} disabled={cancelModal.isProcessing}>Keep</Button>
-              <Button type="button" variant="danger" onClick={handleCancelConfirm} disabled={cancelModal.isProcessing}>
-                {cancelModal.isProcessing ? 'Cancelling…' : 'Yes, Cancel'}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* ── Mark Ready Modal (admin only) ────────────────────────────── */}
-      <Modal isOpen={readyModal.isOpen} onClose={readyModal.close} title="Mark Reservation as Ready">
-        {readyModal.data && (
-          <div className={styles.modalForm}>
-            <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={readyModal.data.book.title} author="" width="64px" height="88px" showText={false} />
-              <div className={styles.modalBookMeta}>
-                <p className={styles.modalBookTitle}>{readyModal.data.book.title}</p>
-                <p className={styles.modalBookAuthor}>{readyModal.data.book.authors[0]?.name ?? '—'}</p>
-                <p className={styles.modalMember}>For: <strong>{readyModal.data.user.fullName}</strong></p>
-              </div>
-            </div>
-            <div className={styles.modalDivider} />
-            <p className={styles.modalHint}>
-              Confirm that a copy has been set aside at the counter. The member will receive a pickup notification.
-            </p>
-            <div className={styles.modalActions}>
-              <Button type="button" variant="ghost" onClick={readyModal.close} disabled={readyModal.isProcessing}>Cancel</Button>
-              <Button type="button" variant="primary" onClick={handleMarkReady} disabled={readyModal.isProcessing}>
-                {readyModal.isProcessing ? 'Updating…' : 'Mark as Ready'}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
 
     </AppShell>
   );

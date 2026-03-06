@@ -65,12 +65,12 @@ const FEATURES = [
 ];
 
 const COLLECTION_CATEGORIES = [
-  { label: 'Fiction & Literature', count: '1,200+', color: '#9b2c5e', bg: '#fdf2f8' },
-  { label: 'Science & Technology', count: '980+', color: '#1e40af', bg: '#eff6ff' },
-  { label: 'Academic & Research', count: '2,400+', color: '#065f46', bg: '#ecfdf5' },
-  { label: 'Arts & Humanities', count: '760+', color: '#92400e', bg: '#fffbeb' },
-  { label: 'Business & Finance', count: '540+', color: '#5b21b6', bg: '#f5f3ff' },
-  { label: 'History & Biography', count: '650+', color: '#155e75', bg: '#ecfeff' },
+  { label: 'Fiction & Literature', count: '1,200+', color: 'var(--color-brand)', bg: 'var(--color-brand-light)' },
+  { label: 'Science & Technology', count: '980+', color: 'var(--color-info-800)', bg: 'var(--color-info-50)' },
+  { label: 'Academic & Research', count: '2,400+', color: 'var(--color-success-900)', bg: 'var(--color-success-50)' },
+  { label: 'Arts & Humanities', count: '760+', color: 'var(--color-warning-800)', bg: 'var(--color-warning-50)' },
+  { label: 'Business & Finance', count: '540+', color: 'var(--color-violet-800)', bg: 'var(--color-violet-50)' },
+  { label: 'History & Biography', count: '650+', color: 'var(--color-cyan-800)', bg: 'var(--color-cyan-50)' },
 ];
 
 const STATS = [

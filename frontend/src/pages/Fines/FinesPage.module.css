@@ -17,12 +17,12 @@
   margin: 0 0 0.25rem 0;
   font-size: 1.875rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .pageSubtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-size: 1rem;
 }
 
@@ -44,28 +44,28 @@
   left: 0.875rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca3af;
+  color: var(--color-text-muted);
   pointer-events: none;
 }
 
 .searchInput {
   width: 100%;
   padding: 0.6rem 2.5rem 0.6rem 2.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 50px;
   font-size: 0.875rem;
-  color: #111827;
+  color: var(--color-text-primary);
   background: white;
   outline: none;
   transition: border-color 0.15s;
 }
 
 .searchInput::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .searchInput:focus {
-  border-color: #9b2c5e;
+  border-color: var(--color-brand);
   box-shadow: 0 0 0 3px rgba(155, 44, 94, 0.08);
 }
 
@@ -76,7 +76,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   cursor: pointer;
   padding: 0.125rem;
   display: flex;
@@ -84,7 +84,7 @@
 }
 
 .clearBtn:hover {
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 /* ── Summary chips ───────────────────────────────────────────────────────── */
@@ -97,12 +97,12 @@
 
 .statChip {
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 50px;
   padding: 0.4rem 1rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-label);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -112,13 +112,13 @@
 }
 
 .statChip:hover:not(.statChipActive) {
-  border-color: #d1d5db;
-  background-color: #f9fafb;
+  border-color: var(--color-surface-300);
+  background-color: var(--color-surface-50);
 }
 
 .statChipActive {
-  background-color: #9b2c5e !important;
-  border-color: #9b2c5e !important;
+  background-color: var(--color-brand) !important;
+  border-color: var(--color-brand) !important;
   color: white !important;
 }
 
@@ -138,9 +138,9 @@
 }
 
 .statChipDanger {
-  background-color: #fef2f2;
-  border-color: #fecaca;
-  color: #DC2626;
+  background-color: var(--color-danger-50);
+  border-color: var(--color-danger-200);
+  color: var(--color-danger-600);
 }
 
 .statDot {
@@ -149,12 +149,12 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.dotUnpaid { background-color: #ef4444; }
-.dotPaid   { background-color: #22c55e; }
+.dotUnpaid { background-color: var(--color-danger); }
+.dotPaid   { background-color: var(--color-success); }
 
 /* ── Skeleton rows ─────────────────────────────────────────────────────── */
 .skeletonWrapper      { padding: 0.25rem 1.5rem; }
-.skeletonRow          { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 0; border-bottom: 1px solid #f3f4f6; }
+.skeletonRow          { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 0; border-bottom: 1px solid var(--color-surface-100); }
 .skeletonRow:last-child { border-bottom: none; }
 .skeletonCell         { flex: 2; }
 
@@ -162,7 +162,7 @@
 .tableCard {
   background: white;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
@@ -170,7 +170,7 @@
 .emptyState {
   padding: 3rem;
   text-align: center;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.9375rem;
 }
 
@@ -191,8 +191,8 @@
 }
 
 .infoCard {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background-color: var(--color-surface-50);
+  border: 1px solid var(--color-surface-200);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   display: flex;
@@ -208,26 +208,26 @@
 
 .infoLabel {
   font-size: 0.875rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .infoValue {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .infoValueDanger {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #DC2626;
+  color: var(--color-danger-600);
 }
 
 .modalHint {
   margin: 0;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   line-height: 1.6;
 }
 
@@ -252,8 +252,8 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background-color: #d1fae5;
-  color: #059669;
+  background-color: var(--color-success-200);
+  color: var(--color-success-600);
   font-size: 1.875rem;
   font-weight: 700;
   display: flex;
@@ -265,24 +265,26 @@
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .confirmedDetail {
   margin: 0;
   font-size: 0.9375rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .headerRow { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
-  .searchRow { flex-wrap: wrap; }
+  .headerRow        { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .searchRow        { flex-wrap: wrap; }
+  .searchInputWrapper { max-width: 100%; }
 }
 
 @media (max-width: 768px) {
-  .pageTitle    { font-size: 1.5rem; }
+  .pageTitle        { font-size: 1.5rem; }
   .searchInputWrapper { max-width: 100%; }
-  .searchRow    { flex-direction: column; align-items: stretch; }
+  .searchRow        { flex-direction: column; align-items: stretch; }
+  .tableCard        { border-radius: 12px; }
 }
 
 @media (max-width: 480px) {

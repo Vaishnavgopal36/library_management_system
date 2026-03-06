@@ -10,6 +10,8 @@ import { Badge } from '../../components/atoms/Badge/Badge';
 import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
 import { Table, Column } from '../../components/molecules/Table/Table';
+import { Pagination } from '../../components/molecules/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
@@ -68,6 +70,9 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
     activeTab === 'Unpaid' ? !f.isPaid : f.isPaid
   );
 
+  // ── Pagination ──
+  const pagination = usePagination(filtered, { pageSize: 5 });
+
   const unpaidCount = fines.filter(f => !f.isPaid).length;
   const totalUnpaid = fines.filter(f => !f.isPaid).reduce((s, f) => s + f.amount, 0);
 
@@ -102,7 +107,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const overdueCol: Column<Fine> = {
     header: 'Days Overdue',
     accessor: 'daysOverdue',
-    render: (row) => <span style={{ color: '#DC2626', fontWeight: 600 }}>{row.daysOverdue} days</span>,
+    render: (row) => <span className="text-danger-600 font-semibold">{row.daysOverdue} days</span>,
   };
   const amountCol: Column<Fine> = {
     header: 'Amount',
@@ -112,7 +117,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const rateCol: Column<Fine> = {
     header: 'Rate',
     accessor: 'id',
-    render: () => <span style={{ color: '#6b7280', fontSize: '0.8125rem' }}>₹{FINE_RATE_PER_DAY}/day</span>,
+    render: () => <span className="text-text-secondary text-[0.8125rem]">₹{FINE_RATE_PER_DAY}/day</span>,
   };
   const statusCol: Column<Fine> = {
     header: 'Status',
@@ -131,7 +136,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
           <Button size="sm" variant="primary" onClick={() => payAction.open(row)}>Mark Paid</Button>
         </div>
       ) : (
-        <span style={{ color: '#9ca3af', fontSize: '0.8125rem' }}>Settled</span>
+        <span className="text-text-muted text-[0.8125rem]">Settled</span>
       ),
   };
   const memberActionCol: Column<Fine> = {
@@ -141,7 +146,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
       !row.isPaid ? (
         <Button size="sm" variant="primary" onClick={() => payAction.open(row)}>Pay Fine</Button>
       ) : (
-        <span style={{ color: '#9ca3af', fontSize: '0.8125rem' }}>Paid</span>
+        <span className="text-text-muted text-[0.8125rem]">Paid</span>
       ),
   };
 
@@ -216,7 +221,17 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
               <p>No {activeTab === 'All' ? '' : activeTab.toLowerCase()} fines found.</p>
             </div>
           ) : (
-            <Table columns={columns} data={filtered} />
+            <>
+              <Table columns={columns} data={pagination.pageData} />
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.totalItems}
+                startIndex={pagination.startIndex}
+                endIndex={pagination.endIndex}
+                onPageChange={pagination.setPage}
+              />
+            </>
           )}
         </div>
 

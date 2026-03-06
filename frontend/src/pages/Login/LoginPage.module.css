@@ -4,7 +4,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f9fafb; /* Soft white/gray base */
+  background-color: var(--color-surface-50); /* Soft white/gray base */
   
   /* Multiple overlapping radial gradients create the soft blurred effect */
   background-image: 
@@ -29,7 +29,7 @@
 .loginCard {
   position: relative;
   z-index: 1;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   width: 100%;
   max-width: 600px;
   padding: 4rem 6rem;
@@ -47,7 +47,7 @@
 .brand {
   font-size: 2.25rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-label);
   margin: 0 0 1.5rem 0;
   letter-spacing: -0.02em;
 }
@@ -55,13 +55,13 @@
 .welcome {
   font-size: 0.9375rem;
   font-weight: 500;
-  color: #4b5563;
+  color: var(--color-text-body);
   margin: 0 0 0.5rem 0;
 }
 
 .subText {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -81,7 +81,7 @@
   top: 2.25rem; /* Adjusts to sit inside the input box, below the label */
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -91,7 +91,7 @@
 }
 
 .eyeButton:hover {
-  color: #4b5563;
+  color: var(--color-text-body);
 }
 
 .formOptions {
@@ -107,58 +107,58 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   cursor: pointer;
 }
 
 /* Custom Coral Checkbox */
 .checkbox {
-  accent-color: #F26A4F;
+  accent-color: var(--color-coral);
   width: 14px;
   height: 14px;
   cursor: pointer;
 }
 
 .forgotPassword {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   text-decoration: underline;
 }
 
 .forgotPassword:hover {
-  color: #374151;
+  color: var(--color-text-label);
 }
 
 /* Overriding the global primary blue to match the Coral theme */
 .submitButton {
   width: 100%;
-  background-color: #F26A4F !important; /* Coral */
-  border-color: #F26A4F !important;
+  background-color: var(--color-coral) !important; /* Coral */
+  border-color: var(--color-coral) !important;
   border-radius: 6px !important;
   font-weight: 500 !important;
   box-shadow: none !important;
 }
 
 .submitButton:hover {
-  background-color: #E05A40 !important;
-  border-color: #E05A40 !important;
+  background-color: var(--color-coral-hover) !important;
+  border-color: var(--color-coral-hover) !important;
 }
 
 .registerPrompt {
   text-align: left;
   font-size: 0.8125rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-top: 2rem;
   margin-bottom: 0;
 }
 
 .registerLink {
-  color: #6b7280;
+  color: var(--color-text-secondary);
   text-decoration: underline;
   margin-left: 0.25rem;
 }
 
 .registerLink:hover {
-  color: #374151;
+  color: var(--color-text-label);
 }
 
 /* ── Responsive ────────────────────────────────────────────── */

@@ -12,6 +12,8 @@ import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
 import { Table, Column } from '../../components/molecules/Table/Table';
+import { Pagination } from '../../components/molecules/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -118,6 +120,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
     : baseData;
   const filtered = activeTab === 'All' ? searchFiltered : searchFiltered.filter(t => t.status === activeTab);
 
+  // ── Pagination ──
+  const pagination = usePagination(filtered, { pageSize: 5 });
+
   // ── Return modal (admin only) ──
   const returnModal = useModal<Transaction>();
   const handleReturnConfirm = () => {
@@ -166,7 +171,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
     header: 'Returned',
     accessor: 'returnedDate',
     render: (row) => (
-      <span style={{ color: row.returnedDate ? '#111827' : '#9ca3af' }}>
+      <span className={row.returnedDate ? 'text-text-primary' : 'text-text-muted'}>
         {row.returnedDate ? fmtDate(row.returnedDate) : '—'}
       </span>
     ),
@@ -185,7 +190,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
           Return
         </Button>
       ) : (
-        <span style={{ color: '#9ca3af', fontSize: '0.8125rem' }}>—</span>
+        <span className="text-text-muted text-[0.8125rem]">—</span>
       ),
   };
 
@@ -196,9 +201,9 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
     accessor: 'daysOverdue',
     render: (row) =>
       row.status === 'Overdue' && row.daysOverdue > 0 ? (
-        <span style={{ color: '#DC2626', fontWeight: 700 }}>₹{row.daysOverdue * FINE_RATE_PER_DAY}</span>
+        <span className="text-danger-600 font-bold">₹{row.daysOverdue * FINE_RATE_PER_DAY}</span>
       ) : (
-        <span style={{ color: '#9ca3af' }}>—</span>
+        <span className="text-text-muted">—</span>
       ),
   };
 
@@ -274,7 +279,17 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
               <p>No {activeTab === 'All' ? '' : activeTab.toLowerCase()} records found.</p>
             </div>
           ) : (
-            <Table columns={columns} data={filtered} />
+            <>
+              <Table columns={columns} data={pagination.pageData} />
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                totalItems={pagination.totalItems}
+                startIndex={pagination.startIndex}
+                endIndex={pagination.endIndex}
+                onPageChange={pagination.setPage}
+              />
+            </>
           )}
         </div>
 

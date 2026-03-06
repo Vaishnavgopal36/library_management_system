@@ -9,6 +9,99 @@ html {
 }
 
 @layer base {
+  :root {
+    /* ── Neutrals ────────────────────────────────────────── */
+    --color-surface: #ffffff;
+    --color-surface-50: #f9fafb;
+    --color-surface-100: #f3f4f6;
+    --color-surface-200: #e5e7eb;
+    --color-surface-300: #d1d5db;
+
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-text-body: #4b5563;
+    --color-text-muted: #9ca3af;
+    --color-text-dark: #1f2937;
+    --color-text-label: #374151;
+
+    --color-border-default: #e5e7eb;
+    --color-border-muted: #d1d5db;
+
+    /* ── Brand (Rose/Magenta) ────────────────────────────── */
+    --color-brand: #9b2c5e;
+    --color-brand-light: #fdf2f8;
+    --color-brand-100: #fbcfe8;
+    --color-brand-200: #f3a8cc;
+    --color-brand-500: #c0507e;
+    --color-brand-dark: #7e2350;
+    --color-brand-darker: #6d1f3e;
+
+    /* ── Coral accent ────────────────────────────────────── */
+    --color-coral: #f26a4f;
+    --color-coral-light: #fa7c54;
+    --color-coral-hover: #e05a40;
+    --color-coral-soft: #ff8c6b;
+
+    /* ── Danger (Red) ────────────────────────────────────── */
+    --color-danger-50: #fef2f2;
+    --color-danger-100: #fee2e2;
+    --color-danger-200: #fecaca;
+    --color-danger-300: #fca5a5;
+    --color-danger: #ef4444;
+    --color-danger-600: #dc2626;
+    --color-danger-800: #991b1b;
+
+    /* ── Success (Green) ─────────────────────────────────── */
+    --color-success-50: #ecfdf5;
+    --color-success-100: #dcfce7;
+    --color-success-200: #d1fae5;
+    --color-success-300: #6ee7b7;
+    --color-success: #22c55e;
+    --color-success-600: #059669;
+    --color-success-800: #166534;
+    --color-success-900: #065f46;
+
+    /* ── Warning (Amber) ─────────────────────────────────── */
+    --color-warning-50: #fffbeb;
+    --color-warning: #f59e0b;
+    --color-warning-100: #fef3c7;
+    --color-warning-300: #fcd34d;
+    --color-warning-800: #92400e;
+
+    /* ── Info (Blue) ─────────────────────────────────────── */
+    --color-info-50: #eff6ff;
+    --color-info-100: #dbeafe;
+    --color-info-300: #93c5fd;
+    --color-info-600: #2563eb;
+    --color-info-800: #1e40af;
+
+    /* ── Violet ──────────────────────────────────────────── */
+    --color-violet-50: #f5f3ff;
+    --color-violet-100: #ede9fe;
+    --color-violet-300: #c4b5fd;
+    --color-violet-800: #5b21b6;
+
+    /* ── Cyan ────────────────────────────────────────────── */
+    --color-cyan-50: #ecfeff;
+    --color-cyan-800: #155e75;
+
+    /* ── Shadows ─────────────────────────────────────────── */
+    --shadow-subtle: 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-elevated: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-focus-blue: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    --shadow-focus-brand: 0 0 0 3px rgba(155, 44, 94, 0.12);
+    --shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.15);
+
+    /* ── Orange ───────────────────────────────────────────── */
+    --color-orange-50: #fff7ed;
+    --color-orange-200: #fed7aa;
+    --color-orange-800: #9a3412;
+
+    /* ── App background ──────────────────────────────────── */
+    --color-app-bg: #f5f6f8;
+  }
+
   * {
     box-sizing: border-box;
   }

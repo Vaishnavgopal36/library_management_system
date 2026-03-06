@@ -17,13 +17,13 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 900;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .pageSubtitle {
   margin: 0;
   font-size: 0.8125rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   line-height: 1.5;
 }
 
@@ -32,12 +32,12 @@
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  background: #fdf2f8;
-  border: 1px solid #f3a8cc;
+  background: var(--color-brand-light);
+  border: 1px solid var(--color-brand-200);
   border-radius: 12px;
   padding: 0.875rem 1.125rem;
   font-size: 0.875rem;
-  color: #6d1f3e;
+  color: var(--color-brand-darker);
   line-height: 1.55;
 }
 
@@ -55,7 +55,7 @@
 
 .accordionItem {
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-surface-200);
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.04);
@@ -64,7 +64,7 @@
 
 .accordionOpen {
   box-shadow: 0 4px 12px rgba(0,0,0,0.07);
-  border-color: #f3a8cc;
+  border-color: var(--color-brand-200);
 }
 
 .accordionHeader {
@@ -80,7 +80,7 @@
 }
 
 .accordionHeader:hover {
-  background: #fafafa;
+  background: var(--color-surface-50);
 }
 
 .accordionLeft {
@@ -93,8 +93,8 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #fdf2f8, #fbcfe8);
-  color: #9b2c5e;
+  background: linear-gradient(135deg, var(--color-brand-light), var(--color-brand-100));
+  color: var(--color-brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,11 +104,11 @@
 .accordionTitle {
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .chevron {
-  color: #9ca3af;
+  color: var(--color-text-muted);
   transition: transform 0.2s;
   flex-shrink: 0;
 }
@@ -123,7 +123,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid var(--color-surface-100);
 }
 
 .ruleRow {
@@ -137,7 +137,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #9b2c5e;
+  background: var(--color-brand);
   flex-shrink: 0;
   margin-top: 7px;
 }
@@ -145,12 +145,12 @@
 .ruleHeading {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .ruleBody {
   font-size: 0.875rem;
-  color: #4b5563;
+  color: var(--color-text-body);
   line-height: 1.65;
 }
 
@@ -158,8 +158,23 @@
 .footerNote {
   margin: 0;
   font-size: 0.8125rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   text-align: center;
   padding: 0.75rem 0 1rem;
   line-height: 1.6;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .pageTitle      { font-size: 1.25rem; }
+  .accordionHeader { padding: 1rem; }
+  .accordionBody  { padding: 0 1rem 1rem; }
+  .accordionIcon  { width: 32px; height: 32px; }
+}
+
+@media (max-width: 480px) {
+  .pageTitle      { font-size: 1.125rem; }
+  .accordionHeader { padding: 0.875rem; }
+  .accordionLeft  { gap: 0.625rem; }
+  .noticeBanner   { padding: 0.75rem; font-size: 0.8125rem; }
 }
