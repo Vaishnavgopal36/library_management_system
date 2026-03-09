@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 @Entity
 @Table(name = "fines")
@@ -16,6 +18,7 @@ import org.hibernate.annotations.CreationTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Audited
 public class Fine {
 
     @Id
@@ -27,6 +30,8 @@ public class Fine {
     @JoinColumn(name = "transaction_id", nullable = false)
     private Transaction transaction;
 
+    // User is not audited — store the FK only, no lookup against a users_aud table.
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

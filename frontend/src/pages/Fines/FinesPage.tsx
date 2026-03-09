@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
-import { AppRole, Fine, FineStatus } from '../../utils/types';
-import { useMockDelay } from '../../hooks/useMockDelay';
+import { AppRole } from '../../utils/types';
 import { useModal } from '../../hooks/useModal';
 import { useConfirmAction } from '../../hooks/useConfirmAction';
+import { useAuth } from '../../context/AuthContext';
+import { fineService, type ApiFine } from '../../services/fine.service';
 import styles from './FinesPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Badge } from '../../components/atoms/Badge/Badge';
@@ -14,17 +15,6 @@ import { Pagination } from '../../components/molecules/Pagination';
 import { usePagination } from '../../hooks/usePagination';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-// Mock data matches FineResponse field names
-const allFines: Fine[] = [
-  { id: 'fine-0001', transactionId: 'tx-0001', bookId: 'bk-0001', userId: 'usr-0001', bookName: 'Clean Code',               userName: 'Reinhard Kenson', daysOverdue: 3,  amount: 30,  isPaid: false },
-  { id: 'fine-0002', transactionId: 'tx-0006', bookId: 'bk-0006', userId: 'usr-0001', bookName: 'Sprint',                   userName: 'Reinhard Kenson', daysOverdue: 5,  amount: 50,  isPaid: false },
-  { id: 'fine-0003', transactionId: 'tx-0007', bookId: 'bk-0007', userId: 'usr-0002', bookName: "You Don't Know JS",        userName: 'Alice Smith',     daysOverdue: 1,  amount: 10,  isPaid: false },
-  { id: 'fine-0004', transactionId: 'tx-0004', bookId: 'bk-0002', userId: 'usr-0003', bookName: 'Design Patterns',          userName: 'Bob Johnson',     daysOverdue: 12, amount: 120, isPaid: false },
-  { id: 'fine-0005', transactionId: 'tx-0003', bookId: 'bk-0003', userId: 'usr-0002', bookName: 'The Pragmatic Programmer', userName: 'Alice Smith',     daysOverdue: 4,  amount: 40,  isPaid: true  },
-];
-
-const memberFines = allFines.filter(f => f.userName === 'Reinhard Kenson');
 // ── Skeleton row placeholder ─────────────────────────────────────────────────────
 const SkeletonRows: React.FC<{ rows?: number }> = ({ rows = 4 }) => (
   <div className={styles.skeletonWrapper}>
@@ -47,18 +37,22 @@ export interface FinesPageProps {
 
 export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const isAdmin = role === 'admin';
+  const { user } = useAuth();
 
-  // ── Simulate loading (TODO: replace with actual API call to GET /api/v1/fine) ──
-  const isLoading = useMockDelay();
-
-  // Local state so rows update after actions
-  const [fines, setFines] = useState<Fine[]>(isAdmin ? allFines : memberFines);
+  // ── Real API loading ──
+  const [fines, setFines] = useState<ApiFine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const loadData = useCallback(() => {
+    setIsLoading(true);
+    fineService.list().then(setFines).catch(console.error).finally(() => setIsLoading(false));
+  }, []);
+  useEffect(() => { loadData(); }, [loadData]);
 
   // ── Search filter ──
   const [searchQuery, setSearchQuery] = useState('');
 
   // ── Tab filter ──
-  const [activeTab, setActiveTab] = useState<'All' | FineStatus>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Unpaid' | 'Paid'>('All');
   const searchFiltered = searchQuery.trim()
     ? fines.filter(f =>
         f.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -77,22 +71,20 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const totalUnpaid = fines.filter(f => !f.isPaid).reduce((s, f) => s + f.amount, 0);
 
   // ── Notify modal (admin only) ──
-  const notifyModal = useModal<Fine>();
+  const notifyModal = useModal<ApiFine>();
   const handleNotifyConfirm = () => {
     notifyModal.setProcessing(true);
-    // TODO: No dedicated fine-notify endpoint in API — notification is triggered server-side via the Notification system
-    // See GET /api/v1/notification for reading notifications
     console.log('Notifying user for fine:', notifyModal.data?.id);
     setTimeout(() => { notifyModal.close(); }, 1000);
   };
 
   // ── Mark Paid modal (admin) / Pay Fine modal (member) ──
-  const payAction = useConfirmAction<Fine>();
+  const payAction = useConfirmAction<ApiFine>();
   const handlePay = () => {
     payAction.startProcessing();
-    // TODO: PUT /api/v1/fine/{id} — body: { isPaid: true } (Map<String,Boolean>)
-    console.log('Settling fine:', payAction.data?.id);
-    setTimeout(() => { payAction.markConfirmed(); }, 1000);
+    fineService.settle(payAction.data!.id)
+      .then(() => payAction.markConfirmed())
+      .catch((err: any) => { payAction.dismiss(); alert(err?.message ?? 'Failed to settle fine.'); });
   };
   const handlePayDone = () => {
     setFines(prev =>
@@ -102,31 +94,26 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   };
 
   // ── Table columns ──
-  const bookCol: Column<Fine> = { header: 'Book', accessor: 'bookName' };
-  const memberCol: Column<Fine> = { header: 'Member', accessor: 'userName' };
-  const overdueCol: Column<Fine> = {
-    header: 'Days Overdue',
-    accessor: 'daysOverdue',
-    render: (row) => <span className="text-danger-600 font-semibold">{row.daysOverdue} days</span>,
-  };
-  const amountCol: Column<Fine> = {
+  const bookCol: Column<ApiFine> = { header: 'Book', accessor: 'bookName' };
+  const memberCol: Column<ApiFine> = { header: 'Member', accessor: 'userName' };
+  const amountCol: Column<ApiFine> = {
     header: 'Amount',
     accessor: 'amount',
     render: (row) => <span style={{ fontWeight: 700 }}>₹{row.amount}</span>,
   };
-  const rateCol: Column<Fine> = {
+  const rateCol: Column<ApiFine> = {
     header: 'Rate',
     accessor: 'id',
     render: () => <span className="text-text-secondary text-[0.8125rem]">₹{FINE_RATE_PER_DAY}/day</span>,
   };
-  const statusCol: Column<Fine> = {
+  const statusCol: Column<ApiFine> = {
     header: 'Status',
     accessor: 'isPaid',
     render: (row) => (
       <Badge variant={row.isPaid ? 'success' : 'error'}>{row.isPaid ? 'Paid' : 'Unpaid'}</Badge>
     ),
   };
-  const adminActionCol: Column<Fine> = {
+  const adminActionCol: Column<ApiFine> = {
     header: 'Actions',
     accessor: 'id',
     render: (row) =>
@@ -139,7 +126,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
         <span className="text-text-muted text-[0.8125rem]">Settled</span>
       ),
   };
-  const memberActionCol: Column<Fine> = {
+  const memberActionCol: Column<ApiFine> = {
     header: 'Action',
     accessor: 'id',
     render: (row) =>
@@ -150,8 +137,8 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
       ),
   };
 
-  const adminColumns: Column<Fine>[] = [bookCol, memberCol, overdueCol, amountCol, statusCol, adminActionCol];
-  const memberColumns: Column<Fine>[] = [bookCol, rateCol, overdueCol, amountCol, statusCol, memberActionCol];
+  const adminColumns: Column<ApiFine>[] = [bookCol, memberCol, amountCol, statusCol, adminActionCol];
+  const memberColumns: Column<ApiFine>[] = [bookCol, rateCol, amountCol, statusCol, memberActionCol];
   const columns = isAdmin ? adminColumns : memberColumns;
 
   const payModalTitle = payAction.isConfirmed
@@ -160,7 +147,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
 
   return (
     <AppShell
-      userName={isAdmin ? 'System Admin' : 'Rick'}
+      userName={user?.fullName ?? (isAdmin ? 'Admin' : 'Member')}
       activeNavItem="Fines & Payments"
       role={role}
       searchConfig={{
@@ -251,10 +238,6 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
               <span className={styles.infoValue}>{notifyModal.data.bookName}</span>
               </div>
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Days Overdue</span>
-                <span className={styles.infoValueDanger}>{notifyModal.data.daysOverdue} days</span>
-              </div>
-              <div className={styles.infoRow}>
                 <span className={styles.infoLabel}>Amount Due</span>
                 <span className={styles.infoValueDanger}>₹{notifyModal.data.amount}</span>
               </div>
@@ -297,10 +280,6 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Book</span>
                     <span className={styles.infoValue}>{payAction.data.bookName}</span>
-                  </div>
-                  <div className={styles.infoRow}>
-                    <span className={styles.infoLabel}>Days Overdue</span>
-                    <span className={styles.infoValueDanger}>{payAction.data.daysOverdue} days</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.infoLabel}>Fine Amount</span>

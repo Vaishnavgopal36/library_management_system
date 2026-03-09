@@ -4,6 +4,8 @@ import { Card } from './Card';
 import { Badge } from '../../atoms/Badge/Badge';
 import { Button } from '../../atoms/Button/Button';
 
+// Card accepts: interactive?, padding ('none'|'sm'|'md'|'lg')
+
 const meta: Meta<typeof Card> = {
   title: 'Molecules/Card',
   component: Card,
@@ -65,4 +67,18 @@ export const BookListingCard: StoryObj<typeof Card> = {
       </div>
     ),
   },
+};
+
+export const PaddingShowcase: StoryObj = {
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '400px' }}>
+      {(['none', 'sm', 'md', 'lg'] as const).map((p) => (
+        <Card key={p} padding={p}>
+          <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+            padding=<strong>'{p}'</strong>
+          </span>
+        </Card>
+      ))}
+    </div>
+  ),
 };

@@ -1,16 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppRole } from '../../utils/types';
 import styles from './ProfilePage.module.css';
+import { Icon } from '../../components/atoms/Icon';
 import { AppShell } from '../../layouts/AppShell/AppShell';
-/*
-  1. This is a static mockup page to design the profile layout and UI.
-  2. The profile data is hardcoded at the bottom of this file for now.
-      - Once the backend is ready, replace the mock data with real API calls.
-  3. The `role` prop is used to conditionally render admin vs member views.
-      - In a real app, the role would come from the authentication context (e.g. JWT token) rather than being passed as a prop.
-  4. The badges are purely cosmetic and meant to demonstrate how we can display user achievements/status.
-*/
-// ── Types ─────────────────────────────────────────────────────────────────────
+import { useAuth } from '../../context/AuthContext';
+import { reportService, type SystemAnalytics } from '../../services/report.service';
+import { transactionService } from '../../services/transaction.service';
+import { fineService } from '../../services/fine.service';
+import { reservationService } from '../../services/reservation.service';
+
 export interface ProfilePageProps {
   role?: AppRole;
 }
@@ -24,111 +22,86 @@ interface BadgeInfo {
   description: string;
 }
 
-// ── Mock profile data ─────────────────────────────────────────────────────────
-const memberProfile = {
-  name: 'Reinhard Kenson',
-  email: 'reinhard@university.edu',
-  memberId: 'MBR-042',
-  department: 'Computer Science',
-  phone: '+91 91234 56789',
-  joined: '15 Aug 2024',
-  avatarInitials: 'RK',
-  stats: [
-    { label: 'Books Borrowed', value: '12' },
-    { label: 'Currently Active', value: '2' },
-    { label: 'Fines Paid', value: '₹80' },
-    { label: 'Reservations', value: '2' },
-  ],
-  badges: [
-    {
-      label: 'Active Member',
-      color: 'var(--color-success-900)',
-      bg: 'var(--color-success-200)',
-      border: 'var(--color-success-300)',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-      ),
-      description: 'Account is in good standing',
-    },
-    {
-      label: 'Bookworm',
-      color: 'var(--color-info-800)',
-      bg: 'var(--color-info-100)',
-      border: 'var(--color-info-300)',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      ),
-      description: 'Borrowed 10+ books',
-    },
-    {
-      label: 'Reserved Pro',
-      color: 'var(--color-violet-800)',
-      bg: 'var(--color-violet-100)',
-      border: 'var(--color-violet-300)',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      ),
-      description: 'Made 2+ reservations',
-    },
-  ] as BadgeInfo[],
-};
+// ── Static badge definitions (cosmetic — role-based) ─────────────────────────
+const ADMIN_BADGES: BadgeInfo[] = [
+  {
+    label: 'System Administrator',
+    color: 'var(--color-danger-800)', bg: 'var(--color-danger-100)', border: 'var(--color-danger-300)',
+    icon: <Icon name="settings" size={16} />,
+    description: 'Full system access & management',
+  },
+  {
+    label: 'Library Manager',
+    color: 'var(--color-violet-800)', bg: 'var(--color-violet-100)', border: 'var(--color-violet-300)',
+    icon: <Icon name="book-open" size={16} />,
+    description: 'Manages circulation & inventory',
+  },
+];
 
-const adminProfile = {
-  name: 'System Admin',
-  email: 'admin@bookstop.lib',
-  memberId: 'ADM-001',
-  department: 'Library Administration',
-  phone: '+91 98765 43210',
-  joined: '01 Jan 2024',
-  avatarInitials: 'SA',
-  stats: [
-    { label: 'Total Members', value: '128' },
-    { label: 'Active Loans', value: '348' },
-    { label: 'Fines Collected', value: '₹4,250' },
-    { label: 'New This Month', value: '14' },
-  ],
-  badges: [
-    {
-      label: 'System Administrator',
-      color: 'var(--color-danger-800)',
-      bg: 'var(--color-danger-100)',
-      border: 'var(--color-danger-300)',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      ),
-      description: 'Full system access & management',
-    },
-    {
-      label: 'Library Manager',
-      color: 'var(--color-violet-800)',
-      bg: 'var(--color-violet-100)',
-      border: 'var(--color-violet-300)',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-      ),
-      description: 'Manages circulation & inventory',
-    },
-    {
-      label: 'Super User',
-      color: 'var(--color-warning-800)',
-      bg: 'var(--color-warning-100)',
-      border: 'var(--color-warning-300)',
-      icon: (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      ),
-      description: 'All-access elevated privilege',
-    },
-  ] as BadgeInfo[],
-};
+const MEMBER_BADGES: BadgeInfo[] = [
+  {
+    label: 'Active Member',
+    color: 'var(--color-success-900)', bg: 'var(--color-success-200)', border: 'var(--color-success-300)',
+    icon: <Icon name="check" size={16} strokeWidth={2.5} />,
+    description: 'Account is in good standing',
+  },
+];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => {
+  const { user } = useAuth();
   const isAdmin = role === 'admin';
-  const profile = isAdmin ? adminProfile : memberProfile;
+
+  // ── Stats from API ──────────────────────────────────────────────────────
+  const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null);
+  const [txCount, setTxCount] = useState<number | null>(null);
+  const [activeLoans, setActiveLoans] = useState<number | null>(null);
+  const [unpaidFines, setUnpaidFines] = useState<number | null>(null);
+  const [reservationCount, setReservationCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (isAdmin) {
+      reportService.getAnalytics().then(setAnalytics).catch(console.error);
+    } else {
+      transactionService.list()
+        .then(txs => {
+          setTxCount(txs.length);
+          setActiveLoans(txs.filter(t => t.status === 'issued' || t.status === 'overdue').length);
+        })
+        .catch(console.error);
+      fineService.list({ isPaid: false })
+        .then(fines => setUnpaidFines(fines.reduce((sum, f) => sum + f.amount, 0)))
+        .catch(console.error);
+      reservationService.list()
+        .then(res => setReservationCount(res.filter(r => r.status === 'active').length))
+        .catch(console.error);
+    }
+  }, [isAdmin]);
+
+  const fmt = (n: number | null) => n == null ? '—' : String(n);
+
+  const adminStats = [
+    { label: 'Total Books', value: analytics != null ? String(analytics.totalActiveBooks) : '—' },
+    { label: 'Active Loans', value: analytics != null ? String(analytics.currentlyIssuedBooks) : '—' },
+    { label: 'Active Members', value: analytics != null ? String(analytics.totalActiveUsers) : '—' },
+    { label: 'Unpaid Fines (₹)', value: analytics != null ? String(Number(analytics.totalUnpaidFinesValue)) : '—' },
+  ];
+
+  const memberStats = [
+    { label: 'Total Borrowed', value: fmt(txCount) },
+    { label: 'Active Loans', value: fmt(activeLoans) },
+    { label: 'Unpaid Fines (₹)', value: fmt(unpaidFines) },
+    { label: 'Active Holds', value: fmt(reservationCount) },
+  ];
+
+  const stats = isAdmin ? adminStats : memberStats;
+  const badges = isAdmin ? ADMIN_BADGES : MEMBER_BADGES;
+  const avatarInitials = user?.fullName
+    ?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? '?';
 
   return (
     <AppShell
-      userName={isAdmin ? 'System Admin' : 'Rick'}
+      userName={user?.fullName ?? (isAdmin ? 'Admin' : 'Member')}
       activeNavItem="Profile"
       role={role}
     >
@@ -140,15 +113,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
           <div className={styles.heroBody}>
             <div className={styles.avatarWrap}>
               <div className={`${styles.bigAvatar} ${isAdmin ? styles.bigAvatarAdmin : styles.bigAvatarMember}`}>
-                {profile.avatarInitials}
+                {avatarInitials}
               </div>
             </div>
             <div className={styles.heroMeta}>
-              <h2 className={styles.heroName}>{profile.name}</h2>
+              <h2 className={styles.heroName}>{user?.fullName ?? '—'}</h2>
               <span className={`${styles.rolePill} ${isAdmin ? styles.rolePillAdmin : styles.rolePillMember}`}>
                 {isAdmin ? 'Administrator' : 'Library Member'}
               </span>
-              <p className={styles.heroId}>ID: {profile.memberId}</p>
             </div>
           </div>
         </div>
@@ -158,37 +130,33 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
 
           {/* Left: Details */}
           <div className={styles.card}>
-            <h3 className={styles.cardTitle}>Personal Details</h3>
+            <h3 className={styles.cardTitle}>Account Details</h3>
             <div className={styles.detailList}>
-              <DetailRow icon={
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              } label="Full Name" value={profile.name} />
-              <DetailRow icon={
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-              } label="Email" value={profile.email} />
-              <DetailRow icon={
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.18z"/></svg>
-              } label="Phone" value={profile.phone} />
-              <DetailRow icon={
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-              } label="Department" value={profile.department} />
-              <DetailRow icon={
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              } label="Member Since" value={profile.joined} />
-              <DetailRow icon={
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              } label={isAdmin ? 'Admin ID' : 'Member ID'} value={profile.memberId} />
+              <DetailRow
+              icon={<Icon name="user" size={16} />}
+                label="Full Name"
+                value={user?.fullName ?? '—'}
+              />
+              <DetailRow
+              icon={<Icon name="mail" size={16} />}
+                label="Email"
+                value={user?.email ?? '—'}
+              />
+              <DetailRow
+              icon={<Icon name="lock" size={16} />}
+                label="Role"
+                value={isAdmin ? 'Administrator' : 'Member'}
+              />
             </div>
           </div>
 
           {/* Right: Stats + Badges */}
           <div className={styles.rightCol}>
 
-            {/* Stats */}
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>{isAdmin ? 'System Overview' : 'Activity Summary'}</h3>
               <div className={styles.statsGrid}>
-                {profile.stats.map((s) => (
+                {stats.map(s => (
                   <div key={s.label} className={styles.statCell}>
                     <span className={styles.statValue}>{s.value}</span>
                     <span className={styles.statLabel}>{s.label}</span>
@@ -197,22 +165,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
               </div>
             </div>
 
-            {/* Badges */}
             <div className={styles.card}>
               <h3 className={styles.cardTitle}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '0.5rem', verticalAlign: 'middle' }}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <Icon name="star" size={16} style={{ marginRight: '0.5rem', verticalAlign: 'middle' }} />
                 Earned Badges
               </h3>
               <div className={styles.badgeList}>
-                {profile.badges.map((b) => (
-                  <div
-                    key={b.label}
-                    className={styles.badgeCard}
-                    style={{ borderColor: b.border, backgroundColor: b.bg }}
-                  >
-                    <div className={styles.badgeIcon} style={{ color: b.color }}>
-                      {b.icon}
-                    </div>
+                {badges.map(b => (
+                  <div key={b.label} className={styles.badgeCard} style={{ borderColor: b.border, backgroundColor: b.bg }}>
+                    <div className={styles.badgeIcon} style={{ color: b.color }}>{b.icon}</div>
                     <div className={styles.badgeInfo}>
                       <span className={styles.badgeLabel} style={{ color: b.color }}>{b.label}</span>
                       <span className={styles.badgeDesc}>{b.description}</span>
@@ -231,9 +192,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
 };
 
 // ── Helper component ──────────────────────────────────────────────────────────
-const DetailRow: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({
-  icon, label, value,
-}) => (
+const DetailRow: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
   <div className={styles.detailRow}>
     <span className={styles.detailIcon}>{icon}</span>
     <span className={styles.detailLabel}>{label}</span>

@@ -1,20 +1,37 @@
 spring:
+  mvc:
+    problemdetails:
+      enabled: true
   application:
     name: library-management-system
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   datasource:
-    # Notice how we replaced the hardcoded strings with the ENV variables
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true   # CRITICAL: prevents crash when existing tables are found
+    baseline-version: 1         # marks the current DB state as V1
+    locations: classpath:db/migration
+
   jpa:
     hibernate:
-      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+      ddl-auto: validate          # Hibernate MUST NOT modify the schema; Flyway owns it now
     database-platform: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+        default_batch_fetch_size: 50
+        in_clause_parameter_padding: true
+        envers:
+          audit_table_suffix: _aud
+          store_data_at_delete: true
 
 server:
   port: 8080
@@ -24,6 +41,12 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
 
 jwt:
-  # The secret is now safely pulled from the environment
   secret: ${JWT_SECRET}
-  expiration: 86400000 # 1 day in milliseconds
+  expiration: 86400000 
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.flywaydb: DEBUG
+    org.springframework.boot.autoconfigure.flyway: TRACE

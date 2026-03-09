@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { fmtDate } from '../../utils/dates';
-import { AppRole, ResStatus, Reservation, ReservationUser, ReservationBook } from '../../utils/types';
+import { AppRole, ResStatus } from '../../utils/types';
 import { resBadgeVariant } from '../../utils/badges';
-import { useMockDelay } from '../../hooks/useMockDelay';
+import { useAuth } from '../../context/AuthContext';
+import { reservationService, type ApiReservation } from '../../services/reservation.service';
 import styles from './ReservationsPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Badge } from '../../components/atoms/Badge/Badge';
@@ -11,68 +12,7 @@ import { Pagination } from '../../components/molecules/Pagination';
 import { usePagination } from '../../hooks/usePagination';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-// ── Mock Data ─────────────────────────────────────────────────────────────────
-// Current logged-in user (member = "Reinhard Kenson", admin = "System Admin")
-const CURRENT_MEMBER = 'Reinhard Kenson';
-
-const mockUser = (id: string, fullName: string): ReservationUser => ({
-  id, email: `${fullName.toLowerCase().replace(' ', '.')}@bookstop.com`,
-  fullName, role: 'member', isActive: true,
-});
-const mockBook = (id: string, title: string, authorName: string, isbn: string): ReservationBook => ({
-  id, title, isbn,
-  stockQuantity: 4, trueAvailableStock: 1, isArchived: false,
-  authors:    [{ id: `auth-${id}`, name: authorName }],
-  categories: [{ id: 'cat-001',    name: 'General'   }],
-});
-
-// Each reservation is valid for exactly 1 day; status auto-resolved by stock scheduler
-const allReservations: Reservation[] = [
-  {
-    id: 'r1',
-    user: mockUser('usr-001', 'Reinhard Kenson'),
-    book: { ...mockBook('bk-001', "Don't Make Me Think", 'Steve Krug', '9780321965516'), trueAvailableStock: 0 },
-    reservedAt: '2026-03-05T08:00:00Z', expiresAt: '2026-03-06T08:00:00Z',
-    status: 'Expired',
-  },
-  {
-    id: 'r2',
-    user: mockUser('usr-002', 'Alice Smith'),
-    book: { ...mockBook('bk-002', 'Clean Code', 'Robert C. Martin', '9780132350884'), trueAvailableStock: 2 },
-    reservedAt: '2026-03-06T09:00:00Z', expiresAt: '2026-03-07T09:00:00Z',
-    status: 'Ready',
-  },
-  {
-    id: 'r3',
-    user: mockUser('usr-003', 'Bob Johnson'),
-    book: { ...mockBook('bk-003', 'The Pragmatic Programmer', 'Hunt & Thomas', '9780135957059'), trueAvailableStock: 0 },
-    reservedAt: '2026-03-04T10:00:00Z', expiresAt: '2026-03-05T10:00:00Z',
-    status: 'Expired',
-  },
-  {
-    id: 'r4',
-    user: mockUser('usr-001', 'Reinhard Kenson'),
-    book: { ...mockBook('bk-004', 'Rich Dad Poor Dad', 'Robert Kiyosaki', '9781612680194'), trueAvailableStock: 1 },
-    reservedAt: '2026-03-06T11:00:00Z', expiresAt: '2026-03-07T11:00:00Z',
-    status: 'Ready',
-  },
-  {
-    id: 'r5',
-    user: mockUser('usr-002', 'Alice Smith'),
-    book: { ...mockBook('bk-005', 'Sprint', 'Jake Knapp', '9781501121746'), trueAvailableStock: 0 },
-    reservedAt: '2026-03-05T12:00:00Z', expiresAt: '2026-03-06T12:00:00Z',
-    status: 'Expired',
-  },
-  {
-    id: 'r6',
-    user: mockUser('usr-003', 'Bob Johnson'),
-    book: { ...mockBook('bk-006', 'Lean UX', 'Jeff Gothelf', '9781492073840'), trueAvailableStock: 3 },
-    reservedAt: '2026-03-06T13:00:00Z', expiresAt: '2026-03-07T13:00:00Z',
-    status: 'Ready',
-  },
-];
+import { Toast } from '../../components/atoms/Toast/Toast';
 
 // ── Skeleton Row ─────────────────────────────────────────────────────────────
 const SkeletonTableRows: React.FC<{ rows?: number }> = ({ rows = 4 }) => (
@@ -109,12 +49,38 @@ export interface ReservationsPageProps {
 type AdminView = 'all' | 'mine';
 type ResTabFilter = 'All' | ResStatus;
 
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'member' }) => {
   const isAdmin = role === 'admin';
+  const { user } = useAuth();
 
-  // ── Simulate loading (TODO: GET /api/v1/reservation) ──
-  // params: reservationId, userId, bookId, status, reservedAfter/Before, expiresAfter/Before, includeExpired
-  const isLoading = useMockDelay();
+  // ── Real API loading ──
+  const [reservations, setReservations] = useState<ApiReservation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const loadData = useCallback(() => {
+    setIsLoading(true);
+    reservationService.list().then(setReservations).catch(console.error).finally(() => setIsLoading(false));
+  }, []);
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // ── Fulfill / Issue Book ──
+  const [fulfillingId, setFulfillingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null);
+
+  const handleFulfil = useCallback(async (reservationId: string, bookTitle: string) => {
+    setFulfillingId(reservationId);
+    try {
+      await reservationService.fulfil(reservationId);
+      setToast({ message: `"${bookTitle}" has been issued successfully.`, variant: 'success' });
+      loadData();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to issue book. Please try again.';
+      setToast({ message: msg, variant: 'error' });
+    } finally {
+      setFulfillingId(null);
+    }
+  }, [loadData]);
 
   // ── Admin toggle: All Members | Mine ──
   const [adminView, setAdminView] = useState<AdminView>('all');
@@ -126,16 +92,16 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
   const [activeTab, setActiveTab] = useState<ResTabFilter>('All');
 
   // ── Derive display data ──
-  const liveBase: Reservation[] = isAdmin
+  const liveBase: ApiReservation[] = isAdmin
     ? adminView === 'all'
-      ? allReservations
-      : allReservations.filter(r => r.user.fullName === CURRENT_MEMBER)
-    : allReservations.filter(r => r.user.fullName === CURRENT_MEMBER);
+      ? reservations
+      : reservations.filter(r => r.user.id === user?.id)
+    : reservations;
 
   // ── Summary counts ──
   const counts = {
-    Ready:   liveBase.filter(r => r.status === 'Ready').length,
-    Expired: liveBase.filter(r => r.status === 'Expired').length,
+    active:  liveBase.filter(r => r.status === 'active').length,
+    expired: liveBase.filter(r => r.status === 'expired').length,
   };
 
   const tabFiltered = activeTab === 'All' ? liveBase : liveBase.filter(r => r.status === activeTab);
@@ -143,7 +109,7 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
     ? tabFiltered.filter(r =>
         r.book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.book.authors.some(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        (r.book.authors ?? []).some(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : tabFiltered;
 
@@ -151,7 +117,7 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
   const pagination = usePagination(liveDisplay, { pageSize: 5 });
 
   // ── Table columns ──
-  const bookCol: Column<Reservation> = {
+  const bookCol: Column<ApiReservation> = {
     header: 'Book',
     accessor: 'book',
     render: (row) => (
@@ -165,41 +131,59 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
     ),
   };
 
-  const memberCol: Column<Reservation> = {
+  const memberCol: Column<ApiReservation> = {
     header: 'Member',
     accessor: 'user',
     render: (row) => <span>{row.user.fullName}</span>,
   };
 
-  const reservedCol: Column<Reservation> = {
+  const reservedCol: Column<ApiReservation> = {
     header: 'Reserved',
     accessor: 'reservedAt',
     render: (row) => <span>{fmtDate(row.reservedAt)}</span>,
   };
 
-  const expiryCol: Column<Reservation> = {
+  const expiryCol: Column<ApiReservation> = {
     header: 'Expires',
     accessor: 'expiresAt',
     render: (row) => (
-      <span className={row.status === 'Expired' ? 'text-danger-600' : 'text-text-label'}>
+      <span className={row.status === 'expired' ? 'text-danger-600' : 'text-text-label'}>
         {fmtDate(row.expiresAt)}
       </span>
     ),
   };
 
-  const statusCol: Column<Reservation> = {
+  const statusCol: Column<ApiReservation> = {
     header: 'Status',
     accessor: 'status',
-    render: (row) => <Badge variant={resBadgeVariant(row.status)}>{row.status}</Badge>,
+    render: (row) => <Badge variant={resBadgeVariant(row.status)}>{cap(row.status)}</Badge>,
   };
 
-  const adminColumns: Column<Reservation>[] = [bookCol, memberCol, reservedCol, expiryCol, statusCol];
-  const memberColumns: Column<Reservation>[] = [bookCol, reservedCol, expiryCol, statusCol];
+  const actionsCol: Column<ApiReservation> = {
+    header: 'Actions',
+    accessor: 'id',
+    render: (row) => {
+      if (row.status !== 'active') return null;
+      const isBusy = fulfillingId === row.id;
+      return (
+        <button
+          className={styles.issueBtn}
+          disabled={isBusy}
+          onClick={() => handleFulfil(row.id, row.book.title)}
+        >
+          {isBusy ? 'Issuing…' : 'Issue Book'}
+        </button>
+      );
+    },
+  };
+
+  const adminColumns: Column<ApiReservation>[] = [bookCol, memberCol, reservedCol, expiryCol, statusCol, actionsCol];
+  const memberColumns: Column<ApiReservation>[] = [bookCol, reservedCol, expiryCol, statusCol];
   const columns = isAdmin ? adminColumns : memberColumns;
 
   return (
     <AppShell
-      userName={isAdmin ? 'System Admin' : 'Rick'}
+      userName={user?.fullName ?? (isAdmin ? 'Admin' : 'Member')}
       activeNavItem="Reservations"
       role={role}
       searchConfig={{
@@ -249,17 +233,17 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
             All <span className={styles.chipCount}>{liveBase.length}</span>
           </button>
           <button
-            className={`${styles.statChip} ${activeTab === 'Ready' ? styles.statChipActive : ''}`}
-            onClick={() => setActiveTab('Ready')}
+            className={`${styles.statChip} ${activeTab === 'active' ? styles.statChipActive : ''}`}
+            onClick={() => setActiveTab('active')}
           >
             <span className={`${styles.statDot} ${styles.dotReady}`} />
-            {counts.Ready} Ready
+            {counts.active} Active
           </button>
           <button
-            className={`${styles.statChip} ${styles.statChipDanger} ${activeTab === 'Expired' ? styles.statChipActive : ''}`}
-            onClick={() => setActiveTab('Expired')}
+            className={`${styles.statChip} ${styles.statChipDanger} ${activeTab === 'expired' ? styles.statChipActive : ''}`}
+            onClick={() => setActiveTab('expired')}
           >
-            {counts.Expired} Expired
+            {counts.expired} Expired
           </button>
         </div>
 
@@ -289,6 +273,17 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
 
       </div>
 
+      {/* ── Toast notification ── */}
+      {toast && (
+        <div className={styles.toastContainer}>
+          <Toast
+            message={toast.message}
+            variant={toast.variant}
+            onClose={() => setToast(null)}
+            duration={4000}
+          />
+        </div>
+      )}
     </AppShell>
   );
 };

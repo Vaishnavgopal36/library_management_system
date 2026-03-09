@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -21,7 +22,17 @@ public class BookRequest {
     private Integer stockQuantity;
 
     private LocalDate publishDate;
-    
-    // We pass the ID, not the whole Publisher object
-    private UUID publisherId; 
+
+    // Legacy: resolve publisher by UUID (kept for compatibility)
+    private UUID publisherId;
+
+    // Preferred: resolve publisher by name (find-or-create)
+    private String publisherName;
+
+    // Author and category names — backend will find-or-create each entry
+    private List<String> authorNames;
+    private List<String> categoryNames;
+
+    // Optional — if provided, sets the archive status (used by PUT to unarchive)
+    private Boolean isArchived;
 }

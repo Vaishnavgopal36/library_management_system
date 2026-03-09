@@ -73,3 +73,17 @@ export const StaticSuccess: StoryObj<typeof Toast> = {
     variant: 'success',
   },
 };
+
+export const StaticError: StoryObj<typeof Toast> = {
+  args: {
+    message: 'Failed to issue book. Active loans may conflict.',
+    variant: 'error',
+  },
+};
+
+export const StaticInfo: StoryObj<typeof Toast> = {
+  args: {
+    message: 'Your reservation has been queued. You will be notified when ready.',
+    variant: 'info',
+  },
+};

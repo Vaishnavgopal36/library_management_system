@@ -51,6 +51,7 @@ const reservationColumns: Column<Reservation>[] = [
 export const FullDashboardLayout: StoryObj<typeof AppShell> = {
   args: {
     userName: 'Kenson',
+    role: 'member',
     activeNavItem: 'Dashboard',
     children: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -95,6 +96,34 @@ export const FullDashboardLayout: StoryObj<typeof AppShell> = {
           </Card>
         </div>
 
+      </div>
+    ),
+  },
+};
+
+export const AdminLayout: StoryObj<typeof AppShell> = {
+  args: {
+    userName: 'Admin User',
+    role: 'admin',
+    activeNavItem: 'Search',
+    children: (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div>
+          <h2 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.875rem' }}>Book Catalog</h2>
+          <p style={{ margin: 0, color: '#6b7280' }}>Manage assets, issue books, and update inventory.</p>
+        </div>
+        <Table
+          columns={[
+            { header: 'Title', accessor: 'title' },
+            { header: 'Status', accessor: 'status', render: (row) => (
+              <Badge variant={row.status === 'Available' ? 'success' : 'warning'}>{row.status}</Badge>
+            )},
+          ]}
+          data={[
+            { id: '1', title: 'The Pragmatic Programmer', status: 'Available' },
+            { id: '2', title: 'Clean Architecture', status: 'Waitlisted' },
+          ]}
+        />
       </div>
     ),
   },

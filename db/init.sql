@@ -73,6 +73,31 @@ CREATE TABLE transactions (
     status VARCHAR(20) DEFAULT 'issued'
 );
 
--- 11. INDEXES (Optimization for Search)
+-- 11. RESERVATIONS
+CREATE TABLE reservations (
+    reservation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    book_id UUID REFERENCES books(book_id) ON DELETE CASCADE,
+    reserved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'active'
+);
+
+-- 12. RESERVATION LIMIT TRIGGER (max 3 active reservations per user — must match MAX_ACTIVE_RESERVATIONS in ReservationService.java)
+CREATE OR REPLACE FUNCTION check_reservation_limit()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (SELECT COUNT(*) FROM reservations WHERE user_id = NEW.user_id AND status = 'active') >= 3 THEN
+        RAISE EXCEPTION 'Limit reached: Max 3 active reservations allowed.';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER enforce_max_reservations
+    BEFORE INSERT ON reservations
+    FOR EACH ROW EXECUTE FUNCTION check_reservation_limit();
+
+-- 13. INDEXES (Optimization for Search)
 CREATE INDEX idx_books_title ON books(title);
 CREATE INDEX idx_authors_name ON authors(name);

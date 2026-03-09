@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './RegisterPage.module.css';
+import { Icon } from '../../components/atoms/Icon';
 import { InputField } from '../../components/atoms/InputField/InputField';
 import { Button } from '../../components/atoms/Button/Button';
+import { authService } from '../../services/auth.service';
 
 export const RegisterPage: React.FC = () => {
   // States matching the DB schema (excluding auto-generated fields)
@@ -16,8 +18,10 @@ export const RegisterPage: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -26,38 +30,28 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    // API constraint: password minimum 8 characters (RegisterRequest)
     if (password.length < 8) {
       setError('Password must be at least 8 characters long.');
       return;
     }
 
     setIsLoading(true);
-
-    // TODO: POST /api/v1/auth/register — body: RegisterRequest { email*, password*(min 8), fullName? }
-    // The payload matching RegisterRequest schema:
-    const payload = {
-      fullName: fullName,
-      email: email,
-      password: password // The Spring Boot backend will hash this into password_hash
-    };
-
-    console.log('Sending Registration DTO to backend:', payload);
-    
-    // Simulate backend network delay
-    setTimeout(() => {
+    try {
+      await authService.register({ fullName, email, password });
+      setSuccess(true);
+      setTimeout(() => navigate('/login', { replace: true }), 1500);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+    } finally {
       setIsLoading(false);
-      alert(`Registration Successful for ${fullName}!\nYou can now log in using your email.`);
-    }, 1500);
+    }
   };
 
   return (
     <div className={styles.pageWrapper}>
       
       <div className={styles.cornerLogo}>
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-        </svg>
+        <Icon name="book-logo" size={48} stroke="var(--color-text-primary)" strokeWidth={1.5} />
       </div>
 
       <div className={styles.registerCard}>
@@ -70,6 +64,17 @@ export const RegisterPage: React.FC = () => {
 
         <form onSubmit={handleRegister} className={styles.form}>
           
+          {error && (
+            <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              {error}
+            </p>
+          )}
+          {success && (
+            <p style={{ color: 'var(--color-success-600)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              Registration successful! Redirecting to login…
+            </p>
+          )}
+
           <div className={styles.inputGroup}>
             <InputField 
               label="Full Name" 
@@ -101,13 +106,7 @@ export const RegisterPage: React.FC = () => {
               required
             />
             <button type="button" className={styles.eyeButton} onClick={() => setShowPassword(!showPassword)}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {showPassword ? (
-                  <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></>
-                ) : (
-                  <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></>
-                )}
-              </svg>
+              <Icon name={showPassword ? 'eye' : 'eye-off'} size={18} />
             </button>
           </div>
 
@@ -122,13 +121,7 @@ export const RegisterPage: React.FC = () => {
               error={error}
             />
             <button type="button" className={styles.eyeButton} onClick={() => setShowConfirm(!showConfirm)}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                {showConfirm ? (
-                  <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></>
-                ) : (
-                  <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></>
-                )}
-              </svg>
+              <Icon name={showConfirm ? 'eye' : 'eye-off'} size={18} />
             </button>
           </div>
 

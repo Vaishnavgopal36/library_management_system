@@ -30,4 +30,16 @@ public interface FineRepository extends JpaRepository<Fine, UUID>, JpaSpecificat
 
     @Query("SELECT COALESCE(SUM(f.amount), 0) FROM Fine f WHERE f.transaction.id = :transactionId")
     BigDecimal sumAmountByTransactionId(@Param("transactionId") UUID transactionId);
+
+    /** All fine records (paid + unpaid) for a transaction. */
+    @Query("SELECT f FROM Fine f WHERE f.transaction.id = :transactionId")
+    List<Fine> findAllByTransactionId(@Param("transactionId") UUID transactionId);
+
+    /** Only unpaid fine records for a transaction. */
+    @Query("SELECT f FROM Fine f WHERE f.transaction.id = :transactionId AND f.isPaid = false")
+    List<Fine> findUnpaidByTransactionId(@Param("transactionId") UUID transactionId);
+
+    /** Sum of PAID fine records for a transaction — used to determine how much has already been settled. */
+    @Query("SELECT COALESCE(SUM(f.amount), 0) FROM Fine f WHERE f.transaction.id = :transactionId AND f.isPaid = true")
+    BigDecimal sumPaidAmountByTransactionId(@Param("transactionId") UUID transactionId);
 }

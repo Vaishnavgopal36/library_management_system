@@ -40,7 +40,7 @@ export interface BookFormData {
 }
 
 // ── Transaction types ─────────────────────────────────────────────────────────
-export type TxStatus = 'Issued' | 'Returned' | 'Overdue';
+export type TxStatus = 'issued' | 'returned' | 'overdue' | 'lost';
 
 /** Matches API TransactionResponse */
 export interface Transaction {
@@ -58,7 +58,8 @@ export interface Transaction {
 }
 
 // ── Fine types ────────────────────────────────────────────────────────────────
-export type FineStatus = 'Unpaid' | 'Paid';
+/** Use `fine.isPaid` (boolean from API) instead of a string status. */
+export type FineStatus = 'unpaid' | 'paid';
 
 /** Matches API FineResponse */
 export interface Fine {
@@ -75,8 +76,8 @@ export interface Fine {
 }
 
 // ── Reservation types ─────────────────────────────────────────────────────────
-// Status is auto-resolved by stock scheduler: Ready (stock available) or Expired (1-day window passed)
-export type ResStatus = 'Ready' | 'Expired';
+// Status values as returned by the backend scheduler (DB CHECK constraint)
+export type ResStatus = 'active' | 'completed' | 'expired' | 'cancelled';
 
 export interface ReservationUser {
   id: string;
@@ -106,7 +107,7 @@ export interface Reservation {
   reservedAt: string;
   /** One day after reservedAt — auto-expired by scheduler */
   expiresAt: string;
-  /** Auto-resolved by stock scheduler; never set manually */
+  /** Auto-managed by backend scheduler */
   status: ResStatus;
 }
 

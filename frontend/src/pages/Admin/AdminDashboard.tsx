@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useModal } from '../../hooks/useModal';
 import { useConfirmAction } from '../../hooks/useConfirmAction';
+import { useAuth } from '../../context/AuthContext';
 import styles from './AdminDashboard.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Card } from '../../components/molecules/Card/Card';
@@ -8,81 +9,154 @@ import { Table, Column } from '../../components/molecules/Table/Table';
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
-import { InputField } from '../../components/atoms/InputField/InputField';
+import { reportService, type SystemAnalytics } from '../../services/report.service';
+import { transactionService, type ApiTransaction } from '../../services/transaction.service';
+import { fineService, type ApiFine } from '../../services/fine.service';
+import { bookService } from '../../services/book.service';
+import { userService } from '../../services/user.service';
+import { fmtDate } from '../../utils/dates';
+import { txBadgeVariant } from '../../utils/badges';
+import { SearchDropdown, type SearchDropdownOption } from '../../components/atoms/SearchDropdown/SearchDropdown';
 
-// Mock data matching your TransactionController & FineController
-const recentTransactions = [
-  { id: '1', user: 'Reinhard Kenson', book: 'Clean Code', action: 'Issued', date: '05 Mar 2026', status: 'Active' },
-  { id: '2', user: 'Alice Smith', book: 'Design Patterns', action: 'Returned', date: '05 Mar 2026', status: 'Completed' },
-];
-
-type FineRow = { id: string; user: string; amount: number; daysOverdue: number; status: string };
-
-const initialFines: FineRow[] = [
-  { id: '1', user: 'Bob Johnson', amount: 150, daysOverdue: 12, status: 'Unpaid' },
-  { id: '2', user: 'Alice Smith', amount: 10, daysOverdue: 1, status: 'Unpaid' },
-];
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export const AdminDashboard: React.FC = () => {
+  const { user } = useAuth();
 
-  // ── Issue Asset modal ─────────────────────────────────────────────────
+  // ── Remote data ────────────────────────────────────────────────────────────
+  const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null);
+  const [recentTx, setRecentTx] = useState<ApiTransaction[]>([]);
+  const [pendingFines, setPendingFines] = useState<ApiFine[]>([]);
+
+  const loadData = useCallback(() => {
+    reportService.getAnalytics().then(setAnalytics).catch(console.error);
+    transactionService.list().then(txs => setRecentTx(txs.slice(0, 5))).catch(console.error);
+    fineService.list({ isPaid: false }).then(setPendingFines).catch(console.error);
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  // ── Issue Asset modal ─────────────────────────────────────────────────────────
   const [isIssueOpen, setIsIssueOpen] = useState(false);
-  const [issueBookTitle, setIssueBookTitle] = useState('');
-  const [issueMemberEmail, setIssueMemberEmail] = useState('');
-  const [issueErrors, setIssueErrors] = useState({ bookTitle: '', memberEmail: '' });
+  const [issueBookQuery, setIssueBookQuery] = useState('');
+  const [issueBookId, setIssueBookId] = useState<string | undefined>();
+  const [issueMemberQuery, setIssueMemberQuery] = useState('');
+  const [issueMemberId, setIssueMemberId] = useState<string | undefined>();
+  const [issueErrors, setIssueErrors] = useState({ book: '', member: '' });
   const [isIssuing, setIsIssuing] = useState(false);
 
-  const closeIssueModal = () => { setIsIssueOpen(false); setIssueBookTitle(''); setIssueMemberEmail(''); setIssueErrors({ bookTitle: '', memberEmail: '' }); };
-  const handleIssueSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const errors = { bookTitle: issueBookTitle.trim() ? '' : 'Book title is required.', memberEmail: '' };
-    if (errors.bookTitle) { setIssueErrors(errors); return; }
-    setIsIssuing(true);
-    // TODO: POST /api/v1/transaction — resolve book & member on the backend by title / email
-    console.log('Issue:', { bookTitle: issueBookTitle, memberEmail: issueMemberEmail || undefined });
-    setTimeout(() => { setIsIssuing(false); closeIssueModal(); }, 1200);
+  const closeIssueModal = () => {
+    setIsIssueOpen(false);
+    setIssueBookQuery(''); setIssueBookId(undefined);
+    setIssueMemberQuery(''); setIssueMemberId(undefined);
+    setIssueErrors({ book: '', member: '' });
   };
 
-  // ── Return Asset modal ────────────────────────────────────────────────
+  const searchBooks = useCallback(async (q: string) => {
+    const page = await bookService.search({ title: q, size: 8 });
+    return page.content.map(b => ({ id: b.id, primary: b.title, secondary: b.authors.map((a: { name: string }) => a.name).join(', ') }));
+  }, []);
+
+  const searchUsers = useCallback(async (q: string) => {
+    const page = await userService.list({ search: q, size: 8 });
+    return page.content.map(u => ({ id: u.id, primary: u.fullName, secondary: u.email }));
+  }, []);
+
+  const handleIssueSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!issueBookId && !issueBookQuery.trim()) {
+      setIssueErrors(p => ({ ...p, book: 'Select a book from the dropdown.' }));
+      return;
+    }
+    setIsIssuing(true);
+    setIssueErrors({ book: '', member: '' });
+    try {
+      let bookId = issueBookId;
+      if (!bookId) {
+        const books = await bookService.findByTitle(issueBookQuery.trim());
+        if (!books.length) { setIssueErrors(p => ({ ...p, book: 'No book found — select from dropdown.' })); return; }
+        bookId = books[0].id;
+      }
+      let userId = issueMemberId;
+      if (!userId && issueMemberQuery.trim()) {
+        const users = await userService.list({ search: issueMemberQuery.trim(), size: 1 });
+        if (!users.content.length) { setIssueErrors(p => ({ ...p, member: 'No member found — select from dropdown.' })); return; }
+        userId = users.content[0].id;
+      }
+      await transactionService.issue(bookId!, userId);
+      loadData();
+      closeIssueModal();
+    } catch (err: any) {
+      setIssueErrors(p => ({ ...p, book: err?.message ?? 'Failed to issue book.' }));
+    } finally {
+      setIsIssuing(false);
+    }
+  };
+
+  // ── Return Asset modal ────────────────────────────────────────────────────────
   const [isReturnOpen, setIsReturnOpen] = useState(false);
-  const [returnBookTitle, setReturnBookTitle] = useState('');
-  const [returnMemberEmail, setReturnMemberEmail] = useState('');
-  const [returnErrors, setReturnErrors] = useState({ bookTitle: '', memberEmail: '' });
+  const [returnBookQuery, setReturnBookQuery] = useState('');
+  const [returnBookId, setReturnBookId] = useState<string | undefined>();
+  const [returnMemberQuery, setReturnMemberQuery] = useState('');
+  const [returnMemberId, setReturnMemberId] = useState<string | undefined>();
+  const [returnErrors, setReturnErrors] = useState({ book: '', member: '' });
   const [isReturning, setIsReturning] = useState(false);
 
-  const closeReturnModal = () => { setIsReturnOpen(false); setReturnBookTitle(''); setReturnMemberEmail(''); setReturnErrors({ bookTitle: '', memberEmail: '' }); };
-  const handleReturnSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const errors = { bookTitle: returnBookTitle.trim() ? '' : 'Book title is required.', memberEmail: '' };
-    if (errors.bookTitle) { setReturnErrors(errors); return; }
-    setIsReturning(true);
-    // TODO: PUT /api/v1/transaction/{id} — resolve transaction by book title + member email
-    console.log('Return:', { bookTitle: returnBookTitle, memberEmail: returnMemberEmail || undefined });
-    setTimeout(() => { setIsReturning(false); closeReturnModal(); }, 1200);
+  const closeReturnModal = () => {
+    setIsReturnOpen(false);
+    setReturnBookQuery(''); setReturnBookId(undefined);
+    setReturnMemberQuery(''); setReturnMemberId(undefined);
+    setReturnErrors({ book: '', member: '' });
   };
 
-  
+  const handleReturnSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!returnBookId && !returnBookQuery.trim()) {
+      setReturnErrors(p => ({ ...p, book: 'Select a book from the dropdown.' }));
+      return;
+    }
+    setIsReturning(true);
+    setReturnErrors({ book: '', member: '' });
+    try {
+      let bookId = returnBookId;
+      if (!bookId) {
+        const books = await bookService.findByTitle(returnBookQuery.trim());
+        if (!books.length) { setReturnErrors(p => ({ ...p, book: 'No book found — select from dropdown.' })); return; }
+        bookId = books[0].id;
+      }
+      let userId = returnMemberId;
+      if (!userId && returnMemberQuery.trim()) {
+        const users = await userService.list({ search: returnMemberQuery.trim(), size: 1 });
+        if (!users.content.length) { setReturnErrors(p => ({ ...p, member: 'No member found — select from dropdown.' })); return; }
+        userId = users.content[0].id;
+      }
+      const txs = await transactionService.list({ bookId, userId });
+      const active = txs.find(t => t.status === 'issued' || t.status === 'overdue');
+      if (!active) { setReturnErrors(p => ({ ...p, book: 'No active loan found for this book.' })); return; }
+      await transactionService.returnBook(active.id);
+      loadData();
+      closeReturnModal();
+    } catch (err: any) {
+      setReturnErrors(p => ({ ...p, book: err?.message ?? 'Failed to return book.' }));
+    } finally {
+      setIsReturning(false);
+    }
+  };
 
   // ── Notify User modal (fines) ───────────────────────────────────────────
-  const notifyModal = useModal<FineRow>();
+  const notifyModal = useModal<ApiFine>();
   const handleNotifyConfirm = () => {
     notifyModal.setProcessing(true);
-    // TODO: No dedicated fine-notify endpoint in API — notification is handled server-side via the Notification system
-    // See GET /api/v1/notification for reading notifications; sending is triggered automatically
-    console.log('Notifying user for fine:', notifyModal.data?.id);
-    setTimeout(() => { notifyModal.close(); }, 1000);
+    setTimeout(() => { notifyModal.close(); }, 800);
   };
 
-  // ── Pending fines (locally mutable so rows disappear after marking paid) ────
-  const [pendingFines, setPendingFines] = useState<FineRow[]>(initialFines);
-
   // ── Mark Fine as Paid modal ────────────────────────────────────────────────
-  const paidAction = useConfirmAction<FineRow>();
+  const paidAction = useConfirmAction<ApiFine>();
   const handleMarkPaid = () => {
     paidAction.startProcessing();
-    // TODO: PUT /api/v1/fine/{id} — body: { isPaid: true } (Map<String,Boolean>)
-    console.log('Marking fine as paid:', paidAction.data?.id);
-    setTimeout(() => { paidAction.markConfirmed(); }, 1000);
+    fineService.settle(paidAction.data!.id)
+      .then(() => paidAction.markConfirmed())
+      .catch((err: any) => { paidAction.dismiss(); alert(err?.message ?? 'Failed to settle fine.'); });
   };
   const handlePaidDone = () => {
     setPendingFines(prev => prev.filter(f => f.id !== paidAction.data?.id));
@@ -90,19 +164,18 @@ export const AdminDashboard: React.FC = () => {
   };
 
   // ── Table columns ───────────────────────────────────────────────────────────
-  const txColumns: Column<typeof recentTransactions[0]>[] = [
-    { header: 'User', accessor: 'user' },
-    { header: 'Book', accessor: 'book' },
-    { header: 'Action', accessor: 'action' },
-    { header: 'Date', accessor: 'date' },
+  const txColumns: Column<ApiTransaction>[] = [
+    { header: 'Member', accessor: 'userName' },
+    { header: 'Book', accessor: 'bookName' },
+    { header: 'Date', accessor: 'checkoutDate', render: (row) => <span>{fmtDate(row.checkoutDate)}</span> },
     { header: 'Status', accessor: 'status', render: (row) => (
-      <Badge variant={row.status === 'Active' ? 'success' : 'neutral'}>{row.status}</Badge>
+      <Badge variant={txBadgeVariant(row.status)}>{cap(row.status)}</Badge>
     )},
   ];
 
-  const fineColumns: Column<FineRow>[] = [
-    { header: 'User', accessor: 'user' },
-    { header: 'Days Overdue', accessor: 'daysOverdue', render: (row) => <span className="text-danger font-semibold">{row.daysOverdue} Days</span> },
+  const fineColumns: Column<ApiFine>[] = [
+    { header: 'Member', accessor: 'userName' },
+    { header: 'Book', accessor: 'bookName' },
     { header: 'Amount', accessor: 'amount', render: (row) => <span style={{ fontWeight: 600 }}>₹{row.amount}</span> },
     { header: 'Action', accessor: 'id', render: (row) => (
       <div className={styles.actionGroup}>
@@ -113,7 +186,7 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   return (
-    <AppShell userName="System Admin" activeNavItem="Dashboard" role="admin">
+    <AppShell userName={user?.fullName ?? 'Admin'} activeNavItem="Dashboard" role="admin">
       <div className={styles.dashboardLayout}>
         
         <div className={styles.headerRow}>
@@ -128,23 +201,22 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         {/* System Analytics */}
-        {/* TODO: All KPI values from GET /api/v1/report */}
         <div className={styles.kpiGrid}>
           <Card padding="md">
             <h4 className={styles.kpiLabel}>Total Inventory</h4>
-            <span className={styles.kpiValue}>1,452</span>
+            <span className={styles.kpiValue}>{analytics != null ? analytics.totalActiveBooks.toLocaleString() : '—'}</span>
           </Card>
           <Card padding="md">
             <h4 className={styles.kpiLabel}>Active Loans</h4>
-            <span className={styles.kpiValue}>348</span>
+            <span className={styles.kpiValue}>{analytics != null ? analytics.currentlyIssuedBooks.toLocaleString() : '—'}</span>
           </Card>
           <Card padding="md">
-            <h4 className={styles.kpiLabel}>Pending Holds</h4>
-            <span className={styles.kpiValue}>24</span>
+            <h4 className={styles.kpiLabel}>Total Members</h4>
+            <span className={styles.kpiValue}>{analytics != null ? analytics.totalActiveUsers.toLocaleString() : '—'}</span>
           </Card>
           <Card padding="md">
-            <h4 className={styles.kpiLabel}>Overdue Fines</h4>
-            <span className={`${styles.kpiValue} text-danger`}>₹4,250</span>
+            <h4 className={styles.kpiLabel}>Unpaid Fines</h4>
+            <span className={`${styles.kpiValue} text-danger`}>{analytics != null ? `₹${Number(analytics.totalUnpaidFinesValue).toLocaleString()}` : '—'}</span>
           </Card>
         </div>
 
@@ -152,7 +224,7 @@ export const AdminDashboard: React.FC = () => {
         <div className={styles.tablesContainer}>
           <div className={styles.tableWrapper}>
             <h3 className={styles.tableTitle}>Recent Circulation Activity</h3>
-            <Table columns={txColumns} data={recentTransactions} />
+            <Table columns={txColumns} data={recentTx} />
           </div>
           
           <div className={styles.tableWrapper}>
@@ -169,21 +241,25 @@ export const AdminDashboard: React.FC = () => {
       {/* ── Issue Asset Modal ──────────────────────────────────────── */}
       <Modal isOpen={isIssueOpen} onClose={closeIssueModal} title="Issue Asset">
         <form onSubmit={handleIssueSubmit} className={styles.modalForm}>
-          <InputField
+          <SearchDropdown
             label="Book Title"
-            placeholder="e.g. Clean Code"
-            value={issueBookTitle}
-            onChange={(e) => { setIssueBookTitle(e.target.value); if (issueErrors.bookTitle) setIssueErrors(p => ({ ...p, bookTitle: '' })); }}
-            error={issueErrors.bookTitle}
+            placeholder="Type to search books…"
+            value={issueBookQuery}
+            onChange={(v) => { setIssueBookQuery(v); setIssueBookId(undefined); if (issueErrors.book) setIssueErrors(p => ({ ...p, book: '' })); }}
+            onSelect={(opt) => { setIssueBookQuery(opt.primary); setIssueBookId(opt.id); }}
+            search={searchBooks}
+            error={issueErrors.book}
             required
             autoFocus
           />
-          <InputField
-            label="Member Email (optional)"
-            placeholder="e.g. alice@example.com — leave empty for logged-in user"
-            value={issueMemberEmail}
-            onChange={(e) => { setIssueMemberEmail(e.target.value); if (issueErrors.memberEmail) setIssueErrors(p => ({ ...p, memberEmail: '' })); }}
-            error={issueErrors.memberEmail}
+          <SearchDropdown
+            label="Member (optional — leave empty for logged-in user)"
+            placeholder="Type name or email to search members…"
+            value={issueMemberQuery}
+            onChange={(v) => { setIssueMemberQuery(v); setIssueMemberId(undefined); if (issueErrors.member) setIssueErrors(p => ({ ...p, member: '' })); }}
+            onSelect={(opt) => { setIssueMemberQuery(`${opt.primary} (${opt.secondary})`); setIssueMemberId(opt.id); }}
+            search={searchUsers}
+            error={issueErrors.member}
           />
           <div className={styles.modalActions}>
             <Button type="button" variant="ghost" onClick={closeIssueModal} disabled={isIssuing}>Cancel</Button>
@@ -195,21 +271,25 @@ export const AdminDashboard: React.FC = () => {
       {/* ── Return Asset Modal ─────────────────────────────────────── */}
       <Modal isOpen={isReturnOpen} onClose={closeReturnModal} title="Return Asset">
         <form onSubmit={handleReturnSubmit} className={styles.modalForm}>
-          <InputField
+          <SearchDropdown
             label="Book Title"
-            placeholder="e.g. Clean Code"
-            value={returnBookTitle}
-            onChange={(e) => { setReturnBookTitle(e.target.value); if (returnErrors.bookTitle) setReturnErrors(p => ({ ...p, bookTitle: '' })); }}
-            error={returnErrors.bookTitle}
+            placeholder="Type to search books…"
+            value={returnBookQuery}
+            onChange={(v) => { setReturnBookQuery(v); setReturnBookId(undefined); if (returnErrors.book) setReturnErrors(p => ({ ...p, book: '' })); }}
+            onSelect={(opt) => { setReturnBookQuery(opt.primary); setReturnBookId(opt.id); }}
+            search={searchBooks}
+            error={returnErrors.book}
             required
             autoFocus
           />
-          <InputField
-            label="Member Email (optional)"
-            placeholder="e.g. alice@example.com"
-            value={returnMemberEmail}
-            onChange={(e) => { setReturnMemberEmail(e.target.value); if (returnErrors.memberEmail) setReturnErrors(p => ({ ...p, memberEmail: '' })); }}
-            error={returnErrors.memberEmail}
+          <SearchDropdown
+            label="Member (optional)"
+            placeholder="Type name or email to search members…"
+            value={returnMemberQuery}
+            onChange={(v) => { setReturnMemberQuery(v); setReturnMemberId(undefined); if (returnErrors.member) setReturnErrors(p => ({ ...p, member: '' })); }}
+            onSelect={(opt) => { setReturnMemberQuery(`${opt.primary} (${opt.secondary})`); setReturnMemberId(opt.id); }}
+            search={searchUsers}
+            error={returnErrors.member}
           />
           <div className={styles.modalActions}>
             <Button type="button" variant="ghost" onClick={closeReturnModal} disabled={isReturning}>Cancel</Button>
@@ -227,11 +307,11 @@ export const AdminDashboard: React.FC = () => {
             <div className={styles.notifyCard}>
               <div className={styles.notifyRow}>
                 <span className={styles.notifyLabel}>Member</span>
-                <span className={styles.notifyValue}>{notifyModal.data.user}</span>
+                <span className={styles.notifyValue}>{notifyModal.data.userName}</span>
               </div>
               <div className={styles.notifyRow}>
-                <span className={styles.notifyLabel}>Days Overdue</span>
-                <span className={styles.notifyValueDanger}>{notifyModal.data.daysOverdue} days</span>
+                <span className={styles.notifyLabel}>Book</span>
+                <span className={styles.notifyValue}>{notifyModal.data.bookName}</span>
               </div>
               <div className={styles.notifyRow}>
                 <span className={styles.notifyLabel}>Amount Due</span>
@@ -255,7 +335,7 @@ export const AdminDashboard: React.FC = () => {
               <div className={styles.confirmedState}>
                 <div className={styles.confirmedIcon}>✓</div>
                 <p className={styles.confirmedTitle}>Marked as Paid</p>
-                <p className={styles.confirmedDetail}>₹{paidAction.data.amount} settled for <strong>{paidAction.data.user}</strong></p>
+                <p className={styles.confirmedDetail}>₹{paidAction.data.amount} settled for <strong>{paidAction.data.userName}</strong></p>
                 <div className={styles.modalActions}>
                   <Button type="button" variant="primary" onClick={handlePaidDone}>Done</Button>
                 </div>
@@ -265,11 +345,11 @@ export const AdminDashboard: React.FC = () => {
                 <div className={styles.notifyCard}>
                   <div className={styles.notifyRow}>
                     <span className={styles.notifyLabel}>Member</span>
-                    <span className={styles.notifyValue}>{paidAction.data.user}</span>
+                    <span className={styles.notifyValue}>{paidAction.data.userName}</span>
                   </div>
                   <div className={styles.notifyRow}>
-                    <span className={styles.notifyLabel}>Days Overdue</span>
-                    <span className={styles.notifyValueDanger}>{paidAction.data.daysOverdue} days</span>
+                    <span className={styles.notifyLabel}>Book</span>
+                    <span className={styles.notifyValue}>{paidAction.data.bookName}</span>
                   </div>
                   <div className={styles.notifyRow}>
                     <span className={styles.notifyLabel}>Amount Due</span>

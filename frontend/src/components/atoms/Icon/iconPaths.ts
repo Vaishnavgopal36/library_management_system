@@ -44,7 +44,11 @@ export type IconName =
   | 'slash'
   | 'check-square'
   | 'info'
+  | 'bell'
   | 'chevron-down'
+  | 'chevron-left'
+  | 'chevron-right'
+  | 'archive'
   | 'play';
 
 export const ICON_PATHS: Record<IconName, SvgElement[]> = {
@@ -193,8 +197,27 @@ export const ICON_PATHS: Record<IconName, SvgElement[]> = {
     { tag: 'line', x1: 12, y1: 16, x2: 12.01, y2: 16 },
   ],
 
+  bell: [
+    { tag: 'path', d: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9' },
+    { tag: 'path', d: 'M13.73 21a2 2 0 0 1-3.46 0' },
+  ],
+
   'chevron-down': [
     { tag: 'polyline', points: '6 9 12 15 18 9' },
+  ],
+
+  'chevron-left': [
+    { tag: 'polyline', points: '15 18 9 12 15 6' },
+  ],
+
+  'chevron-right': [
+    { tag: 'polyline', points: '9 18 15 12 9 6' },
+  ],
+
+  archive: [
+    { tag: 'polyline', points: '21 8 21 21 3 21 3 8' },
+    { tag: 'rect', x: 1, y: 3, width: 22, height: 5 },
+    { tag: 'line', x1: 10, y1: 12, x2: 14, y2: 12 },
   ],
 
   play: [

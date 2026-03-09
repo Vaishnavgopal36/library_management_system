@@ -1,0 +1,105 @@
+You are an Expert Full-Stack Architect (React/TypeScript + Spring Boot/Java). We are upgrading this library management system to an enterprise-grade standard for a VP-level technical review. 
+
+
+Please review my codebase (both frontend and backend) and execute the following refactoring plan. 
+
+**CRITICAL INSTRUCTION:** Do not execute the entire plan or write massive amounts of code at once. For your first response, ONLY output a detailed step-by-step plan for how you will execute **Phase 1**. Wait for my approval before modifying any files.
+
+
+--- FRONTEND REFACTORING ---
+
+
+### Phase 1: SVGs & Theme Consolidation
+
+1. Create a new file: `frontend/src/components/atoms/Icon/Icon.tsx`.
+
+2. Extract all raw inline `<svg>` tags (e.g., in Topbar, Sidebar, AdminSearchPage) into this single `Icon` component that accepts `name`, `size`, `className`, and `color` props.
+
+3. Replace all inline SVGs in the frontend codebase with `<Icon name="..." />`.
+
+4. Extract hardcoded hex colors into semantic color variables in `tailwind.config.js`.
+
+
+### Phase 2: Component Extraction (DRY Principle)
+
+1. **Empty States:** Extract the repeated "No data found" UI into a generic `src/components/molecules/EmptyState.tsx` component.
+
+2. **Skeletons:** Extract the repetitive `SkeletonRows` and `SkeletonBookRows` functions into a reusable `<TableSkeleton columns={number} rows={number} />` component.
+
+3. **Modals:** Create a `<FormModal>` wrapper in `components/molecules` that abstracts away the repetitive modal forms and "Cancel / Confirm" action buttons.
+
+
+### Phase 3: Hybrid Tailwind Migration & UI Bug Fixes
+
+1. **Hybrid Migration:** Convert standard layout properties (flexbox, grid, margins, typography) into inline Tailwind CSS utility classes across pages. 
+
+2. **Keep Complex CSS:** DO NOT completely delete `.module.css` files. Retain them ONLY for complex custom designs (e.g., mesh gradients, keyframe animations).
+
+3. **UI Fix 1 (Search Blowout):** In `AdminSearchPage`, ensure the book info flex-child has `min-w-0` and the title has `truncate`. Increase the controls row z-index to fix dropdown clipping.
+
+4. **UI Fix 2 (Reserve Button Alignment):** In `MemberDashboard.tsx`, use flex-grow on the text container and `margin-top: auto` on action buttons so they align at the bottom of the cards.
+
+5. **UI Fix 3 (Scroll Clipping):** In `MemberDashboard.tsx`, change `.topRow` to `min-height`, remove `overflow: hidden` from `.newArrivalsCard`, and add a pseudo-element spacer to `.scrollContainer`.
+
+
+### Phase 4: Asset Cleanup
+
+1. Delete boilerplate assets in `src/stories/assets/` (e.g., `accessibility.svg`, discord/youtube SVGs). DO NOT delete `.stories.tsx` files.
+
+
+### Phase 5: Zustand State Management
+
+1. Install `zustand`.
+
+2. Create `src/store/useAuthStore.ts` holding `user`, `isAuthenticated`, and login/logout actions.
+
+3. Update `AppShell.tsx` and `Sidebar.tsx` to read the user role directly from Zustand.
+
+
+### Phase 6: Prepare for API (React Query)
+
+1. Install `@tanstack/react-query` and wrap the app in `main.tsx`.
+
+2. Create `src/hooks/useBooks.ts` outlining the structure for fetching data. Replace `useMockDelay` with this implementation. Wrap `hashString` calculations in `useMemo`.
+
+
+### Phase 7: Enterprise Resiliency
+
+1. Update `src/routes/index.tsx` to use `React.lazy()` and `<Suspense>` for Code Splitting.
+
+2. Create a global `ErrorBoundary.tsx` component to wrap the app.
+
+3. Create `src/api/client.ts` using `axios` with request interceptors for JWT injection.
+
+
+--- BACKEND REFACTORING ---
+
+
+### Phase 8: Backend - Redis Caching Strategy
+
+1. Add `spring-boot-starter-cache` and `spring-boot-starter-data-redis` to `backend/pom.xml`.
+
+2. Add `@EnableCaching` to `BackendApplication.java`.
+
+3. In `BookService.java`, apply `@Cacheable(value = "books")` to read operations and `@CacheEvict(value = "books", allEntries = true)` to write/update operations.
+
+
+### Phase 9: Backend - Audit Trail (Envers)
+
+1. Add `spring-data-envers` to `pom.xml`.
+
+2. Create an `AuditConfig.java` class with `@EnableJpaAuditing` and an `AuditorAware` bean reading from `SecurityContextHolder`.
+
+3. Add `@Audited` to critical entities (e.g., Fines, Transactions) and implement standard audit fields (`@CreatedDate`, `@CreatedBy`, etc.) using `@EntityListeners(AuditingEntityListener.class)`.
+
+
+### Phase 10: Backend - Structured Enterprise Logging
+
+1. Ensure Lombok's `@Slf4j` is utilized across all Controllers and Services.
+
+2. Implement structured logging for all critical business actions (e.g., `log.info("Action: PAY_FINE | FineID: {} | User: {}", id, principal.getName());`).
+
+3. Create a `src/main/resources/logback-spring.xml` file to configure a RollingFileAppender so logs are saved to daily archived files instead of just printing to the console.
+
+
+Please acknowledge this plan. Once you confirm you understand, output your detailed plan for executing **Phase 1** only. I will review it before you write any code.

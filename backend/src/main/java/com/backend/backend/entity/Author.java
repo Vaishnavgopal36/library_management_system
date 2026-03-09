@@ -2,6 +2,8 @@ package com.backend.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import java.util.Set;
 import java.util.UUID;
@@ -13,6 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Audited
 public class Author {
 
     @Id
@@ -24,6 +27,9 @@ public class Author {
     private String name;
 
     // Inverse side of the ManyToMany relationship mapped in Book.java
+    // @NotAudited: Envers tracks the join table from the owning side (Book).
+    // Auditing this inverse side would cause duplicate / conflicting audit records.
+    @NotAudited
     @ManyToMany(mappedBy = "authors", fetch = FetchType.LAZY)
     private Set<Book> books;
 }

@@ -1,0 +1,418 @@
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Controls & Dropdown */
+.controlsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 50; 
+}
+
+.dropdownContainer {
+  position: relative;
+}
+
+.browseButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-surface-200);
+  border-radius: 50px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-label);
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  background: white;
+  border: 1px solid var(--color-surface-200);
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  overflow: hidden;
+}
+
+.dropdownMenu ul { list-style: none; padding: 0.5rem 0; margin: 0; }
+.dropdownMenu li { padding: 0.75rem 1.25rem; font-size: 0.875rem; color: var(--color-text-body); cursor: pointer; }
+.dropdownMenu li:hover { background-color: var(--color-surface-50); color: var(--color-text-primary); }
+.dropdownItemActive { background-color: var(--color-surface-100) !important; color: var(--color-text-primary) !important; font-weight: 600; }
+
+/* Controls left group */
+.controlsLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+/* Search input */
+.searchInputWrapper {
+  position: relative;
+  flex: 1;
+  max-width: 420px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.6rem 2.5rem 0.6rem 2.75rem;
+  border: 1px solid var(--color-surface-200);
+  border-radius: 50px;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.searchInput:focus {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgba(155, 44, 94, 0.08);
+}
+
+.clearBtn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.125rem;
+  display: flex;
+  align-items: center;
+}
+
+.clearBtn:hover {
+  color: var(--color-text-secondary);
+}
+
+/* Empty state */
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.emptyState p { margin: 0; }
+
+/* CSS Grid Alignment for Headers and Rows */
+.listHeader {
+  display: flex;
+  padding: 0 2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-label);
+  margin-bottom: -0.5rem;
+}
+
+.colBook { flex: 4; display: flex; align-items: center; min-width: 0;}
+.colCategory { flex: 2; display: flex; flex-direction: column; justify-content: center; }
+.colStatus { flex: 2; display: flex; flex-direction: column; justify-content: center; gap: 0.5rem; align-items: flex-start; }
+.colAction { flex: 2; display: flex; align-items: center; justify-content: flex-end; }
+
+.listContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Individual Book Card Row */
+.bookRow {
+  display: flex;
+  background-color: var(--color-surface);
+  border-radius: 16px;
+  padding: 1.25rem 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.bookRow:hover {
+  border-color: var(--color-danger-300);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+/* Book Title/Image Column */
+.bookInfoWrapper {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.bookInfoWrapper > :first-child {
+  flex-shrink: 0;
+}
+
+.bookText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bookTitle { margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--color-text-primary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.bookAuthor { margin: 0; font-size: 0.9375rem; color: var(--color-text-body); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.bookEdition { margin: 0; font-size: 0.8125rem; color: var(--color-text-muted); }
+
+/* Text Styles */
+.categoryText { font-size: 1rem; font-weight: 500; color: var(--color-text-label); margin-bottom: 0.25rem; }
+.subCategoryText { font-size: 0.875rem; color: var(--color-text-secondary); }
+
+.stockText {
+  font-size: 0.875rem;
+  color: var(--color-text-body);
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.iconButton {
+  background: transparent;
+  border: 1px solid var(--color-surface-200);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.iconButton:hover { background-color: var(--color-surface-100); border-color: var(--color-surface-300); }
+
+.deleteBtn { color: var(--color-danger); }
+.deleteBtn:hover { background-color: var(--color-danger-50); border-color: var(--color-danger-300); color: var(--color-danger-600); }
+.deleteBtn svg { stroke: currentColor; }
+
+/* ── Issue Modal ─────────────────────────────────────────────────────────── */
+.issueForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.issueBookPreview {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.25rem;
+  background-color: var(--color-surface-50);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.issueBookMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.issueBookTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.issueBookAuthor {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-body);
+}
+
+.issueBookEdition {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.issueDivider {
+  height: 1px;
+  background-color: var(--color-surface-200);
+  margin: 0.25rem 0;
+}
+
+.issueActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+/* Two-column form row inside modals */
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Delete confirmation */
+.deleteWarning {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.deleteIcon {
+  width: 56px;
+  height: 56px;
+  background-color: var(--color-danger-50);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteWarningText {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-label);
+  line-height: 1.6;
+}
+
+.deleteWarningSubtext {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* Reserve hint text inside member reserve modal */
+.reserveHint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .colCategory { display: none; }
+}
+
+@media (max-width: 768px) {
+  /* Hide the column headers on mobile — info embedded in each card */
+  .listHeader { display: none; }
+
+  /* Stack the book row columns vertically */
+  .bookRow {
+    flex-direction: column;
+    padding: 1rem 1.25rem;
+    gap: 0.75rem;
+  }
+  .colBook, .colCategory, .colStatus, .colAction {
+    flex: none;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .colAction { justify-content: flex-end; }
+
+  /* Two-column form back to one column */
+  .formRow { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .bookRow     { padding: 0.875rem 1rem; }
+  .bookTitle   { font-size: 1rem; }
+  .actionButtons { flex-wrap: wrap; }
+}
+
+/* ── Archived book row dim ───────────────────────────────────────────────── */
+.bookRowArchived {
+  opacity: 0.55;
+  background-color: var(--color-surface-50);
+}
+.bookRowArchived:hover {
+  border-color: var(--color-danger-200) !important;
+}
+
+/* ── Active / Inactive pill segmented toggle ─────────────────────────────── */
+.pillToggle {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 50px;
+  border: 1.5px solid var(--color-surface-300);
+  background-color: var(--color-surface);
+  overflow: hidden;
+  padding: 3px;
+  gap: 2px;
+}
+
+.pillSegment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.9rem;
+  border-radius: 50px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.18s, color 0.18s;
+  white-space: nowrap;
+}
+.pillSegment:hover {
+  background-color: var(--color-surface-100);
+  color: var(--color-text-primary);
+}
+
+.pillSegmentActive {
+  background-color: var(--color-success-100);
+  color: var(--color-success-800);
+}
+.pillSegmentActive:hover {
+  background-color: #bbf7d0;
+  color: var(--color-success-800);
+}
+
+.pillSegmentInactive {
+  background-color: var(--color-danger-50);
+  color: var(--color-danger-700);
+}
+.pillSegmentInactive:hover {
+  background-color: var(--color-danger-200);
+  color: var(--color-danger-700);
+}

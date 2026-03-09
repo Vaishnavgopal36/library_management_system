@@ -1,6 +1,9 @@
 package com.backend.backend.service;
 
+import com.backend.backend.dto.response.AuthorResponse;
 import com.backend.backend.dto.response.BookResponse;
+import com.backend.backend.dto.response.CategoryResponse;
+import com.backend.backend.dto.response.PublisherResponse;
 import com.backend.backend.dto.response.ReservationResponse;
 import com.backend.backend.dto.response.UserResponse;
 import com.backend.backend.entity.Book;
@@ -16,14 +19,20 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
+import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -44,8 +53,9 @@ public class ReservationService {
     @Transactional
     public ReservationResponse createReservation(UUID userId, UUID bookId) {
         
-        // 1. Check Dynamic Stock
-        Integer availableStock = bookRepository.getTrueAvailableStock(bookId);
+        // 1. Check Dynamic Stock — single batch query, no N+1
+        List<Object[]> stockRows = bookRepository.getTrueAvailableStockBatch(List.of(bookId));
+        Integer availableStock = stockRows.isEmpty() ? null : ((Number) stockRows.get(0)[1]).intValue();
         if (availableStock == null || availableStock <= 0) {
             throw new IllegalStateException("Book is currently out of stock.");
         }
@@ -65,10 +75,14 @@ public class ReservationService {
                 .build();
 
         try {
-           
-            return mapToResponse(reservationRepository.saveAndFlush(reservation));
-        } catch (DataIntegrityViolationException e) {
-   
+            // availableStock is already resolved above; reuse it to avoid a second query.
+            return mapToResponse(reservationRepository.saveAndFlush(reservation), availableStock);
+        } catch (DataIntegrityViolationException | JpaSystemException e) {
+            // Catches both constraint violations and DB trigger exceptions (PSQLException wrapped as JpaSystemException)
+            String msg = e.getMostSpecificCause().getMessage();
+            if (msg != null && msg.contains("Limit reached")) {
+                throw new IllegalStateException(msg);
+            }
             throw new IllegalArgumentException("Reservation failed: Limit reached or duplicate hold.");
         }
     }
@@ -245,15 +259,48 @@ public class ReservationService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return reservationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "reservedAt")).stream()
-                .map(this::mapToResponse)
+        List<Reservation> reservations = reservationRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "reservedAt"));
+        // Batch-fetch stock for all books on this result set — not one query per reservation.
+        List<UUID> bookIds = reservations.stream().map(r -> r.getBook().getId()).collect(Collectors.toList());
+        Map<UUID, Integer> stockMap = fetchStockMap(bookIds);
+        return reservations.stream()
+                .map(r -> mapToResponse(r, stockMap.getOrDefault(r.getBook().getId(), 0)))
                 .collect(Collectors.toList());
     }
 
-    private ReservationResponse mapToResponse(Reservation reservation) {
+    /**
+     * Fetches true available stock for a collection of book IDs in a SINGLE SQL query.
+     * Safe for empty input: returns an empty map without hitting the database.
+     */
+    private Map<UUID, Integer> fetchStockMap(Collection<UUID> bookIds) {
+        if (bookIds == null || bookIds.isEmpty()) return Collections.emptyMap();
+        List<Object[]> rows = bookRepository.getTrueAvailableStockBatch(bookIds);
+        Map<UUID, Integer> map = new HashMap<>(rows.size());
+        for (Object[] row : rows) {
+            UUID id    = UUID.fromString(row[0].toString());
+            int  stock = row[1] == null ? 0 : ((Number) row[1]).intValue();
+            map.put(id, stock);
+        }
+        return map;
+    }
+
+    private ReservationResponse mapToResponse(Reservation reservation, int trueStock) {
         User user = reservation.getUser();
         Book book = reservation.getBook();
-        Integer dynamicStock = bookRepository.getTrueAvailableStock(book.getId());
+
+        List<AuthorResponse> authors = book.getAuthors() == null
+                ? Collections.emptyList()
+                : book.getAuthors().stream()
+                        .map(a -> AuthorResponse.builder().id(a.getId()).name(a.getName()).build())
+                        .sorted(Comparator.comparing(AuthorResponse::getName, String.CASE_INSENSITIVE_ORDER))
+                        .collect(Collectors.toList());
+
+        List<CategoryResponse> categories = book.getCategories() == null
+                ? Collections.emptyList()
+                : book.getCategories().stream()
+                        .map(c -> CategoryResponse.builder().id(c.getId()).name(c.getName()).build())
+                        .sorted(Comparator.comparing(CategoryResponse::getName, String.CASE_INSENSITIVE_ORDER))
+                        .collect(Collectors.toList());
 
         return ReservationResponse.builder()
                 .id(reservation.getId())
@@ -269,8 +316,14 @@ public class ReservationService {
                         .title(book.getTitle())
                         .isbn(book.getIsbn())
                         .stockQuantity(book.getStockQuantity())
-                        .trueAvailableStock(dynamicStock != null ? dynamicStock : 0)
+                        .trueAvailableStock(trueStock)
                         .isArchived(book.getIsArchived())
+                        .publisher(book.getPublisher() == null ? null : PublisherResponse.builder()
+                                .id(book.getPublisher().getId())
+                                .name(book.getPublisher().getName())
+                                .build())
+                        .authors(authors)
+                        .categories(categories)
                         .build())
                 .reservedAt(reservation.getReservedAt())
                 .expiresAt(reservation.getExpiresAt())

@@ -37,7 +37,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/library_db
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=securepassword
-      # Best Practice: Use Flyway/Liquibase for migrations, set Hibernate to validate against the existing schema
+      # Hibernate is read-only. Flyway owns all schema changes.
       - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
       - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
       - REDIS_HOST=redis
@@ -57,7 +57,7 @@ services:
       - "5173:5173"
       - "6006:6006"
     environment:
-      - VITE_API_URL=http://localhost:8080 # Browser talks to localhost
+      - VITE_API_URL=http://localhost:8080/api/v1 # Browser talks to localhost
     networks:
       - library_network
 
@@ -66,7 +66,38 @@ services:
     image: redis:alpine
     networks:
       - library_network
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    depends_on:
+      - db  # Change this if your postgres service is named something else (e.g., postgres)
+    networks:             # <--- ADD THIS
+      - library_network
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - library_network
 
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    depends_on:
+      - loki
+    networks:
+      - library_network
 volumes:
   postgres_data:
 

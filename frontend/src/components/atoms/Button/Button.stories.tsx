@@ -43,3 +43,36 @@ export const Ghost: Story = {
     children: 'Ghost Button',
   },
 };
+
+export const Danger: Story = {
+  args: {
+    variant: 'danger',
+    size: 'md',
+    children: 'Danger Button',
+  },
+};
+
+export const Small: Story = {
+  args: {
+    variant: 'primary',
+    size: 'sm',
+    children: 'Small Button',
+  },
+};
+
+export const Large: Story = {
+  args: {
+    variant: 'primary',
+    size: 'lg',
+    children: 'Large Button',
+  },
+};
+
+export const Disabled: Story = {
+  args: {
+    variant: 'primary',
+    size: 'md',
+    children: 'Disabled Button',
+    disabled: true,
+  },
+};

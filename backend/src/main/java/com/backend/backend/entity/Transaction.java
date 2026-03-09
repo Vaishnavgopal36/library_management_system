@@ -4,6 +4,8 @@ import com.backend.backend.entity.enums.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,6 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Audited
 public class Transaction {
 
     @Id
@@ -22,6 +25,8 @@ public class Transaction {
     @Column(name = "transaction_id", updatable = false, nullable = false)
     private UUID id;
 
+    // User is not audited — store the FK only, no lookup against a users_aud table.
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

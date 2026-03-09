@@ -18,7 +18,7 @@
   background-color: var(--color-surface);
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
@@ -58,7 +58,9 @@
 
 .body {
   padding: 1.5rem;
+  max-height: calc(90vh - 70px);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @keyframes fadeIn {

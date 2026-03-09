@@ -1,9 +1,10 @@
+import React from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { LoginPage } from '../pages/Login/LoginPage';
 import { RegisterPage } from '../pages/Register/RegisterPage';
 import { MemberDashboard } from '../pages/Member/MemberDashboard';
 import { AdminDashboard } from '../pages/Admin/AdminDashboard';
-import { SearchPage } from '../pages/AdminSearch/AdminSearchPage';
+import { SearchPage } from '../pages/Search/AdminSearchPage';
 import { HistoryPage } from '../pages/History/HistoryPage';
 import { FinesPage } from '../pages/Fines/FinesPage';
 import { ReservationsPage } from '../pages/Reservations/ReservationsPage';
@@ -12,8 +13,17 @@ import { MemberDirectoryPage } from '../pages/MemberDirectory/MemberDirectoryPag
 import { AboutPage } from '../pages/About/AboutPage';
 import { TermsPage } from '../pages/Terms/TermsPage';
 import { SupportPage } from '../pages/Support/SupportPage';
+import { NotificationsPage } from '../pages/Notifications/NotificationsPage';
+import { ProtectedRoute } from '../components/atoms/ProtectedRoute/ProtectedRoute';
 
-// This acts as a centralized map of your entire application's URLs
+// Helper to reduce boilerplate
+const member = (el: React.ReactElement) => (
+  <ProtectedRoute role="member">{el}</ProtectedRoute>
+);
+const admin = (el: React.ReactElement) => (
+  <ProtectedRoute role="admin">{el}</ProtectedRoute>
+);
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -27,80 +37,27 @@ export const router = createBrowserRouter([
     path: '/register',
     element: <RegisterPage />,
   },
-  {
-    path: '/member/dashboard',
-    element: <MemberDashboard />,
-  },
-  {
-    path: '/member/search',
-    element: <SearchPage role="member" />,
-  },
-  {
-    path: '/admin/dashboard',
-    element: <AdminDashboard />,
-  },
-  {
-    path: '/admin/search',
-    element: <SearchPage role="admin" />,
-  },
-  {
-    path: '/member/history',
-    element: <HistoryPage role="member" />,
-  },
-  {
-    path: '/admin/history',
-    element: <HistoryPage role="admin" />,
-  },
-  {
-    path: '/member/fines',
-    element: <FinesPage role="member" />,
-  },
-  {
-    path: '/admin/fines',
-    element: <FinesPage role="admin" />,
-  },
-  {
-    path: '/member/reservations',
-    element: <ReservationsPage role="member" />,
-  },
-  {
-    path: '/admin/reservations',
-    element: <ReservationsPage role="admin" />,
-  },
-  {
-    path: '/member/profile',
-    element: <ProfilePage role="member" />,
-  },
-  {
-    path: '/admin/profile',
-    element: <ProfilePage role="admin" />,
-  },
-  {
-    path: '/admin/members',
-    element: <MemberDirectoryPage />,
-  },
-  {
-    path: '/member/about',
-    element: <AboutPage role="member" />,
-  },
-  {
-    path: '/admin/about',
-    element: <AboutPage role="admin" />,
-  },
-  {
-    path: '/member/terms',
-    element: <TermsPage role="member" />,
-  },
-  {
-    path: '/admin/terms',
-    element: <TermsPage role="admin" />,
-  },
-  {
-    path: '/member/support',
-    element: <SupportPage role="member" />,
-  },
-  {
-    path: '/admin/support',
-    element: <SupportPage role="admin" />,
-  },
+  // ── Member routes ────────────────────────────────────────────────────────────
+  { path: '/member/dashboard',    element: member(<MemberDashboard />) },
+  { path: '/member/search',       element: member(<SearchPage role="member" />) },
+  { path: '/member/history',      element: member(<HistoryPage role="member" />) },
+  { path: '/member/fines',        element: member(<FinesPage role="member" />) },
+  { path: '/member/reservations', element: member(<ReservationsPage role="member" />) },
+  { path: '/member/profile',      element: member(<ProfilePage role="member" />) },
+  { path: '/member/about',        element: member(<AboutPage role="member" />) },
+  { path: '/member/terms',        element: member(<TermsPage role="member" />) },
+  { path: '/member/support',      element: member(<SupportPage role="member" />) },
+  { path: '/member/notifications', element: member(<NotificationsPage role="member" />) },
+  // ── Admin routes ─────────────────────────────────────────────────────────────
+  { path: '/admin/dashboard',    element: admin(<AdminDashboard />) },
+  { path: '/admin/search',       element: admin(<SearchPage role="admin" />) },
+  { path: '/admin/history',      element: admin(<HistoryPage role="admin" />) },
+  { path: '/admin/fines',        element: admin(<FinesPage role="admin" />) },
+  { path: '/admin/reservations', element: admin(<ReservationsPage role="admin" />) },
+  { path: '/admin/profile',      element: admin(<ProfilePage role="admin" />) },
+  { path: '/admin/members',      element: admin(<MemberDirectoryPage />) },
+  { path: '/admin/about',        element: admin(<AboutPage role="admin" />) },
+  { path: '/admin/terms',        element: admin(<TermsPage role="admin" />) },
+  { path: '/admin/support',      element: admin(<SupportPage role="admin" />) },
+  { path: '/admin/notifications', element: admin(<NotificationsPage role="admin" />) },
 ]);

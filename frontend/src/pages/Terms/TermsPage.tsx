@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AppRole } from '../../utils/types';
 import styles from './TermsPage.module.css';
+import { Icon } from '../../components/atoms/Icon';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 
 export interface TermsPageProps {
@@ -18,11 +19,7 @@ const SECTIONS: Section[] = [
   {
     id: 'membership',
     title: 'Membership & Accounts',
-    icon: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
+    icon: <Icon name="user" size={20} />,
     rules: [
       { heading: 'One account per person', body: 'Each individual may hold only one active library account at any time. Duplicate accounts are subject to removal.' },
       { heading: 'Valid email required', body: 'A working email address is required for account verification, loan notifications and overdue reminders.' },
@@ -33,11 +30,7 @@ const SECTIONS: Section[] = [
   {
     id: 'borrowing',
     title: 'Borrowing Rules',
-    icon: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      </svg>
-    ),
+    icon: <Icon name="book-open" size={20} />,
     rules: [
       { heading: 'Borrowing limit', body: 'A maximum of 5 books may be held at any one time. Borrowing a 6th item requires that an existing loan be returned first.' },
       { heading: 'Standard loan period', body: 'Each book is lent for 14 calendar days from the date of issue. The due date is shown in your borrowing history.' },
@@ -48,13 +41,9 @@ const SECTIONS: Section[] = [
   {
     id: 'fines',
     title: 'Fines & Overdue Policy',
-    icon: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
-      </svg>
-    ),
+    icon: <Icon name="credit-card" size={20} />,
     rules: [
-      { heading: 'Overdue fine rate', body: 'A daily fine of ₹5 per item is applied for each calendar day a book remains unreturned after its due date, including weekends and public holidays.' },
+      { heading: 'Overdue fine rate', body: 'A daily fine of ₹2 per item is applied for each calendar day a book remains unreturned after its due date, including weekends and public holidays.' },
       { heading: 'Fine accumulation', body: 'Fines accumulate automatically. The outstanding amount is visible in the Fines & Payments section of your account at any time.' },
       { heading: 'Borrowing suspension', body: 'If your outstanding fine balance reaches ₹500 or more, new borrowings are suspended until the balance is cleared.' },
       { heading: 'Fine settlement', body: 'Fines are settled through the Fines & Payments page. A receipt is generated and your payment history is retained for your records.' },
@@ -63,11 +52,7 @@ const SECTIONS: Section[] = [
   {
     id: 'reservations',
     title: 'Reservations',
-    icon: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-    ),
+    icon: <Icon name="calendar" size={20} />,
     rules: [
       { heading: 'Reservation limit', body: 'A maximum of 3 reservations may be active at any one time, covering books that are currently on loan to another member.' },
       { heading: 'Hold window', body: 'When a reserved item becomes available, it is held exclusively for you for 3 calendar days. If not collected within this window, the reservation expires and the item is returned to open circulation.' },
@@ -78,11 +63,7 @@ const SECTIONS: Section[] = [
   {
     id: 'blacklisting',
     title: 'Account Restrictions & Blacklisting',
-    icon: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-      </svg>
-    ),
+    icon: <Icon name="slash" size={20} />,
     rules: [
       { heading: 'Blacklisting criteria', body: 'An account may be blacklisted if 3 or more items are overdue simultaneously, the outstanding fine balance exceeds ₹500, or if there is evidence of account misuse.' },
       { heading: 'Effect of blacklisting', body: 'A blacklisted account cannot borrow new items or place reservations. Existing loans must be returned and fines cleared before the restriction can be lifted.' },
@@ -93,11 +74,7 @@ const SECTIONS: Section[] = [
   {
     id: 'conduct',
     title: 'Acceptable Use',
-    icon: (
-      <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-      </svg>
-    ),
+    icon: <Icon name="check-square" size={20} />,
     rules: [
       { heading: 'Intended use', body: 'This platform is provided for the sole purpose of accessing library services. Commercial use, scraping or automated querying is prohibited.' },
       { heading: 'Respectful conduct', body: 'Members are expected to interact with the platform and its staff in a respectful manner. Abusive behaviour is grounds for account suspension.' },
@@ -126,9 +103,7 @@ export function TermsPage({ role = 'member' }: TermsPageProps) {
 
         {/* Notice banner */}
         <div className={styles.noticeBanner}>
-          <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
+          <Icon name="info" size={18} stroke="var(--color-brand)" />
           <span>By using BookStop you agree to abide by the policies below. Rules are enforced consistently to ensure fair access for all members.</span>
         </div>
 
@@ -141,12 +116,12 @@ export function TermsPage({ role = 'member' }: TermsPageProps) {
                   <div className={styles.accordionIcon}>{section.icon}</div>
                   <span className={styles.accordionTitle}>{section.title}</span>
                 </div>
-                <svg
+                <Icon
+                  name="chevron-down"
                   className={`${styles.chevron} ${expanded === section.id ? styles.chevronUp : ''}`}
-                  width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
+                  size={18}
+                  strokeWidth={2.5}
+                />
               </button>
               {expanded === section.id && (
                 <div className={styles.accordionBody}>

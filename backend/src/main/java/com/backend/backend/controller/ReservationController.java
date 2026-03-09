@@ -93,6 +93,7 @@ public class ReservationController {
         return ResponseEntity.noContent().build();
     }
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> resolveHold(@PathVariable UUID id, @RequestBody Map<String, String> payload) {
         String action = payload.get("status");
         try {

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Icon } from '../../components/atoms/Icon';
 import styles from './Topbar.module.css';
 import type { SearchConfig } from '../AppShell/AppShell';
+import { notificationService } from '../../services/notification.service';
+import { TOKEN_KEY } from '../../services/api';
 
 export interface TopbarProps {
   userName?: string;
@@ -21,10 +23,22 @@ export const Topbar: React.FC<TopbarProps> = ({
 }) => {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!localStorage.getItem(TOKEN_KEY)) return;
+    const fetchCount = () =>
+      notificationService.unreadCount()
+        .then(setUnreadCount)
+        .catch(() => {});
+    fetchCount();
+    const interval = setInterval(fetchCount, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const formatTime = (date: Date) =>
@@ -34,7 +48,11 @@ export const Topbar: React.FC<TopbarProps> = ({
     date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
       .toUpperCase().replace(/ /g, '-');
 
-  const hasCategory = searchConfig?.showCategoryDropdown && (searchConfig.categories?.length ?? 0) > 0;
+  const hasSearchTypes = (searchConfig?.searchTypes?.length ?? 0) > 0;
+  const hasCategory = !hasSearchTypes && searchConfig?.showCategoryDropdown && (searchConfig.categories?.length ?? 0) > 0;
+  const showCategoryInline = hasSearchTypes
+    && searchConfig?.searchType === 'category'
+    && (searchConfig?.categories?.length ?? 0) > 0;
 
   return (
     <header className={styles.topbar}>
@@ -54,7 +72,23 @@ export const Topbar: React.FC<TopbarProps> = ({
         {/* Search Bar — only shown when the page provides searchConfig */}
         {searchConfig ? (
           <div className={styles.searchGroup}>
-            {/* Category dropdown — only rendered when the current page requests it */}
+            {/* Search-by type selector (Title / Author / Category) */}
+            {hasSearchTypes && (
+              <>
+                <select
+                  className={styles.searchSelect}
+                  value={searchConfig.searchType ?? searchConfig.searchTypes![0]}
+                  onChange={(e) => searchConfig.onSearchTypeChange?.(e.target.value)}
+                >
+                  {searchConfig.searchTypes!.map((t) => (
+                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                  ))}
+                </select>
+                <div className={styles.divider} />
+              </>
+            )}
+
+            {/* Legacy category dropdown */}
             {hasCategory && (
               <>
                 <select
@@ -70,25 +104,41 @@ export const Topbar: React.FC<TopbarProps> = ({
               </>
             )}
 
-            <Icon name="search" size={16} className={styles.searchIconInline} />
-
-            <input
-              type="text"
-              className={styles.searchInput}
-              placeholder={searchConfig.placeholder ?? 'Search…'}
-              value={searchConfig.query}
-              onChange={(e) => searchConfig.onQueryChange(e.target.value)}
-            />
-
-            {searchConfig.query && (
-              <button
-                type="button"
-                className={styles.clearBtn}
-                aria-label="Clear search"
-                onClick={() => searchConfig.onQueryChange('')}
+            {/* When searchType is 'category', replace text input with category select */}
+            {showCategoryInline ? (
+              <select
+                className={styles.searchSelect}
+                style={{ flex: 1, paddingRight: '0.5rem' }}
+                value={searchConfig.selectedCategory ?? searchConfig.categories![0]}
+                onChange={(e) => searchConfig.onCategoryChange?.(e.target.value)}
               >
-                <Icon name="x-close" size={14} />
-              </button>
+                {searchConfig.categories!.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            ) : (
+              <>
+                <Icon name="search" size={16} className={styles.searchIconInline} />
+
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder={searchConfig.placeholder ?? 'Search…'}
+                  value={searchConfig.query}
+                  onChange={(e) => searchConfig.onQueryChange(e.target.value)}
+                />
+
+                {searchConfig.query && (
+                  <button
+                    type="button"
+                    className={styles.clearBtn}
+                    aria-label="Clear search"
+                    onClick={() => searchConfig.onQueryChange('')}
+                  >
+                    <Icon name="x-close" size={14} />
+                  </button>
+                )}
+              </>
             )}
           </div>
         ) : (
@@ -98,6 +148,20 @@ export const Topbar: React.FC<TopbarProps> = ({
 
       {/* Right side: System Info & Profile */}
       <div className={styles.systemInfo}>
+        {/* Bell / Notifications */}
+        <button
+          className={styles.bellBtn}
+          aria-label="Notifications"
+          onClick={() => navigate(`/${role}/notifications`)}
+        >
+          <Icon name="bell" size={20} />
+          {unreadCount > 0 && (
+            <span className={styles.bellBadge}>
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </button>
+
         <div className={styles.dateTime}>
           <span className={styles.time}>{formatTime(currentTime)}</span>
           <span className={styles.date}>{formatDate(currentTime)}</span>

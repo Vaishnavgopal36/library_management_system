@@ -3,9 +3,9 @@ package com.backend.backend.controller;
 import com.backend.backend.dto.request.BookRequest;
 import com.backend.backend.dto.response.BookResponse;
 import com.backend.backend.service.BookService;
+import com.backend.backend.util.RestPage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ public class BookController {
     private final BookService bookService;
 
     @GetMapping
-    public ResponseEntity<Page<BookResponse>> searchCatalog(
+    public ResponseEntity<RestPage<BookResponse>> searchCatalog(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String author,
             @RequestParam(required = false) String category,
@@ -30,6 +30,8 @@ public class BookController {
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) String isbn,
             @RequestParam(required = false) UUID bookId,
+            @RequestParam(defaultValue = "false") boolean includeArchived,
+            @RequestParam(defaultValue = "false") boolean archivedOnly,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
@@ -42,6 +44,8 @@ public class BookController {
                 categoryId,
                 isbn,
                 bookId,
+                includeArchived,
+                archivedOnly,
                 PageRequest.of(page, size)
         ));
     }

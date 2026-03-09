@@ -40,7 +40,18 @@ export const CustomSize: StoryObj<typeof DynamicBookCover> = {
   },
 };
 
-// 4. A gallery showing the deterministic gradients in action
+// 4. Testing showText={false} — used in list rows where thumbnails stand alone
+export const ThumbnailOnly: StoryObj<typeof DynamicBookCover> = {
+  args: {
+    title: 'The Pragmatic Programmer',
+    author: 'David Thomas',
+    width: '96px',
+    height: '135px',
+    showText: false,
+  },
+};
+
+// 5. A gallery showing the deterministic gradients in action
 export const CoverGallery: StoryObj = {
   render: () => (
     <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', padding: '2rem', backgroundColor: '#f9fafb' }}>

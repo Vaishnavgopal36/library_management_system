@@ -2,13 +2,44 @@ package com.backend.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.envers.Audited;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Named entity graphs used by BookRepository to eliminate the N+1 problem.
+ *
+ * - BOOK_WITH_ALL_ASSOCIATIONS: used for single-entity lookups (findById).
+ *   Safe to JOIN-FETCH all three associations because there is no pagination.
+ *
+ * - BOOK_WITH_PUBLISHER: used for paginated queries (findByIsArchivedFalse,
+ *   Specification search).  Fetching @ManyToMany collections inside a
+ *   paginated EntityGraph forces Hibernate into in-memory pagination
+ *   (HHH90003004), which is worse than N+1 for large tables.  Instead, the
+ *   @ManyToOne publisher is JOIN-fetched here, and the @ManyToMany collections
+ *   are loaded in batches via @BatchSize on the fields below.
+ */
+@NamedEntityGraphs({
+    @NamedEntityGraph(
+        name = Book.GRAPH_WITH_ALL_ASSOCIATIONS,
+        attributeNodes = {
+            @NamedAttributeNode("authors"),
+            @NamedAttributeNode("categories"),
+            @NamedAttributeNode("publisher")
+        }
+    ),
+    @NamedEntityGraph(
+        name = Book.GRAPH_WITH_PUBLISHER,
+        attributeNodes = {
+            @NamedAttributeNode("publisher")
+        }
+    )
+})
 @Entity
 @Table(name = "books")
 @Getter
@@ -16,7 +47,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Audited
 public class Book {
+
+    /** Graph constant names — avoids magic strings in the repository. */
+    public static final String GRAPH_WITH_ALL_ASSOCIATIONS = "Book.withAllAssociations";
+    public static final String GRAPH_WITH_PUBLISHER        = "Book.withPublisher";
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -48,13 +84,17 @@ public class Book {
     @JoinColumn(name = "publisher_id")
     private Publisher publisher;
 
-    // Mapping the Join Tables exactly as defined in your DB schema
+    // Mapping the Join Tables exactly as defined in your DB schema.
+    // @BatchSize: for paginated queries, Hibernate loads authors/categories for
+    // the entire page in a single IN-clause query per collection
+    // (e.g., WHERE author_id IN (?, ?, ...)) rather than one query per book.
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "book_authors",
         joinColumns = @JoinColumn(name = "book_id"),
         inverseJoinColumns = @JoinColumn(name = "author_id")
     )
+    @BatchSize(size = 50)
     private Set<Author> authors;
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -63,5 +103,6 @@ public class Book {
         joinColumns = @JoinColumn(name = "book_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
+    @BatchSize(size = 50)
     private Set<Category> categories;
 }

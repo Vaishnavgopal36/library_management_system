@@ -14,6 +14,7 @@ import com.backend.backend.repository.TransactionRepository;
 import com.backend.backend.repository.UserRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -149,11 +150,13 @@ public class TransactionService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "books", allEntries = true)
     @Transactional
     public TransactionResponse issueBook(TransactionRequest request) {
         return issueBook(request.getUserId(), request.getBookId());
     }
 
+    @CacheEvict(value = "books", allEntries = true)
     @Transactional
     public TransactionResponse issueBook(UUID userId, UUID bookId) {
         if (userId == null || bookId == null) {
@@ -174,8 +177,9 @@ public class TransactionService {
 
         enforceBorrowLimits(user.getId());
 
-        // Enforce ACID constraint: Check true dynamic stock before issuing
-        Integer availableStock = bookRepository.getTrueAvailableStock(book.getId());
+        // Enforce ACID constraint: Check true dynamic stock before issuing — single batch query
+        List<Object[]> stockRows = bookRepository.getTrueAvailableStockBatch(List.of(book.getId()));
+        Integer availableStock = stockRows.isEmpty() ? null : ((Number) stockRows.get(0)[1]).intValue();
         if (availableStock == null || availableStock <= 0) {
             throw new IllegalStateException("Book is currently out of stock.");
         }
@@ -189,9 +193,12 @@ public class TransactionService {
                 .build();
 
         Transaction savedTransaction = transactionRepository.save(transaction);
+        // Notify the member that the book was issued to them
+        notificationService.notifyBookIssued(user, book.getTitle(), savedTransaction.getDueDate());
         return mapToResponse(savedTransaction);
     }
 
+    @CacheEvict(value = "books", allEntries = true)
     @Transactional
     public TransactionResponse returnBook(UUID transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
@@ -237,6 +244,7 @@ public class TransactionService {
         return mapToResponse(transactionRepository.save(transaction));
     }
 
+    @CacheEvict(value = "books", allEntries = true)
     @Transactional
     public TransactionResponse markLost(UUID transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
@@ -251,6 +259,19 @@ public class TransactionService {
 
         transaction.setStatus(TransactionStatus.lost);
         return mapToResponse(transactionRepository.save(transaction));
+    }
+
+    /**
+     * Computes the canonical overdue fine purely from dates: daysLate × DAILY_OVERDUE_FINE.
+     * Reference point is returnDate for returned books, otherwise now.
+     * This is the single source of truth — no DB fine record reads are needed for display.
+     */
+    private BigDecimal computeAccruedFine(Transaction transaction) {
+        LocalDateTime referenceDate = transaction.getReturnDate() != null
+                ? transaction.getReturnDate()
+                : LocalDateTime.now();
+        long daysLate = Math.max(0, ChronoUnit.DAYS.between(transaction.getDueDate(), referenceDate));
+        return DAILY_OVERDUE_FINE.multiply(BigDecimal.valueOf(daysLate));
     }
 
     // Helper method to safely convert Database Entities into JSON Data Transfer Objects
@@ -268,7 +289,9 @@ public class TransactionService {
                 .userName(userName)
                 .checkoutDate(transaction.getCheckoutDate())
                 .dueDate(transaction.getDueDate())
+                .returnDate(transaction.getReturnDate())
                 .status(transaction.getStatus().name())
+                .totalAccruedFine(computeAccruedFine(transaction))
                 .build();
     }
 

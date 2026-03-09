@@ -6,9 +6,10 @@ type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'neutral';
  * Map a transaction status to a Badge component variant.
  */
 export const txBadgeVariant = (status: TxStatus): BadgeVariant => {
-  if (status === 'Issued') return 'info';
-  if (status === 'Returned') return 'success';
-  return 'error'; // Overdue
+  if (status === 'issued')   return 'info';
+  if (status === 'returned') return 'success';
+  if (status === 'lost')     return 'neutral';
+  return 'error'; // overdue
 };
 
 /**
@@ -16,9 +17,11 @@ export const txBadgeVariant = (status: TxStatus): BadgeVariant => {
  */
 export const resBadgeVariant = (status: ResStatus): BadgeVariant => {
   switch (status) {
-    case 'Ready':   return 'success';
-    case 'Expired': return 'error';
-    default:        return 'neutral';
+    case 'active':    return 'info';
+    case 'completed': return 'success';
+    case 'expired':   return 'warning';
+    case 'cancelled': return 'neutral';
+    default:          return 'neutral';
   }
 };
 
@@ -26,5 +29,5 @@ export const resBadgeVariant = (status: ResStatus): BadgeVariant => {
  * Map a fine status to a Badge component variant.
  */
 export const fineBadgeVariant = (status: FineStatus): BadgeVariant => {
-  return status === 'Paid' ? 'success' : 'error';
+  return status === 'paid' ? 'success' : 'error';
 };

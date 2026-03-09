@@ -9,11 +9,15 @@ export interface SearchConfig {
   query: string;
   onQueryChange: (value: string) => void;
   placeholder?: string;
-  /** Show a category dropdown (Search page only). */
+  /** Show a category dropdown (Search page only — legacy, use searchTypes instead). */
   showCategoryDropdown?: boolean;
   categories?: string[];
   selectedCategory?: string;
   onCategoryChange?: (cat: string) => void;
+  /** Search-by type selector ('title' | 'author' | 'category'). */
+  searchTypes?: string[];
+  searchType?: string;
+  onSearchTypeChange?: (type: string) => void;
 }
 
 export interface AppShellProps {

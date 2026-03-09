@@ -4,31 +4,30 @@ import styles from './LoginPage.module.css';
 import { InputField } from '../../components/atoms/InputField/InputField';
 import { Button } from '../../components/atoms/Button/Button';
 import { Icon } from '../../components/atoms/Icon';
+import { useAuth } from '../../context/AuthContext';
 
 export const LoginPage: React.FC = () => {
-  // Field name matches LoginRequest.email (POST /api/v1/auth/login)
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
-
-    // TODO: POST /api/v1/auth/login — body: LoginRequest { email, password }
-    // Note: role for routing must come from the API response (JWT/role field), not be inferred from the email string
-    console.log('Attempting login with:', { email, password });
-    
-    setTimeout(() => {
+    try {
+      const user = await login({ email, password });
+      navigate(user.role === 'admin' ? '/admin/dashboard' : '/member/dashboard', { replace: true });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      setError(msg);
+    } finally {
       setIsLoading(false);
-      if (email.toLowerCase().includes('admin')) {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/member/dashboard');
-      }
-    }, 1500);
+    }
   };
 
   return (
@@ -49,6 +48,12 @@ export const LoginPage: React.FC = () => {
 
         <form onSubmit={handleLogin} className={styles.form}>
           
+          {error && (
+            <p style={{ color: 'var(--color-error, #ef4444)', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              {error}
+            </p>
+          )}
+
           <div className={styles.inputGroup}>
             <InputField 
               label="Email" 

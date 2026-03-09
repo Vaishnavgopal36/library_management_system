@@ -9,7 +9,7 @@
 .topRow {
   display: flex;
   gap: 1.5rem;
-  height: 290px;
+  min-height: 290px;
 }
 
 .quoteCard {
@@ -32,7 +32,6 @@
   flex: 2;
   display: flex !important;
   flex-direction: row !important;
-  overflow: hidden;
 }
 
 .newArrivalsHeader {
@@ -56,9 +55,13 @@
   gap: 1.5rem;
   padding: 1.5rem;
   overflow-x: auto;
-  align-items: flex-start;
+  overflow-y: hidden; 
+  align-items: stretch;
 }
-
+.scrollContainer::after {
+  content: "";
+  padding-right: 0.1px; 
+}
 .sectionTitle { margin: 0 0 0.5rem 0; font-size: 1.75rem; color: var(--color-text-primary); }
 .subTitle { margin: 0 0 1.5rem 0; font-size: 1.125rem; font-weight: 500; color: var(--color-text-body); }
 
@@ -79,7 +82,7 @@
 
 .bookDisplay:hover { transform: translateY(-4px); }
 
-.bookInfo { display: flex; flex-direction: column; gap: 0.25rem; }
+.bookInfo { display: flex; flex-direction: column; gap: 0.25rem; flex-grow: 1;}
 .bookTitle { margin: 0; font-size: 0.875rem; color: var(--color-text-primary); line-height: 1.3; font-weight: 600; }
 .bookAuthor { margin: 0; font-size: 0.75rem; color: var(--color-text-secondary); }
 .bookRating { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; }
@@ -92,7 +95,7 @@
 
 /* Reserve button on recommended books */
 .reserveBtn {
-  margin-top: 0.5rem;
+  margin-top: auto !important;
   background: none;
   border: 1px solid var(--color-brand);
   color: var(--color-brand);
@@ -111,7 +114,7 @@
 
 /* Return button on possession cards */
 .returnBtn {
-  margin-top: 0.5rem !important;
+  margin-top: auto !important;
   font-size: 0.8125rem !important;
   color: var(--color-text-secondary) !important;
   border-color: var(--color-surface-200) !important;

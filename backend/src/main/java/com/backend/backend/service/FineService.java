@@ -2,8 +2,11 @@ package com.backend.backend.service;
 
 import com.backend.backend.dto.response.FineResponse;
 import com.backend.backend.entity.Fine;
+import com.backend.backend.entity.Transaction;
+import com.backend.backend.entity.enums.TransactionStatus;
 import jakarta.persistence.criteria.Predicate;
 import com.backend.backend.repository.FineRepository;
+import com.backend.backend.repository.TransactionRepository;
 import com.backend.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -12,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -21,9 +26,19 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FineService {
 
+    private static final BigDecimal DAILY_FINE = BigDecimal.valueOf(2);
+
     private final FineRepository fineRepository;
+    private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+
+    /** Compute the canonical fine for a transaction: daysLate × 2, using returnDate or now. */
+    private BigDecimal canonicalFine(Transaction tx) {
+        LocalDateTime ref = tx.getReturnDate() != null ? tx.getReturnDate() : LocalDateTime.now();
+        long days = Math.max(0, ChronoUnit.DAYS.between(tx.getDueDate(), ref));
+        return DAILY_FINE.multiply(BigDecimal.valueOf(days));
+    }
 
     @Transactional(readOnly = true)
     public List<FineResponse> getGlobalLedger() {
@@ -63,6 +78,14 @@ public class FineService {
         return searchLedger(fineId, userId, transactionId, isPaid, minAmount, maxAmount);
     }
 
+    /**
+     * Sources from the Transaction table (status=overdue) — NOT from Fine records.
+     * This ensures every overdue transaction appears on the Fines page regardless of
+     * whether the automation engine has created Fine records for it yet.
+     *
+     * amount   = canonical daysLate × 2 (always fresh from dates)
+     * isPaid   = paidFineRecords >= canonical
+     */
     private List<FineResponse> searchLedger(
             UUID fineId,
             UUID userId,
@@ -71,71 +94,104 @@ public class FineService {
             BigDecimal minAmount,
             BigDecimal maxAmount
     ) {
-        Specification<Fine> spec = (root, query, cb) -> {
+        Specification<Transaction> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-
-            if (fineId != null) {
-                predicates.add(cb.equal(root.get("id"), fineId));
-            }
+            predicates.add(cb.equal(root.get("status"), TransactionStatus.overdue));
             if (userId != null) {
                 predicates.add(cb.equal(root.get("user").get("id"), userId));
             }
             if (transactionId != null) {
-                predicates.add(cb.equal(root.get("transaction").get("id"), transactionId));
+                predicates.add(cb.equal(root.get("id"), transactionId));
             }
-            if (isPaid != null) {
-                predicates.add(cb.equal(root.get("isPaid"), isPaid));
-            }
-            if (minAmount != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("amount"), minAmount));
-            }
-            if (maxAmount != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("amount"), maxAmount));
-            }
-
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return fineRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt")).stream()
-                .map(this::mapToResponse)
+        List<Transaction> txList = transactionRepository.findAll(spec,
+                Sort.by(Sort.Direction.DESC, "dueDate"));
+
+        return txList.stream()
+                .map(this::txToFineResponse)
+                .filter(fr -> isPaid == null || fr.getIsPaid().equals(isPaid))
+                .filter(fr -> minAmount == null || fr.getAmount().compareTo(minAmount) >= 0)
+                .filter(fr -> maxAmount == null || fr.getAmount().compareTo(maxAmount) <= 0)
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    public FineResponse settleFine(UUID fineId) {
-        Fine fine = fineRepository.findById(fineId)
-                .orElseThrow(() -> new IllegalArgumentException("Fine record not found"));
+    /** Build a FineResponse from a Transaction — canonical fine from dates, paid amount from fine records. */
+    private FineResponse txToFineResponse(Transaction tx) {
+        BigDecimal canonical = canonicalFine(tx);
+        BigDecimal paid = fineRepository.sumPaidAmountByTransactionId(tx.getId());
+        if (paid == null) paid = BigDecimal.ZERO;
+        boolean settledd = canonical.compareTo(BigDecimal.ZERO) > 0 && paid.compareTo(canonical) >= 0;
 
-        if (fine.getIsPaid()) {
-            throw new IllegalStateException("Fine is already settled.");
-        }
-
-        fine.setIsPaid(true); // Soft Delete equivalent for financial obligations
-        Fine updatedFine = fineRepository.save(fine);
-        BigDecimal outstanding = fineRepository.sumUnpaidAmountByUserId(fine.getUser().getId());
-        notificationService.notifyFineSettled(
-                fine.getUser(),
-                fine.getAmount(),
-                outstanding != null ? outstanding : BigDecimal.ZERO
-        );
-        return mapToResponse(updatedFine);
-    }
-
-    private FineResponse mapToResponse(Fine fine) {
-        String userName = fine.getUser().getFullName();
-        if (userName == null || userName.isBlank()) {
-            userName = fine.getUser().getEmail();
-        }
+        String userName = tx.getUser().getFullName();
+        if (userName == null || userName.isBlank()) userName = tx.getUser().getEmail();
 
         return FineResponse.builder()
-                .id(fine.getId())
-                .transactionId(fine.getTransaction().getId())
-                .bookId(fine.getTransaction().getBook().getId())
-                .userId(fine.getUser().getId())
-                .bookName(fine.getTransaction().getBook().getTitle())
+                .id(tx.getId())              // id == transactionId for settle endpoint
+                .transactionId(tx.getId())
+                .bookId(tx.getBook().getId())
+                .userId(tx.getUser().getId())
+                .bookName(tx.getBook().getTitle())
                 .userName(userName)
-                .amount(fine.getAmount())
-                .isPaid(fine.getIsPaid())
+                .amount(canonical)
+                .isPaid(settledd)
                 .build();
+    }
+
+    /**
+     * Settles a fine by transactionId.
+     * 1. Looks up the transaction directly (handles case where automation hasn't created Fine records yet).
+     * 2. Marks all existing unpaid Fine records as paid.
+     * 3. Creates a reconciliation record for any gap between Fine records and the canonical days×2 amount.
+     * 4. Result: Fine records always sum exactly to days×2 after settlement.
+     */
+    @Transactional
+    public FineResponse settleFine(UUID transactionId) {
+        Transaction tx = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+
+        BigDecimal canonical = canonicalFine(tx);
+        if (canonical.compareTo(BigDecimal.ZERO) == 0) {
+            throw new IllegalStateException("No overdue fine applicable for this transaction.");
+        }
+
+        BigDecimal alreadyPaid   = fineRepository.sumPaidAmountByTransactionId(transactionId);
+        if (alreadyPaid == null) alreadyPaid = BigDecimal.ZERO;
+        if (alreadyPaid.compareTo(canonical) >= 0) {
+            throw new IllegalStateException("Fine is already fully settled.");
+        }
+
+        // Mark all unpaid records as paid
+        List<Fine> unpaid = fineRepository.findUnpaidByTransactionId(transactionId);
+        BigDecimal settledFromRecords = BigDecimal.ZERO;
+        for (Fine f : unpaid) {
+            f.setIsPaid(true);
+            settledFromRecords = settledFromRecords.add(f.getAmount());
+            fineRepository.save(f);
+        }
+
+        // Reconcile: if existing records don't cover the full canonical amount, add gap record
+        BigDecimal totalCoveredAfter = alreadyPaid.add(settledFromRecords);
+        BigDecimal gap = canonical.subtract(totalCoveredAfter);
+        if (gap.compareTo(BigDecimal.ZERO) > 0) {
+            Fine reconcile = Fine.builder()
+                    .transaction(tx)
+                    .user(tx.getUser())
+                    .amount(gap)
+                    .reason("Settlement reconciliation")
+                    .isPaid(true)
+                    .build();
+            fineRepository.save(reconcile);
+        }
+
+        BigDecimal outstanding = fineRepository.sumUnpaidAmountByUserId(tx.getUser().getId());
+        notificationService.notifyFineSettled(
+                tx.getUser(),
+                canonical.subtract(alreadyPaid),
+                outstanding != null ? outstanding : BigDecimal.ZERO
+        );
+
+        return txToFineResponse(tx);
     }
 }

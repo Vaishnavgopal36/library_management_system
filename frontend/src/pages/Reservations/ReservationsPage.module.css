@@ -275,6 +275,39 @@
   padding-top: 0.25rem;
 }
 
+/* ── Issue Book button (admin actions column) ─────────────────────────────── */
+.issueBtn {
+  background: var(--color-brand, #3b5bdb);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.35rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.issueBtn:hover:not(:disabled) {
+  background: var(--color-brand-dark, #2f4ac9);
+}
+
+.issueBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Toast overlay ────────────────────────────────────────────────────────── */
+.toastContainer {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  min-width: 280px;
+  max-width: 420px;
+}
+
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .headerRow   { flex-direction: column; align-items: flex-start; gap: 0.75rem; }

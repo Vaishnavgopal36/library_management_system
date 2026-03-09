@@ -5,12 +5,14 @@ export interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElem
   label?: string;
   icon?: React.ReactNode;
   error?: string;
+  hint?: string;
 }
 
 export const InputField: React.FC<InputFieldProps> = ({
   label,
   icon,
   error,
+  hint,
   className = '',
   ...props
 }) => {
@@ -28,6 +30,7 @@ export const InputField: React.FC<InputFieldProps> = ({
         {icon && <span className={styles.iconWrapper}>{icon}</span>}
         <input className={inputClasses} {...props} />
       </div>
+      {hint && !error && <span className={styles.hintMessage}>{hint}</span>}
       {error && <span className={styles.errorMessage}>{error}</span>}
     </div>
   );

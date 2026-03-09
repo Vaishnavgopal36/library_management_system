@@ -53,7 +53,7 @@ export const Icon: React.FC<IconProps> = ({
   const elements = ICON_PATHS[name];
 
   if (!elements) {
-    if (process.env.NODE_ENV !== 'production') {
+    if (import.meta.env.DEV) {
       console.warn(`[Icon] Unknown icon name: "${name}"`);
     }
     return null;

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { FINE_RATE_PER_DAY } from '../../utils/constants';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useModal } from '../../hooks/useModal';
 import { useConfirmAction } from '../../hooks/useConfirmAction';
+import { useAuth } from '../../context/AuthContext';
 import styles from './MemberDashboard.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Card } from '../../components/molecules/Card/Card';
@@ -9,40 +9,21 @@ import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/Dynami
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
+import { bookService, type ApiBook } from '../../services/book.service';
+import { transactionService, type ApiTransaction } from '../../services/transaction.service';
+import { fineService, type ApiFine } from '../../services/fine.service';
+import { reservationService } from '../../services/reservation.service';
 
-type BookData = { title: string; author: string; coverHash: string; rating?: string };
-type PossessionData = { title: string; author: string; coverHash: string; dueIn: string; dueVariant: 'warning' | 'success' };
+const computeDueIn = (dueDate: string): { label: string; variant: 'warning' | 'success' | 'error' } => {
+  const days = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86400000);
+  if (days < 0) return { label: `${Math.abs(days)} days overdue`, variant: 'error' };
+  if (days <= 3) return { label: `${days} day${days === 1 ? '' : 's'} left`, variant: 'warning' };
+  return { label: `${days} days left`, variant: 'success' };
+};
 
-const recommendedBooks: BookData[] = [
-  { title: "Don't Make Me Think", author: 'Steve Krug, 2000', coverHash: 'Think' },
-  { title: 'The Road to React', author: 'Robin Wieruch',  coverHash: 'React' },
-  { title: 'Rich Dad Poor Dad', author: 'Robert Kiyosaki',  coverHash: 'Rich' },
-  { title: 'Harry Potter', author: 'J.K. Rowling',  coverHash: 'Potter' },
-  { title: "You Don't Know JS", author: 'Kyle Simpson',  coverHash: 'JS' },
-];
-
-const newArrivals: BookData[] = [
-  { title: 'Holy Bible', author: 'King James', coverHash: 'Bible' },
-  { title: 'Harry Potter', author: 'J.K. Rowling', coverHash: 'Potter' },
-  { title: 'Lean UX', author: 'Jeff Gothelf', coverHash: 'Lean' },
-  { title: "Don't Make Me Think", author: 'Steve Krug', coverHash: 'Think' },
-];
-
-const currentPossessions: PossessionData[] = [
-  { title: 'Sprint', author: 'Jake Knapp', coverHash: 'Sprint', dueIn: '2 Days', dueVariant: 'warning' },
-  { title: 'The Design of Everyday Things', author: 'Don Norman', coverHash: 'Design', dueIn: '14 Days', dueVariant: 'success' },
-];
-
-type FineData = { id: string; book: string; daysOverdue: number; amount: number };
-const initialMemberFines: FineData[] = [
-  { id: 'f1', book: 'Clean Code', daysOverdue: 3, amount: 30 },
-  { id: 'f6', book: 'Sprint', daysOverdue: 5, amount: 50 },
-];
-
-// Clicking the whole card triggers reserve (suitable for tight scroll areas too)
 const BookDisplay = ({
   title, author, rating, coverHash, onReserve, showReserveButton,
-}: BookData & { onReserve?: () => void; showReserveButton?: boolean }) => (
+}: { title: string; author: string; rating?: string; coverHash: string; onReserve?: () => void; showReserveButton?: boolean }) => (
   <div className={styles.bookDisplay} onClick={onReserve} style={{ cursor: onReserve ? 'pointer' : 'default' }}>
     <DynamicBookCover title={coverHash} author="" width="130px" height="190px" />
     <div className={styles.bookInfo}>
@@ -62,33 +43,49 @@ const BookDisplay = ({
 );
 
 export const MemberDashboard: React.FC = () => {
+  const { user } = useAuth();
+
+  // ── Remote data ────────────────────────────────────────────────────────────
+  const [allBooks, setAllBooks] = useState<ApiBook[]>([]);
+  const [possessions, setPossessions] = useState<ApiTransaction[]>([]);
+  const [memberFines, setMemberFines] = useState<ApiFine[]>([]);
+
+  const loadData = useCallback(() => {
+    bookService.search({ size: 20 }).then(p => setAllBooks(p.content)).catch(console.error);
+    transactionService.list({ status: 'issued' }).then(setPossessions).catch(console.error);
+    fineService.list({ isPaid: false }).then(setMemberFines).catch(console.error);
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const newArrivals = allBooks.slice(0, 8);
+  const recommendedBooks = allBooks.slice(8, 16).length ? allBooks.slice(8, 16) : allBooks.slice(0, 8);
 
   // ── Reserve Book modal ───────────────────────────────────────────────────
-  const reserveModal = useModal<BookData>();
+  const reserveModal = useModal<ApiBook>();
   const handleReserveConfirm = () => {
     reserveModal.setProcessing(true);
-    // TODO: POST /api/v1/reservation — body: ReservationRequest { bookId (from selected book) }
-    console.log('Reserving:', reserveModal.data?.title);
-    setTimeout(() => { reserveModal.close(); }, 1200);
+    reservationService.create(reserveModal.data!.id)
+      .then(() => { reserveModal.close(); loadData(); })
+      .catch((err: any) => { reserveModal.setProcessing(false); alert(err?.message ?? 'Failed to reserve.'); });
   };
 
   // ── Return Book modal ─────────────────────────────────────────────────────
-  const returnModal = useModal<PossessionData>();
+  const returnModal = useModal<ApiTransaction>();
   const handleReturnConfirm = () => {
     returnModal.setProcessing(true);
-    // TODO: PUT /api/v1/transaction/{id} — path param: transactionId; body: Map<String,String>
-    console.log('Returning:', returnModal.data?.title);
-    setTimeout(() => { returnModal.close(); }, 1000);
+    transactionService.returnBook(returnModal.data!.id)
+      .then(() => { returnModal.close(); loadData(); })
+      .catch((err: any) => { returnModal.setProcessing(false); alert(err?.message ?? 'Failed to return.'); });
   };
 
   // ── Pay Fine modal ────────────────────────────────────────────────────────
-  const [memberFines, setMemberFines] = useState<FineData[]>(initialMemberFines);
-  const payFineAction = useConfirmAction<FineData>();
+  const payFineAction = useConfirmAction<ApiFine>();
   const handlePayFine = () => {
     payFineAction.startProcessing();
-    // TODO: PUT /api/v1/fine/{id} — body: { isPaid: true } (Map<String,Boolean>)
-    console.log('Paying fine:', payFineAction.data?.id);
-    setTimeout(() => { payFineAction.markConfirmed(); }, 1000);
+    fineService.settle(payFineAction.data!.id)
+      .then(() => payFineAction.markConfirmed())
+      .catch((err: any) => { payFineAction.dismiss(); alert(err?.message ?? 'Failed to pay fine.'); });
   };
   const handleFinePaidDone = () => {
     setMemberFines(prev => prev.filter(f => f.id !== payFineAction.data?.id));
@@ -96,7 +93,7 @@ export const MemberDashboard: React.FC = () => {
   };
 
   return (
-    <AppShell userName="Rick" activeNavItem="Dashboard" role="member">
+    <AppShell userName={user?.fullName ?? 'Member'} activeNavItem="Dashboard" role="member">
       <div className={styles.dashboardLayout}>
 
         {/* Top Row: Quote and New Arrivals */}
@@ -106,9 +103,9 @@ export const MemberDashboard: React.FC = () => {
           <div className={styles.quoteCard}>
             <h3 className={styles.quoteHeader}>Today's Quote</h3>
             <p className={styles.quoteText}>
-              “There is more treasure in books than in all the pirate’s loot on Treasure Island.”
+              “Don't judge a book by its cover” 
             </p>
-            <p className={styles.quoteAuthor}>- Walt Disney</p>
+            <p className={styles.quoteAuthor}>— George Eliot AKA Mary Ann Evans.</p>
           </div>
 
           {/* New Arrivals — clicking a book opens the reserve modal */}
@@ -118,7 +115,13 @@ export const MemberDashboard: React.FC = () => {
             </div>
             <div className={styles.scrollContainer}>
               {newArrivals.map((book) => (
-                <BookDisplay key={book.coverHash} {...book} onReserve={() => reserveModal.open(book)} />
+                <BookDisplay
+                  key={book.id}
+                  title={book.title}
+                  author={book.authors.map(a => a.name).join(', ')}
+                  coverHash={book.title}
+                  onReserve={() => reserveModal.open(book)}
+                />
               ))}
             </div>
           </Card>
@@ -130,7 +133,14 @@ export const MemberDashboard: React.FC = () => {
           <h3 className={styles.subTitle}>Recommended for You</h3>
           <div className={styles.bookGrid}>
             {recommendedBooks.map((book) => (
-              <BookDisplay key={book.coverHash} {...book} onReserve={() => reserveModal.open(book)} showReserveButton />
+              <BookDisplay
+                key={book.id}
+                title={book.title}
+                author={book.authors.map(a => a.name).join(', ')}
+                coverHash={book.title}
+                onReserve={() => reserveModal.open(book)}
+                showReserveButton
+              />
             ))}
           </div>
         </div>
@@ -139,20 +149,23 @@ export const MemberDashboard: React.FC = () => {
         <div className={styles.section}>
           <h3 className={styles.subTitle}>Books Currently in possession</h3>
           <div className={styles.bookGrid}>
-            {currentPossessions.map((book) => (
-              <div key={book.coverHash} className={styles.possessionCard}>
-                <BookDisplay title={book.title} author={book.author} coverHash={book.coverHash} />
-                <Badge variant={book.dueVariant} style={{ marginTop: '0.75rem' }}>Due in {book.dueIn}</Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={styles.returnBtn}
-                  onClick={() => returnModal.open(book)}
-                >
-                  Return Book
-                </Button>
-              </div>
-            ))}
+            {possessions.map((tx) => {
+              const due = computeDueIn(tx.dueDate);
+              return (
+                <div key={tx.id} className={styles.possessionCard}>
+                  <BookDisplay title={tx.bookName} author="" coverHash={tx.bookName} />
+                  <Badge variant={due.variant} style={{ marginTop: '0.75rem' }}>{due.label}</Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={styles.returnBtn}
+                    onClick={() => returnModal.open(tx)}
+                  >
+                    Return Book
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -163,11 +176,10 @@ export const MemberDashboard: React.FC = () => {
         {reserveModal.data && (
           <div className={styles.modalBody}>
             <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={reserveModal.data.coverHash} author="" width="80px" height="112px" showText={false} />
+              <DynamicBookCover title={reserveModal.data.title} author="" width="80px" height="112px" showText={false} />
               <div className={styles.modalBookMeta}>
                 <p className={styles.modalBookTitle}>{reserveModal.data.title}</p>
-                <p className={styles.modalBookAuthor}>{reserveModal.data.author}</p>
-                {reserveModal.data.rating && <span className={styles.modalBookRating}>★ {reserveModal.data.rating}</span>}
+                <p className={styles.modalBookAuthor}>{reserveModal.data.authors.map(a => a.name).join(', ')}</p>
               </div>
             </div>
             <div className={styles.modalDivider} />
@@ -189,11 +201,12 @@ export const MemberDashboard: React.FC = () => {
         {returnModal.data && (
           <div className={styles.modalBody}>
             <div className={styles.modalBookPreview}>
-              <DynamicBookCover title={returnModal.data.coverHash} author="" width="80px" height="112px" showText={false} />
+              <DynamicBookCover title={returnModal.data.bookName} author="" width="80px" height="112px" showText={false} />
               <div className={styles.modalBookMeta}>
-                <p className={styles.modalBookTitle}>{returnModal.data.title}</p>
-                <p className={styles.modalBookAuthor}>{returnModal.data.author}</p>
-                <Badge variant={returnModal.data.dueVariant} style={{ marginTop: '0.5rem' }}>Due in {returnModal.data.dueIn}</Badge>
+                <p className={styles.modalBookTitle}>{returnModal.data.bookName}</p>
+                <Badge variant={computeDueIn(returnModal.data.dueDate).variant} style={{ marginTop: '0.5rem' }}>
+                  {computeDueIn(returnModal.data.dueDate).label}
+                </Badge>
               </div>
             </div>
             <div className={styles.modalDivider} />
@@ -218,7 +231,7 @@ export const MemberDashboard: React.FC = () => {
               <div className={styles.confirmedState}>
                 <div className={styles.confirmedIcon}>✓</div>
                 <p className={styles.confirmedTitle}>Confirmed</p>
-                <p className={styles.confirmedDetail}>₹{payFineAction.data.amount} paid for <strong>{payFineAction.data.book}</strong></p>
+                <p className={styles.confirmedDetail}>₹{payFineAction.data.amount} paid for <strong>{payFineAction.data.bookName}</strong></p>
                 <div className={styles.modalActions}>
                   <Button type="button" variant="primary" onClick={handleFinePaidDone}>Done</Button>
                 </div>
@@ -228,11 +241,7 @@ export const MemberDashboard: React.FC = () => {
                 <div className={styles.fineModalCard}>
                   <div className={styles.fineModalRow}>
                     <span className={styles.fineModalLabel}>Book</span>
-                    <span className={styles.fineModalValue}>{payFineAction.data.book}</span>
-                  </div>
-                  <div className={styles.fineModalRow}>
-                    <span className={styles.fineModalLabel}>Days Overdue</span>
-                    <span className={styles.fineModalValueDanger}>{payFineAction.data.daysOverdue} days</span>
+                    <span className={styles.fineModalValue}>{payFineAction.data.bookName}</span>
                   </div>
                   <div className={styles.fineModalRow}>
                     <span className={styles.fineModalLabel}>Fine Amount</span>

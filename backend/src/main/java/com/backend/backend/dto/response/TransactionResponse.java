@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -20,5 +21,8 @@ public class TransactionResponse {
     private String userName;
     private LocalDateTime checkoutDate;
     private LocalDateTime dueDate;
+    private LocalDateTime returnDate;
     private String status;
+    /** Sum of all fine records charged against this transaction. Null / 0 means no fine. */
+    private BigDecimal totalAccruedFine;
 }

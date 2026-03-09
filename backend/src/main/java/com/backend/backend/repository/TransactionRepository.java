@@ -17,12 +17,16 @@ import java.util.UUID;
 public interface TransactionRepository extends JpaRepository<Transaction, UUID>, JpaSpecificationExecutor<Transaction> {
     List<Transaction> findByUserId(UUID userId);
     long countByStatus(TransactionStatus status);
+    long countByStatusIn(Collection<TransactionStatus> statuses);
     long countByUserIdAndStatusIn(UUID userId, Collection<TransactionStatus> statuses);
     long countByBookIdAndStatusIn(UUID bookId, Collection<TransactionStatus> statuses);
     List<Transaction> findByStatusInAndDueDateBefore(Collection<TransactionStatus> statuses, LocalDateTime date);
     
     // Required for the Automation Engine to find overdue items
     List<Transaction> findByStatusAndDueDateBefore(TransactionStatus status, LocalDateTime date);
+
+    /** All transactions with a given status — used by ReportService for analytics. */
+    List<Transaction> findByStatus(TransactionStatus status);
 
     @Query("""
             SELECT t.book.id, t.book.title, COUNT(t.id)

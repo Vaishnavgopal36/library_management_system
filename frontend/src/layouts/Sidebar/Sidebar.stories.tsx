@@ -26,22 +26,24 @@ export default meta;
 
 
 
-const SidebarWrapper = () => {
+const SidebarWrapper = ({ role }: { role: 'admin' | 'member' }) => {
   const [active, setActive] = useState('Dashboard');
 
   return (
     <div style={{ display: 'flex', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
-      <Sidebar activeItem={active} onNavigate={setActive} />
-      
-      {/* Mock content area to show how the layout looks next to the sidebar */}
+      <Sidebar activeItem={active} role={role} onNavigate={setActive} />
       <main style={{ flex: 1, padding: '2rem' }}>
         <h2 style={{ color: '#111827', marginTop: 0 }}>{active} View</h2>
-        <p style={{ color: '#6b7280' }}>This is where the {active} content cards and tables will be displayed.</p>
+        <p style={{ color: '#6b7280' }}>Role: <strong>{role}</strong>. This is where {active} content renders.</p>
       </main>
     </div>
   );
 };
 
-export const InteractiveSidebar: StoryObj = {
-  render: () => <SidebarWrapper />,
+export const MemberSidebar: StoryObj = {
+  render: () => <SidebarWrapper role="member" />,
+};
+
+export const AdminSidebar: StoryObj = {
+  render: () => <SidebarWrapper role="admin" />,
 };

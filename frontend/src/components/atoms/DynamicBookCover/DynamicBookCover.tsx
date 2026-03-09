@@ -17,7 +17,7 @@ const hashString = (str: string) => {
   return Math.abs(hash);
 };
 
-const gradients = [
+const GRADIENT_PALETTES = [
   'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)', // Soft Pink
   'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', // Purple/Pink
   'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)', // Mint/Blue
@@ -35,8 +35,8 @@ export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({
   height = '200px',
   showText = true,
 }) => {
-  const gradientIndex = hashString(title) % gradients.length;
-  const background = gradients[gradientIndex];
+  const gradientIndex = hashString(title) % GRADIENT_PALETTES.length;
+  const background = GRADIENT_PALETTES[gradientIndex];
 
   return (
     <div style={{
