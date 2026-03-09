@@ -74,9 +74,16 @@ async function request<T>(
   if (!res.ok) {
     let body: unknown;
     try { body = await res.json(); } catch { body = await res.text(); }
-    const msg = (body as Record<string, string>)?.error
-      ?? (body as Record<string, string>)?.message
-      ?? `HTTP ${res.status}`;
+    // RFC 7807 ProblemDetail uses 'detail' (human sentence) and 'title' (short label).
+    // Fall back to legacy 'error' / 'message' keys so non-ProblemDetail responses
+    // are still handled gracefully during any transition period.
+    const pd = body as Record<string, unknown>;
+    const msg =
+      (typeof pd?.detail  === 'string' && pd.detail)  ||
+      (typeof pd?.title   === 'string' && pd.title)   ||
+      (typeof pd?.error   === 'string' && pd.error)   ||
+      (typeof pd?.message === 'string' && pd.message) ||
+      `HTTP ${res.status}`;
     throw new ApiError(res.status, msg, body);
   }
 

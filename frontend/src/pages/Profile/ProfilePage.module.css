@@ -57,10 +57,32 @@
 }
 
 .heroMeta {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding-bottom: 0.25rem;
+  gap: 0.5rem;
+}
+
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  align-self: flex-start;
+  background: none;
+  border: 1.5px solid var(--color-danger-400, #f87171);
+  color: var(--color-danger-600, #dc2626);
+  border-radius: 8px;
+  padding: 0.35rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.logoutBtn:hover {
+  background: var(--color-danger-50, #fef2f2);
+  border-color: var(--color-danger-500, #ef4444);
 }
 
 .heroName {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import type { AppRole } from '../../utils/types';
+import type { AppRole } from '/home/vaishnavgpal/Code/projects/library-management-system/frontend/src/utils/types.ts';
 
 interface Props {
   /** If supplied, only this role may access the route. */

@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class UserUpdateRequest {
     // All fields are optional because a PUT request might only update one thing
     private String fullName;
+    private String email;
     private String password;
     private Boolean isActive;
 }

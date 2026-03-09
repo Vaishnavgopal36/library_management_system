@@ -46,7 +46,7 @@ jwt:
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.flywaydb: DEBUG
-    org.springframework.boot.autoconfigure.flyway: TRACE
+    "[org.hibernate.SQL]": DEBUG
+    "[org.hibernate.type.descriptor.sql.BasicBinder]": TRACE
+    "[org.flywaydb]": DEBUG
+    "[org.springframework.boot.autoconfigure.flyway]": TRACE

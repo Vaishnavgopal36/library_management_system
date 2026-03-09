@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 public class ReservationService {
 
     private static final int MAX_ACTIVE_BORROWS = 3;
-    private static final int MAX_ACTIVE_RESERVATIONS = 3;
     private static final int MAX_ACTIVE_ITEMS = 3;
     private static final List<TransactionStatus> ACTIVE_BORROW_STATUSES =  List.of(TransactionStatus.issued, TransactionStatus.overdue, TransactionStatus.lost);
 
@@ -197,13 +196,9 @@ public class ReservationService {
 
     private void enforceReservationLimits(UUID userId) {
         long activeReservations = reservationRepository.countActiveByUserId(userId, LocalDateTime.now());
-        if (activeReservations >= MAX_ACTIVE_RESERVATIONS) {
-            throw new IllegalStateException("Reservation limit reached. Max 3 active reservations.");
-        }
-
         long activeBorrowed = transactionRepository.countByUserIdAndStatusIn(userId, ACTIVE_BORROW_STATUSES);
         if (activeBorrowed + activeReservations >= MAX_ACTIVE_ITEMS) {
-            throw new IllegalStateException("Total active items limit reached. Max 3 borrowed/reserved books.");
+            throw new IllegalStateException("You have reached the maximum limit of 3 books. Please return a book before reserving another.");
         }
     }
 

@@ -7,6 +7,7 @@ import { Button } from '../../components/atoms/Button/Button';
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
 import { Modal } from '../../components/molecules/Modal/Modal';
+import { Toast } from '../../components/atoms/Toast/Toast';
 import { InputField } from '../../components/atoms/InputField/InputField';
 import { Pagination } from '../../components/molecules/Pagination';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
@@ -266,17 +267,18 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
   const [reserveBook, setReserveBook] = useState<ApiBook | null>(null);
   const [isReserving, setIsReserving] = useState(false);
-  const [reserveError, setReserveError] = useState('');
+  const [reserveToast, setReserveToast] = useState('');
 
-  const openReserveModal = (book: ApiBook) => { setReserveBook(book); setReserveError(''); setIsReserveModalOpen(true); };
-  const closeReserveModal = () => { setIsReserveModalOpen(false); setReserveBook(null); setReserveError(''); };
+  const openReserveModal = (book: ApiBook) => { setReserveBook(book); setIsReserveModalOpen(true); };
+  const closeReserveModal = () => { setIsReserveModalOpen(false); setReserveBook(null); };
   const handleReserveConfirm = async () => {
-    setIsReserving(true); setReserveError('');
+    setIsReserving(true);
     try {
       await reservationService.create(reserveBook!.id);
       closeReserveModal();
     } catch (err: any) {
-      setReserveError(err?.message ?? 'Failed to create reservation.');
+      closeReserveModal();
+      setReserveToast(err?.message ?? 'Failed to create reservation.');
     } finally { setIsReserving(false); }
   };
 
@@ -542,7 +544,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
       <Modal isOpen={isReserveModalOpen} onClose={closeReserveModal} title="Reserve Book">
         {reserveBook && (
           <div className={styles.issueForm}>
-            {reserveError && <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', margin: 0 }}>{reserveError}</p>}
             <div className={styles.issueBookPreview}>
               <DynamicBookCover title={reserveBook.title} author="" width="72px" height="100px" showText={false} />
               <div className={styles.issueBookMeta}>
@@ -567,6 +568,14 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
           </div>
         )}
       </Modal>
+
+      {reserveToast && (
+        <Toast
+          message={reserveToast}
+          variant="error"
+          onClose={() => setReserveToast('')}
+        />
+      )}
 
     </AppShell>
   );

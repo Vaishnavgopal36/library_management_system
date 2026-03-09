@@ -9,6 +9,7 @@ import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/Dynami
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
+import { Toast } from '../../components/atoms/Toast/Toast';
 import { bookService, type ApiBook } from '../../services/book.service';
 import { transactionService, type ApiTransaction } from '../../services/transaction.service';
 import { fineService, type ApiFine } from '../../services/fine.service';
@@ -63,11 +64,16 @@ export const MemberDashboard: React.FC = () => {
 
   // ── Reserve Book modal ───────────────────────────────────────────────────
   const reserveModal = useModal<ApiBook>();
+  const [reserveToast, setReserveToast] = useState('');
   const handleReserveConfirm = () => {
     reserveModal.setProcessing(true);
     reservationService.create(reserveModal.data!.id)
       .then(() => { reserveModal.close(); loadData(); })
-      .catch((err: any) => { reserveModal.setProcessing(false); alert(err?.message ?? 'Failed to reserve.'); });
+      .catch((err: any) => {
+        reserveModal.setProcessing(false);
+        reserveModal.close();
+        setReserveToast(err?.message ?? 'Failed to reserve.');
+      });
   };
 
   // ── Return Book modal ─────────────────────────────────────────────────────
@@ -260,6 +266,14 @@ export const MemberDashboard: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {reserveToast && (
+        <Toast
+          message={reserveToast}
+          variant="error"
+          onClose={() => setReserveToast('')}
+        />
+      )}
 
     </AppShell>
   );

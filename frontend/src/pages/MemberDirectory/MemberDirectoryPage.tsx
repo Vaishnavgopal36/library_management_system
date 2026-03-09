@@ -39,23 +39,37 @@ function SkeletonRows({ rows }: { rows: number }) {
 }
 
 // ── Edit modal ────────────────────────────────────────────────────────────────
+interface EditSaveData {
+  fullName?: string;
+  email?: string;
+  password?: string;
+}
+
 interface EditModalProps {
   member: UserResponse;
-  onSave: (fullName: string) => Promise<void>;
+  onSave: (data: EditSaveData) => Promise<void>;
   onClose: () => void;
 }
 
 function EditMemberModal({ member, onSave, onClose }: EditModalProps) {
-  const [fullName, setFullName] = useState(member.fullName);
+  const [fullName, setFullName] = useState(member.fullName ?? '');
+  const [email, setEmail] = useState(member.email ?? '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim()) return;
+    if (!email.trim()) { setError('Username / Email is required.'); return; }
+    if (password && password !== confirmPassword) { setError('Passwords do not match.'); return; }
     setIsSaving(true); setError('');
+    const data: EditSaveData = {};
+    if (fullName.trim()) data.fullName = fullName.trim();
+    if (email.trim() !== member.email) data.email = email.trim();
+    if (password) data.password = password;
     try {
-      await onSave(fullName.trim());
+      await onSave(data);
     } catch (err: any) {
       setError(err?.message ?? 'Update failed.');
       setIsSaving(false);
@@ -74,10 +88,50 @@ function EditMemberModal({ member, onSave, onClose }: EditModalProps) {
         <form onSubmit={handleSubmit} className={styles.modalForm}>
           {error && <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', margin: 0 }}>{error}</p>}
           <label className={styles.fieldLabel}>
-            Full Name *
-            <input className={styles.fieldInput} value={fullName} onChange={e => setFullName(e.target.value)} placeholder="e.g. John Doe" required autoFocus />
+            Full Name
+            <input
+              className={styles.fieldInput}
+              value={fullName}
+              onChange={e => setFullName(e.target.value)}
+              placeholder="e.g. John Doe"
+              autoFocus
+            />
           </label>
-          <p className={styles.privacyNote}>Only the member's display name can be updated here.</p>
+          <label className={styles.fieldLabel}>
+            Username / Email *
+            <input
+              className={styles.fieldInput}
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="e.g. john@example.com"
+              required
+            />
+          </label>
+          <label className={styles.fieldLabel}>
+            New Password
+            <input
+              className={styles.fieldInput}
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Leave blank to keep current password"
+              autoComplete="new-password"
+            />
+          </label>
+          {password && (
+            <label className={styles.fieldLabel}>
+              Confirm New Password
+              <input
+                className={styles.fieldInput}
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter new password"
+                autoComplete="new-password"
+              />
+            </label>
+          )}
           <div className={styles.modalActions}>
             <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={isSaving}>Cancel</button>
             <button type="submit" className={styles.btnPrimary} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</button>
@@ -125,7 +179,7 @@ function NotifyModal({ member, onClose }: NotifyModalProps) {
         </div>
         <form onSubmit={handleSend} className={styles.modalForm}>
           <p style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-            Send a notification to <strong>{member.fullName}</strong>.
+            Send a notification to <strong>{member.fullName || member.email}</strong>.
           </p>
           {error && <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', margin: 0 }}>{error}</p>}
           {success && <p style={{ color: 'var(--color-success-700, #15803d)', fontSize: '0.875rem', margin: 0 }}>Notification sent!</p>}
@@ -215,9 +269,13 @@ export function MemberDirectoryPage() {
 
   useEffect(() => { loadMembers(); }, [loadMembers]);
 
-  const handleEdit = async (fullName: string) => {
-    await userService.update(editTarget!.id, { fullName });
-    setMembers(prev => prev.map(m => m.id === editTarget!.id ? { ...m, fullName } : m));
+  const handleEdit = async (data: { fullName?: string; email?: string; password?: string }) => {
+    await userService.update(editTarget!.id, data);
+    setMembers(prev => prev.map(m =>
+      m.id === editTarget!.id
+        ? { ...m, ...(data.fullName !== undefined && { fullName: data.fullName }), ...(data.email !== undefined && { email: data.email }) }
+        : m
+    ));
     setEditTarget(null);
   };
 
@@ -249,8 +307,8 @@ export function MemberDirectoryPage() {
       .filter(m => m.isActive === isActive)
       .filter(m =>
         !q ||
-        m.fullName.toLowerCase().includes(q) ||
-        m.email.toLowerCase().includes(q),
+        (m.fullName ?? '').toLowerCase().includes(q) ||
+        (m.email ?? '').toLowerCase().includes(q),
       );
   }, [members, activeFilter, searchQuery]);
 
@@ -313,10 +371,10 @@ export function MemberDirectoryPage() {
                     <td className={styles.td}>
                       <div className={styles.memberCell}>
                         <div className={styles.avatar}>
-                          {member.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          {(member.fullName || member.email || '?').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <div className={styles.memberName}>{member.fullName}</div>
+                          <div className={styles.memberName}>{member.fullName || <em style={{ color: 'var(--color-text-tertiary, #9ca3af)' }}>No name set</em>}</div>
                           <div className={styles.memberEmail}>{member.email}</div>
                         </div>
                       </div>
@@ -336,29 +394,39 @@ export function MemberDirectoryPage() {
                       </button>
                     </td>
                     <td className={styles.td}>
-                      <div className={styles.actionRow}>
+                      {member.isActive ? (
+                        <div className={styles.actionRow}>
+                          <button
+                            className={styles.actionBtn}
+                            title="Send notification"
+                            onClick={() => setNotifyTarget(member)}
+                          >
+                            <Icon name="bell" size={15} />
+                          </button>
+                          <button
+                            className={styles.actionBtn}
+                            title="Edit name"
+                            onClick={() => setEditTarget(member)}
+                          >
+                            <Icon name="edit" size={15} />
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                            title="Deactivate member"
+                            onClick={() => setDeleteTarget(member)}
+                          >
+                            <Icon name="trash-2" size={15} />
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          className={styles.actionBtn}
-                          title="Send notification"
-                          onClick={() => setNotifyTarget(member)}
+                          className={styles.btnPrimary}
+                          disabled={togglingId === member.id}
+                          onClick={() => handleToggleStatus(member)}
                         >
-                          <Icon name="bell" size={15} />
+                          {togglingId === member.id ? 'Activating…' : 'Activate User'}
                         </button>
-                        <button
-                          className={styles.actionBtn}
-                          title="Edit name"
-                          onClick={() => setEditTarget(member)}
-                        >
-                          <Icon name="edit" size={15} />
-                        </button>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                          title="Deactivate member"
-                          onClick={() => setDeleteTarget(member)}
-                        >
-                          <Icon name="trash-2" size={15} />
-                        </button>
-                      </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -383,7 +451,7 @@ export function MemberDirectoryPage() {
       )}
       {deleteTarget && (
         <DeleteModal
-          memberName={deleteTarget.fullName}
+          memberName={deleteTarget.fullName || deleteTarget.email}
           onConfirm={handleDelete}
           onClose={() => setDeleteTarget(null)}
         />

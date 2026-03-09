@@ -38,8 +38,16 @@ export const authService = {
 
     const normalizedRole = raw.role.toLowerCase() as 'admin' | 'member';
 
-    // We don't have fullName from Auth response — will be fetched lazily
     const user: StoredUser = { id: userId, email: req.email, fullName: '', role: normalizedRole };
+
+    // Fetch fullName from the user profile endpoint right after login
+    if (userId) {
+      try {
+        const profilePage = await api.get<{ content: Array<{ fullName: string }> }>(`/user?userId=${userId}`);
+        user.fullName = profilePage.content[0]?.fullName ?? '';
+      } catch { /* ignore — profile fetch is best-effort */ }
+    }
+
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     return user;
   },

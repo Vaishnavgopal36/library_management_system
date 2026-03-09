@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppRole } from '../../utils/types';
 import styles from './ProfilePage.module.css';
 import { Icon } from '../../components/atoms/Icon';
@@ -8,6 +9,7 @@ import { reportService, type SystemAnalytics } from '../../services/report.servi
 import { transactionService } from '../../services/transaction.service';
 import { fineService } from '../../services/fine.service';
 import { reservationService } from '../../services/reservation.service';
+import { userService } from '../../services/user.service';
 
 export interface ProfilePageProps {
   role?: AppRole;
@@ -49,8 +51,26 @@ const MEMBER_BADGES: BadgeInfo[] = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAdmin = role === 'admin';
+  const navigate = useNavigate();
+
+  // Fetch fresh profile so fullName is always up-to-date (even for old sessions)
+  const [fetchedName, setFetchedName] = useState<string | null>(null);
+  useEffect(() => {
+    if (user?.id) {
+      userService.getById(user.id)
+        .then(p => { if (p?.fullName) setFetchedName(p.fullName); })
+        .catch(() => {/* ignore */});
+    }
+  }, [user?.id]);
+
+  const displayName = fetchedName || user?.fullName || '';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   // ── Stats from API ──────────────────────────────────────────────────────
   const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null);
@@ -96,12 +116,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
 
   const stats = isAdmin ? adminStats : memberStats;
   const badges = isAdmin ? ADMIN_BADGES : MEMBER_BADGES;
-  const avatarInitials = user?.fullName
-    ?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? '?';
+  const avatarInitials = displayName
+    ? displayName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : (isAdmin ? 'AD' : 'ME');
 
   return (
     <AppShell
-      userName={user?.fullName ?? (isAdmin ? 'Admin' : 'Member')}
+      userName={displayName || (isAdmin ? 'Admin' : 'Member')}
       activeNavItem="Profile"
       role={role}
     >
@@ -117,10 +138,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
               </div>
             </div>
             <div className={styles.heroMeta}>
-              <h2 className={styles.heroName}>{user?.fullName ?? '—'}</h2>
+              <h2 className={styles.heroName}>{displayName || (isAdmin ? 'Administrator' : 'Member')}</h2>
               <span className={`${styles.rolePill} ${isAdmin ? styles.rolePillAdmin : styles.rolePillMember}`}>
                 {isAdmin ? 'Administrator' : 'Library Member'}
               </span>
+              <button className={styles.logoutBtn} onClick={handleLogout}>
+                <Icon name="log-out" size={15} strokeWidth={2} />
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -135,7 +160,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
               <DetailRow
               icon={<Icon name="user" size={16} />}
                 label="Full Name"
-                value={user?.fullName ?? '—'}
+                value={displayName || '—'}
               />
               <DetailRow
               icon={<Icon name="mail" size={16} />}

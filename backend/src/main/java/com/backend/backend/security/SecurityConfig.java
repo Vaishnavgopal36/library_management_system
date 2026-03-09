@@ -81,12 +81,12 @@ public class SecurityConfig {
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"401 UNAUTHORIZED: " + authException.getMessage() + "\"}");
+                    response.getWriter().write("{\"title\":\"Unauthorized\",\"status\":401,\"detail\":\"" + authException.getMessage() + "\"}");
                 })
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"error\": \"403 FORBIDDEN: " + accessDeniedException.getMessage() + "\"}");
+                    response.getWriter().write("{\"title\":\"Forbidden\",\"status\":403,\"detail\":\"" + accessDeniedException.getMessage() + "\"}");
                 })
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
