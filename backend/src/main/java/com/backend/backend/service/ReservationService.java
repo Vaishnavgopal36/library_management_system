@@ -56,13 +56,13 @@ public class ReservationService {
         List<Object[]> stockRows = bookRepository.getTrueAvailableStockBatch(List.of(bookId));
         Integer availableStock = stockRows.isEmpty() ? null : ((Number) stockRows.get(0)[1]).intValue();
         if (availableStock == null || availableStock <= 0) {
-            throw new IllegalStateException("Book is currently out of stock.");
+            throw new IllegalStateException("Sorry, all copies of this book are currently borrowed. Please check back later.");
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that member account."));
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that book. It may have been removed."));
 
         enforceReservationLimits(user.getId());
 
@@ -80,19 +80,19 @@ public class ReservationService {
             // Catches both constraint violations and DB trigger exceptions (PSQLException wrapped as JpaSystemException)
             String msg = e.getMostSpecificCause().getMessage();
             if (msg != null && msg.contains("Limit reached")) {
-                throw new IllegalStateException(msg);
+                throw new IllegalStateException("You've reached the maximum number of active reservations. Please cancel an existing one before adding a new reservation.");
             }
-            throw new IllegalArgumentException("Reservation failed: Limit reached or duplicate hold.");
+            throw new IllegalArgumentException("This book is already reserved by you, or you've reached your reservation limit.");
         }
     }
 
     @Transactional
     public void fulfillReservation(UUID reservationId) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that reservation."));
 
         if (!"active".equals(reservation.getStatus())) {
-            throw new IllegalStateException("Only active reservations can be fulfilled.");
+            throw new IllegalStateException("This reservation has already been completed or cancelled and cannot be fulfilled.");
         }
 
         long activeBorrowed = transactionRepository.countByUserIdAndStatusIn(
@@ -100,7 +100,7 @@ public class ReservationService {
                 ACTIVE_BORROW_STATUSES
         );
         if (activeBorrowed >= MAX_ACTIVE_BORROWS) {
-            throw new IllegalStateException("Borrow limit reached. Max 3 active borrowed books.");
+            throw new IllegalStateException("This member has already borrowed the maximum of 3 books. A book must be returned before this reservation can be fulfilled.");
         }
 
         reservation.setStatus("completed");
@@ -165,7 +165,7 @@ public class ReservationService {
             Boolean includeExpired
     ) {
         UUID userId = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"))
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that member account."))
                 .getId();
 
         return searchReservations(
@@ -184,10 +184,10 @@ public class ReservationService {
     @Transactional
     public void cancelReservation(UUID id) {
         Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Reservation not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that reservation."));
 
         if (!"active".equalsIgnoreCase(reservation.getStatus())) {
-            throw new IllegalStateException("Only active reservations can be cancelled.");
+            throw new IllegalStateException("This reservation can't be cancelled because it is no longer active.");
         }
 
         reservation.setStatus("cancelled");

@@ -6,6 +6,7 @@ import { Icon } from '../../components/atoms/Icon';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 import { notificationService } from '../../services/notification.service';
+import { Toast } from '../../components/atoms/Toast/Toast';
 
 // ── Derived status ─────────────────────────────────────────────────────────────
 type MemberFilter = 'Active' | 'Blacklisted';
@@ -217,11 +218,17 @@ interface DeleteModalProps {
 
 function DeleteModal({ memberName, onConfirm, onClose }: DeleteModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleConfirm = async () => {
     setIsDeleting(true);
-    try { await onConfirm(); }
-    catch { setIsDeleting(false); }
+    setError('');
+    try {
+      await onConfirm();
+    } catch (err: any) {
+      setError(err?.message ?? 'Could not deactivate this member. Please try again.');
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -236,6 +243,11 @@ function DeleteModal({ memberName, onConfirm, onClose }: DeleteModalProps) {
         <p className={styles.deleteMsg}>
           Deactivate <strong>{memberName}</strong>? They will lose access to the library system.
         </p>
+        {error && (
+          <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', margin: '0 0 0.5rem' }}>
+            {error}
+          </p>
+        )}
         <div className={styles.modalActions}>
           <button className={styles.btnSecondary} onClick={onClose} disabled={isDeleting}>Cancel</button>
           <button className={styles.btnDanger} onClick={handleConfirm} disabled={isDeleting}>
@@ -258,6 +270,7 @@ export function MemberDirectoryPage() {
   const [deleteTarget, setDeleteTarget] = useState<UserResponse | null>(null);
   const [notifyTarget, setNotifyTarget] = useState<UserResponse | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState('');
 
   const loadMembers = useCallback(() => {
     setIsLoading(true);
@@ -291,7 +304,7 @@ export function MemberDirectoryPage() {
       const updated = await userService.update(member.id, { isActive: !member.isActive });
       setMembers(prev => prev.map(m => m.id === member.id ? { ...m, isActive: updated.isActive } : m));
     } catch (err: any) {
-      alert(err?.message ?? 'Failed to update member status.');
+      setErrorToast(err?.message ?? 'Failed to update member status.');
     } finally {
       setTogglingId(null);
     }
@@ -454,6 +467,13 @@ export function MemberDirectoryPage() {
           memberName={deleteTarget.fullName || deleteTarget.email}
           onConfirm={handleDelete}
           onClose={() => setDeleteTarget(null)}
+        />
+      )}
+      {errorToast && (
+        <Toast
+          message={errorToast}
+          variant="error"
+          onClose={() => setErrorToast('')}
         />
       )}
     </AppShell>

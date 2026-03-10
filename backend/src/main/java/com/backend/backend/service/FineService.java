@@ -72,7 +72,7 @@ public class FineService {
             BigDecimal maxAmount
     ) {
         UUID userId = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"))
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that member account."))
                 .getId();
 
         return searchLedger(fineId, userId, transactionId, isPaid, minAmount, maxAmount);
@@ -149,17 +149,17 @@ public class FineService {
     @Transactional
     public FineResponse settleFine(UUID transactionId) {
         Transaction tx = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that borrowing record."));
 
         BigDecimal canonical = canonicalFine(tx);
         if (canonical.compareTo(BigDecimal.ZERO) == 0) {
-            throw new IllegalStateException("No overdue fine applicable for this transaction.");
+            throw new IllegalStateException("There is no outstanding fine for this borrowing record.");
         }
 
         BigDecimal alreadyPaid   = fineRepository.sumPaidAmountByTransactionId(transactionId);
         if (alreadyPaid == null) alreadyPaid = BigDecimal.ZERO;
         if (alreadyPaid.compareTo(canonical) >= 0) {
-            throw new IllegalStateException("Fine is already fully settled.");
+            throw new IllegalStateException("This fine has already been paid in full — no further action needed.");
         }
 
         // Mark all unpaid records as paid

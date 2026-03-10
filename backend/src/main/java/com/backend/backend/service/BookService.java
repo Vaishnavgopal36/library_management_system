@@ -66,7 +66,7 @@ public class BookService {
     @Transactional(readOnly = true)
     public BookResponse getBookById(UUID id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that book. It may have been removed."));
         Map<UUID, Integer> stockMap = fetchStockMap(List.of(id));
         return mapToResponse(book, stockMap.getOrDefault(id, 0));
     }
@@ -97,7 +97,7 @@ public class BookService {
     @Transactional
     public BookResponse updateBook(UUID id, BookRequest request) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that book. It may have been removed."));
 
         book.setTitle(request.getTitle());
         book.setIsbn(request.getIsbn());
@@ -125,12 +125,13 @@ public class BookService {
     @Transactional
     public void archiveBook(UUID id) {
         Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that book. It may have been removed."));
 
         long activeTransactions = transactionRepository.countByBookIdAndStatusIn(id, ACTIVE_BORROW_STATUSES);
         if (activeTransactions > 0) {
             throw new IllegalStateException(
-                    "Cannot delete/archive book. It currently has " + activeTransactions + " active borrow transaction(s)."
+                    "This book cannot be removed right now because " + activeTransactions +
+                    " member(s) currently have it borrowed. Please wait until all copies are returned."
             );
         }
         

@@ -118,25 +118,25 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that member account."));
         return mapToResponse(user);
     }
 
     @Transactional
     public UserResponse updateUser(UUID id, UserUpdateRequest request, String requesterEmail) {
         User requester = userRepository.findByEmail(requesterEmail)
-                .orElseThrow(() -> new IllegalArgumentException("Requester not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Your session could not be verified. Please log out and sign in again."));
         boolean requesterIsAdmin = requester.getRole() == UserRole.admin;
         if (!requesterIsAdmin && !requester.getId().equals(id)) {
-            throw new IllegalArgumentException("Members can update only their own profile.");
+            throw new IllegalArgumentException("You can only update your own profile.");
         }
 
         User userToUpdate = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that member account."));
 
         // Enforce soft-delete through DELETE endpoint only.
         if (Boolean.FALSE.equals(request.getIsActive())) {
-            throw new IllegalArgumentException("Use DELETE /api/v1/user/{id} for deactivation.");
+            throw new IllegalArgumentException("Account deactivation must be done through the Remove Member action.");
         }
         if (Boolean.TRUE.equals(request.getIsActive())) {
             userToUpdate.setIsActive(true);
@@ -158,19 +158,21 @@ public class UserService {
     @Transactional
     public void deactivateUser(UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that member account."));
 
         BigDecimal totalUnpaidFines = fineRepository.sumUnpaidAmountByUserId(id);
         if (totalUnpaidFines != null && totalUnpaidFines.compareTo(BigDecimal.ZERO) > 0) {
             throw new IllegalStateException(
-                    "Cannot delete/deactivate user. User has unpaid fines totaling " + totalUnpaidFines + "."
+                    "This member cannot be removed because they have an outstanding fine of $" + totalUnpaidFines +
+                    ". Please settle the fine first."
             );
         }
 
         long activeTransactions = transactionRepository.countByUserIdAndStatusIn(id, ACTIVE_BORROW_STATUSES);
         if (activeTransactions > 0) {
             throw new IllegalStateException(
-                    "Cannot delete/deactivate user. User has " + activeTransactions + " active borrowed book(s)."
+                    "This member cannot be removed because they currently have " + activeTransactions +
+                    " book(s) borrowed. Please wait for the books to be returned."
             );
         }
 
@@ -197,7 +199,7 @@ public class UserService {
         try {
             return UserRole.valueOf(role.trim().toLowerCase());
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid role filter. Allowed values: member, admin.");
+            throw new IllegalArgumentException("Invalid role filter. Please use: member or admin.");
         }
     }
 }

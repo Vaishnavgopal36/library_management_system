@@ -90,7 +90,7 @@ public class TransactionService {
             LocalDateTime dueBefore
     ) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that member account."));
 
         return searchHistory(
                 transactionId,
@@ -160,18 +160,19 @@ public class TransactionService {
     @Transactional
     public TransactionResponse issueBook(UUID userId, UUID bookId) {
         if (userId == null || bookId == null) {
-            throw new IllegalArgumentException("Both userId and bookId are required.");
+            throw new IllegalArgumentException("Please select both a member and a book to issue.");
         }
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+            .orElseThrow(() -> new IllegalArgumentException("We couldn't find that member account."));
         Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new IllegalArgumentException("Book not found"));
+            .orElseThrow(() -> new IllegalArgumentException("We couldn't find that book. It may have been removed."));
 
         BigDecimal totalUnpaidFines = fineRepository.sumUnpaidAmountByUserId(user.getId());
         if (totalUnpaidFines != null && totalUnpaidFines.compareTo(BigDecimal.ZERO) > 0) {
             throw new IllegalStateException(
-                    "Cannot issue book. User has unpaid fines totaling " + totalUnpaidFines + "."
+                    "This book cannot be issued because the member has an outstanding fine of $" + totalUnpaidFines +
+                    ". Please settle the fine first."
             );
         }
 
@@ -181,7 +182,7 @@ public class TransactionService {
         List<Object[]> stockRows = bookRepository.getTrueAvailableStockBatch(List.of(book.getId()));
         Integer availableStock = stockRows.isEmpty() ? null : ((Number) stockRows.get(0)[1]).intValue();
         if (availableStock == null || availableStock <= 0) {
-            throw new IllegalStateException("Book is currently out of stock.");
+            throw new IllegalStateException("Sorry, all copies of this book are currently borrowed. Please try again later or place a reservation.");
         }
 
         Transaction transaction = Transaction.builder()
@@ -202,10 +203,10 @@ public class TransactionService {
     @Transactional
     public TransactionResponse returnBook(UUID transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that borrowing record."));
 
         if (transaction.getStatus() == TransactionStatus.returned) {
-            throw new IllegalStateException("Book is already returned.");
+            throw new IllegalStateException("This book has already been returned — no further action needed.");
         }
 
         transaction.setStatus(TransactionStatus.returned);
@@ -248,13 +249,13 @@ public class TransactionService {
     @Transactional
     public TransactionResponse markLost(UUID transactionId) {
         Transaction transaction = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+                .orElseThrow(() -> new IllegalArgumentException("We couldn't find that borrowing record."));
 
         if (transaction.getStatus() == TransactionStatus.lost) {
-            throw new IllegalStateException("Book is already marked as lost.");
+            throw new IllegalStateException("This book is already marked as lost.");
         }
         if (transaction.getStatus() == TransactionStatus.returned) {
-            throw new IllegalStateException("Cannot mark a returned transaction as lost.");
+            throw new IllegalStateException("A book that has already been returned cannot be marked as lost.");
         }
 
         transaction.setStatus(TransactionStatus.lost);
@@ -298,12 +299,12 @@ public class TransactionService {
     private void enforceBorrowLimits(UUID userId) {
         long activeBorrowed = transactionRepository.countByUserIdAndStatusIn(userId, ACTIVE_BORROW_STATUSES);
         if (activeBorrowed >= MAX_ACTIVE_BORROWS) {
-            throw new IllegalStateException("Borrow limit reached. Max 3 active borrowed books.");
+            throw new IllegalStateException("This member has already borrowed the maximum of 3 books. A book must be returned before another can be borrowed.");
         }
 
         long activeReservations = reservationRepository.countActiveByUserId(userId, LocalDateTime.now());
         if (activeBorrowed + activeReservations >= MAX_ACTIVE_ITEMS) {
-            throw new IllegalStateException("Total active items limit reached. Max 3 borrowed/reserved books.");
+            throw new IllegalStateException("This member has reached the maximum of 3 active borrowed/reserved items. Please return or cancel one before proceeding.");
         }
     }
 
@@ -315,7 +316,7 @@ public class TransactionService {
         try {
             return TransactionStatus.valueOf(status.trim().toLowerCase());
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Invalid transaction status filter. Allowed values: issued, returned, overdue, lost.");
+            throw new IllegalArgumentException("Invalid status filter. Please use one of: issued, returned, overdue, lost.");
         }
     }
 }
