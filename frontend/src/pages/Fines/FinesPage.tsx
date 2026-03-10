@@ -68,7 +68,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const pagination = usePagination(filtered, { pageSize: 5 });
 
   const unpaidCount = fines.filter(f => !f.isPaid).length;
-  const totalUnpaid = fines.filter(f => !f.isPaid).reduce((s, f) => s + f.amount, 0);
+  const totalUnpaid = fines.filter(f => !f.isPaid).reduce((s, f) => s + f.remainingAmount, 0);
 
   // ── Notify modal (admin only) ──
   const notifyModal = useModal<ApiFine>();

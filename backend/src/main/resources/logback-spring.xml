@@ -3,6 +3,23 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
+    <!--
+        LOKI appender — structured JSON payload.
+
+        Each log line pushed to Loki is a self-contained JSON object.
+        Grafana LogQL can then parse it with `| json` and filter/aggregate
+        on individual fields (e.g. `level`, `logger`, `stackTrace != ""`).
+
+        Escaping strategy:
+          - %replace(%msg)      — escapes " and \ in the log message so the
+                                  JSON string value is always valid.
+          - %replace(%xThrowable) — collapses the full stack trace onto one
+                                  line (replaces CR/LF/TAB with a space) and
+                                  escapes " and \.  Empty string when no
+                                  exception is present.
+
+        Labels are kept exactly as before so Loki stream indexing is unchanged.
+    -->
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
         <http>
             <url>http://loki:3100/loki/api/v1/push</url>
@@ -12,7 +29,7 @@
                 <pattern>app=library-backend,host=${HOSTNAME},level=%level</pattern>
             </label>
             <message>
-                <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+                <pattern>{"timestamp":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}","level":"%level","thread":"%thread","logger":"%logger","message":"%replace(%msg){'(["\\\\])','\\$1'}","stackTrace":"%replace(%replace(%xThrowable{full}){'(["\\\\])','\\$1'}){'[\r\n\t]+',' '}"}</pattern>
             </message>
             <sortByTime>true</sortByTime>
         </format>

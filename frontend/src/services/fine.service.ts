@@ -8,7 +8,8 @@ export interface ApiFine {
   userId: string;
   bookName: string;
   userName: string;
-  amount: number;
+  amount: number;          // canonical total fine (daysLate × 2)
+  remainingAmount: number; // amount still owed (canonical − already paid)
   isPaid: boolean;
 }
 

@@ -100,4 +100,29 @@ CREATE TRIGGER enforce_max_reservations
 
 -- 13. INDEXES (Optimization for Search)
 CREATE INDEX idx_books_title ON books(title);
+
+-- 14. ENVERS REVISION TABLE with principal identity columns
+CREATE TABLE IF NOT EXISTS revinfo (
+    rev         INTEGER      PRIMARY KEY,
+    revtstmp    BIGINT,
+    audit_notes VARCHAR(255),
+    username    VARCHAR(255),
+    email       VARCHAR(255),
+    ip_address  VARCHAR(64)
+);
+
+-- 15. AUTHENTICATION AUDIT LOG (tracks every login attempt independently of Envers)
+CREATE TABLE IF NOT EXISTS auth_audit_log (
+    id              UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    attempted_email VARCHAR(255) NOT NULL,
+    ip_address      VARCHAR(64)  NOT NULL,
+    status          VARCHAR(16)  NOT NULL,   -- 'SUCCESS' or 'FAILED'
+    failure_reason  VARCHAR(512),
+    timestamp       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_auth_audit_email     ON auth_audit_log(attempted_email);
+CREATE INDEX idx_auth_audit_ip        ON auth_audit_log(ip_address);
+CREATE INDEX idx_auth_audit_timestamp ON auth_audit_log(timestamp);
+CREATE INDEX idx_auth_audit_status    ON auth_audit_log(status);
 CREATE INDEX idx_authors_name ON authors(name);

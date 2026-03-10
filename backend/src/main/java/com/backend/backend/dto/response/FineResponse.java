@@ -20,5 +20,6 @@ public class FineResponse {
     private String bookName;
     private String userName;
     private BigDecimal amount; 
+    private BigDecimal remainingAmount;
     private Boolean isPaid;
 }
