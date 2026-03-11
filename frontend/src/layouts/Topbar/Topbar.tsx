@@ -4,7 +4,7 @@ import { Icon } from '../../components/atoms/Icon';
 import styles from './Topbar.module.css';
 import type { SearchConfig } from '../AppShell/AppShell';
 import { notificationService } from '../../services/notification.service';
-import { TOKEN_KEY } from '../../services/api';
+import { USER_KEY } from '../../services/api';
 
 export interface TopbarProps {
   userName?: string;
@@ -31,7 +31,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem(TOKEN_KEY)) return;
+    if (!localStorage.getItem(USER_KEY)) return;
     const fetchCount = () =>
       notificationService.unreadCount()
         .then(setUnreadCount)
@@ -57,17 +57,20 @@ export const Topbar: React.FC<TopbarProps> = ({
   return (
     <header className={styles.topbar}>
 
-      {/* Left group: hamburger (mobile only) + search bar */}
+      {/* Hamburger — direct topbar child so it lands in Row 1 on mobile
+          (order: 1 in the topbar flex context, not buried inside leftGroup) */}
+      {onMenuClick && (
+        <button
+          className={styles.hamburgerBtn}
+          onClick={onMenuClick}
+          aria-label="Open navigation menu"
+        >
+          <Icon name="hamburger" size={20} />
+        </button>
+      )}
+
+      {/* Left group: search bar only (hamburger moved out above) */}
       <div className={styles.leftGroup}>
-        {onMenuClick && (
-          <button
-            className={styles.hamburgerBtn}
-            onClick={onMenuClick}
-            aria-label="Open navigation menu"
-          >
-            <Icon name="hamburger" size={20} />
-          </button>
-        )}
 
         {/* Search Bar — only shown when the page provides searchConfig */}
         {searchConfig ? (

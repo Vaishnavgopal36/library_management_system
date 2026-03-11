@@ -1,14 +1,14 @@
 /**
  * Base API client.
  * - Reads VITE_API_URL from environment.
- * - Attaches Bearer JWT from localStorage on every authenticated call.
+ * - Sends the HttpOnly JWT cookie automatically via credentials:'include' on every request.
  * - Throws ApiError on non-2xx responses so callers can .catch() cleanly.
- * - Redirects to /login on 401 (expired / missing token).
+ * - Redirects to /login on 401 (expired / missing cookie session).
  */
 
 export const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api/v1';
 
-export const TOKEN_KEY = 'bookstop_token';
+// User profile key — only non-sensitive metadata (name, role, userId), never the token.
 export const USER_KEY  = 'bookstop_user';
 
 // ── Stored auth user shape ────────────────────────────────────────────────────
@@ -55,17 +55,17 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  if (auth) {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  // credentials:'include' tells the browser to attach the HttpOnly JWT cookie
+  // automatically on every request — no manual Bearer header needed.
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
 
   // Only treat 401 as "session expired" on authenticated requests.
   // Public endpoints (auth = false, e.g. login) should surface the error normally.
   if (res.status === 401 && auth) {
-    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     window.location.href = '/login';
     throw new ApiError(401, 'Session expired. Please log in again.');

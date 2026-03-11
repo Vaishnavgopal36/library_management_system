@@ -16,6 +16,7 @@ import { bookService } from '../../services/book.service';
 import { userService } from '../../services/user.service';
 import { fmtDate } from '../../utils/dates';
 import { txBadgeVariant } from '../../utils/badges';
+import { truncateTitle } from '../../utils/textUtils';
 import { SearchDropdown, type SearchDropdownOption } from '../../components/atoms/SearchDropdown/SearchDropdown';
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -165,8 +166,8 @@ export const AdminDashboard: React.FC = () => {
 
   // ── Table columns ───────────────────────────────────────────────────────────
   const txColumns: Column<ApiTransaction>[] = [
-    { header: 'Member', accessor: 'userName' },
-    { header: 'Book', accessor: 'bookName' },
+    { header: 'Member', accessor: 'userName', render: (row) => <span title={row.userName}>{truncateTitle(row.userName)}</span> },
+    { header: 'Book',   accessor: 'bookName', render: (row) => <span title={row.bookName}>{truncateTitle(row.bookName)}</span> },
     { header: 'Date', accessor: 'checkoutDate', render: (row) => <span>{fmtDate(row.checkoutDate)}</span> },
     { header: 'Status', accessor: 'status', render: (row) => (
       <Badge variant={txBadgeVariant(row.status)}>{cap(row.status)}</Badge>
@@ -174,8 +175,8 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   const fineColumns: Column<ApiFine>[] = [
-    { header: 'Member', accessor: 'userName' },
-    { header: 'Book', accessor: 'bookName' },
+    { header: 'Member', accessor: 'userName', render: (row) => <span title={row.userName}>{truncateTitle(row.userName)}</span> },
+    { header: 'Book',   accessor: 'bookName', render: (row) => <span title={row.bookName}>{truncateTitle(row.bookName)}</span> },
     { header: 'Amount', accessor: 'amount', render: (row) => <span style={{ fontWeight: 600 }}>₹{row.amount}</span> },
     { header: 'Action', accessor: 'id', render: (row) => (
       <div className={styles.actionGroup}>

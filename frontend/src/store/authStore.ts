@@ -12,12 +12,13 @@ interface AuthState {
 
   login: (req: LoginRequest) => Promise<StoredUser>;
   logout: () => void;
-  syncFromStorage: () => void;
 }
 
 // ── Store ─────────────────────────────────────────────────────────────────────
-// No persist middleware — authService already writes token + user to localStorage.
-// The store is initialised from localStorage on every page load via getStoredUser().
+// No persist middleware — authService writes the non-sensitive user profile to
+// localStorage (USER_KEY). The JWT lives exclusively in an HttpOnly cookie; it
+// is never touched from JS. The store is hydrated from localStorage on every
+// page load via getStoredUser().
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: authService.getStoredUser(),
 
@@ -34,17 +35,5 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     authService.logout();
     set({ user: null });
   },
-
-  syncFromStorage: () => {
-    set({ user: authService.getStoredUser() });
-  },
 }));
 
-// Cross-tab sync: when another tab logs in/out, update this tab's store
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'bookstop_token' || e.key === 'bookstop_user') {
-      useAuthStore.getState().syncFromStorage();
-    }
-  });
-}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { truncateTitle } from '../../utils/textUtils';
 import { fmtDate } from '../../utils/dates';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
 import { AppRole, TxStatus } from '../../utils/types';
@@ -112,7 +113,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
       <div className={styles.bookCell}>
         <DynamicBookCover title={row.bookName} author="" width="48px" height="64px" showText={false} />
         <div className={styles.bookCellText}>
-          <p className={styles.bookCellTitle}>{row.bookName}</p>
+          <p className={styles.bookCellTitle} title={row.bookName}>{truncateTitle(row.bookName)}</p>
         </div>
       </div>
     ),
@@ -132,8 +133,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
     header: 'Returned',
     accessor: 'returnedDate',
     render: (row) => (
-      <span className={row.returnedDate ? 'text-text-primary' : 'text-text-muted'}>
-        {row.returnedDate ? fmtDate(row.returnedDate) : '—'}
+      <span className={row.returnDate ? 'text-text-primary' : 'text-text-muted'}>
+        {row.returnDate ? fmtDate(row.returnDate) : '—'}
       </span>
     ),
   };

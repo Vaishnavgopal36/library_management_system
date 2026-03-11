@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppRole } from '../../utils/types';
 import styles from './AdminSearchPage.module.css';
 import { Icon } from '../../components/atoms/Icon';
@@ -14,10 +14,12 @@ import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 import { SearchDropdown, SearchDropdownOption } from '../../components/atoms/SearchDropdown/SearchDropdown';
 import { bookService, type ApiBook, type BookSearchParams } from '../../services/book.service';
 import { useBooks } from '../../hooks/useBooks';
+import { useDebounce } from '../../hooks/useDebounce';
 import { transactionService } from '../../services/transaction.service';
 import { reservationService } from '../../services/reservation.service';
 import { userService } from '../../services/user.service';
 import { useAuth } from '../../context/AuthContext';
+import { truncateTitle } from '../../utils/textUtils';
 
 interface BookFormData {
   title: string;
@@ -73,12 +75,14 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   const PAGE_SIZE = 10;
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [searchQuery, setSearchQuery] = useState('');
-  /* debouncedQuery drives the React Query key — updated 350ms after user input */
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  /* useDebounce delays API calls by 500ms after the user stops typing */
+  const debouncedQuery = useDebounce(searchQuery, 500);
   const [searchBy, setSearchBy] = useState<'title' | 'author' | 'category'>('title');
   const [allCategories, setAllCategories] = useState<string[]>(['All Categories']);
   const [bookFilter, setBookFilter] = useState<'active' | 'inactive'>('active');
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset to page 0 whenever the debounced query actually changes
+  useEffect(() => { setCurrentPage(0); }, [debouncedQuery]);
 
   const queryParams: BookSearchParams = {
     title: searchBy === 'title' ? debouncedQuery.trim() || undefined : undefined,
@@ -93,7 +97,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
 
   // Fetch all categories once for the dropdown
   useEffect(() => {
-    bookService.search({ size: 500 }).then(p => {
+    bookService.search({ size: 800 }).then(p => {
       const cats = Array.from(new Set(p.content.flatMap(b => b.categories.map(c => c.name)))).sort();
       setAllCategories(['All Categories', ...cats]);
     }).catch(console.error);
@@ -103,18 +107,13 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
     const t = type as 'title' | 'author' | 'category';
     setSearchBy(t);
     setSearchQuery('');
-    setDebouncedQuery('');
     setSelectedCategory('All Categories');
     setCurrentPage(0);
   };
 
   const handleSearchChange = (q: string) => {
     setSearchQuery(q);
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => {
-      setCurrentPage(0);
-      setDebouncedQuery(q);
-    }, 350);
+    // page reset is handled by the useEffect that watches debouncedQuery
   };
 
   const handleCategoryChange = (cat: string) => {
@@ -286,7 +285,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   return (
     <AppShell
       userName={user?.fullName ?? (isAdmin ? 'Admin' : 'Member')}
-      activeNavItem="Search"
+      activeNavItem="Books"
       role={role}
       searchConfig={{
         placeholder: searchBy === 'author' ? 'Search by author name…' : 'Search by book title…',
@@ -352,7 +351,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
                       <div className={styles.bookInfoWrapper}>
                         <DynamicBookCover title={book.title} author="" width="96px" height="135px" showText={false} />
                         <div className={styles.bookText}>
-                          <h3 className={styles.bookTitle}>{book.title}</h3>
+                          <h3 className={styles.bookTitle} title={book.title}>{truncateTitle(book.title)}</h3>
                           <p className={styles.bookAuthor}>{book.authors.map(a => a.name).join(', ')}</p>
                           <p className={styles.bookEdition}>{book.isbn}</p>
                         </div>

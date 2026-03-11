@@ -60,14 +60,16 @@ export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({
         <div style={{ paddingLeft: '8px' }}>
           <h3 style={{ 
             margin: 0, 
-            fontSize: '1.1rem', 
+            fontSize: '0.95rem', 
             fontWeight: 800, 
-            lineHeight: 1.2,
-            letterSpacing: '-0.025em',
+            lineHeight: 1.25,
+            letterSpacing: '-0.02em',
             display: '-webkit-box',
-            WebkitLineClamp: 4,
+            WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word',
           }}>
             {title}
           </h3>
@@ -76,7 +78,15 @@ export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({
 
       {showText && (
         <div style={{ paddingLeft: '8px' }}>
-          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, opacity: 0.8 }}>
+          <p style={{ 
+            margin: 0, 
+            fontSize: '0.7rem', 
+            fontWeight: 600, 
+            opacity: 0.8,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
             {author}
           </p>
         </div>

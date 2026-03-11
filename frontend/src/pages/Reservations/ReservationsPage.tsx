@@ -3,6 +3,7 @@ import { fmtDate } from '../../utils/dates';
 import { AppRole, ResStatus } from '../../utils/types';
 import { resBadgeVariant } from '../../utils/badges';
 import { useAuth } from '../../context/AuthContext';
+import { truncateTitle } from '../../utils/textUtils';
 import { reservationService, type ApiReservation } from '../../services/reservation.service';
 import styles from './ReservationsPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
@@ -124,7 +125,7 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
       <div className={styles.bookCell}>
         <DynamicBookCover title={row.book.title} author="" width="48px" height="64px" showText={false} />
         <div className={styles.bookCellText}>
-          <p className={styles.bookCellTitle}>{row.book.title}</p>
+          <p className={styles.bookCellTitle} title={row.book.title}>{truncateTitle(row.book.title)}</p>
           <p className={styles.bookCellAuthor}>{row.book.authors[0]?.name ?? '—'}</p>
         </div>
       </div>

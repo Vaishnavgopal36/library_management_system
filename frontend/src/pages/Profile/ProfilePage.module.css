@@ -63,12 +63,41 @@
   gap: 0.5rem;
 }
 
+.heroActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1.5px solid var(--color-info-400, #60a5fa);
+  color: var(--color-info-700, #1d4ed8);
+  border-radius: 8px;
+  padding: 0.35rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.editBtn:hover {
+  background: var(--color-info-50, #eff6ff);
+  border-color: var(--color-info-500, #3b82f6);
+}
+
 .logoutBtn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
-  margin-top: 0.5rem;
-  align-self: flex-start;
   background: none;
   border: 1.5px solid var(--color-danger-400, #f87171);
   color: var(--color-danger-600, #dc2626);

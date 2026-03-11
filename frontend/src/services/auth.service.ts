@@ -1,4 +1,4 @@
-import { api, StoredUser, TOKEN_KEY, USER_KEY } from './api';
+import { api, StoredUser, USER_KEY } from './api';
 
 // ── Request/Response shapes ───────────────────────────────────────────────────
 export interface LoginRequest {
@@ -13,9 +13,10 @@ export interface RegisterRequest {
 }
 
 interface RawAuthResponse {
-  token: string;
-  type: string;
-  role: string; // "ADMIN" | "MEMBER" — uppercase from backend
+  /** Normalised role: "ADMIN" | "MEMBER" — uppercase from backend */
+  role: string;
+  /** UUID of the authenticated user — safe to store client-side */
+  userId: string;
 }
 
 // ── Auth service ──────────────────────────────────────────────────────────────
@@ -27,23 +28,15 @@ export const authService = {
   async login(req: LoginRequest): Promise<StoredUser> {
     const raw = await api.post<RawAuthResponse>('/auth/login', req, false);
 
-    localStorage.setItem(TOKEN_KEY, raw.token);
-
-    // Decode userId from JWT payload (middle segment, base64)
-    let userId = '';
-    try {
-      const payload = JSON.parse(atob(raw.token.split('.')[1]));
-      userId = payload.userId ?? '';
-    } catch { /* ignore decode failures */ }
-
+    // JWT is delivered as an HttpOnly cookie — it is never present in the response
+    // body, so there is nothing to store in localStorage.
     const normalizedRole = raw.role.toLowerCase() as 'admin' | 'member';
-
-    const user: StoredUser = { id: userId, email: req.email, fullName: '', role: normalizedRole };
+    const user: StoredUser = { id: raw.userId, email: req.email, fullName: '', role: normalizedRole };
 
     // Fetch fullName from the user profile endpoint right after login
-    if (userId) {
+    if (raw.userId) {
       try {
-        const profilePage = await api.get<{ content: Array<{ fullName: string }> }>(`/user?userId=${userId}`);
+        const profilePage = await api.get<{ content: Array<{ fullName: string }> }>(`/user?userId=${raw.userId}`);
         user.fullName = profilePage.content[0]?.fullName ?? '';
       } catch { /* ignore — profile fetch is best-effort */ }
     }
@@ -61,7 +54,9 @@ export const authService = {
   },
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
+    // Tell the server to expire the HttpOnly jwt cookie (maxAge=0).
+    // Fire-and-forget: local state is cleared regardless of network outcome.
+    api.post('/auth/logout', {}, false).catch(() => { /* ignore */ });
     localStorage.removeItem(USER_KEY);
   },
 
@@ -72,6 +67,6 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem(TOKEN_KEY);
+    return !!localStorage.getItem(USER_KEY);
   },
 };

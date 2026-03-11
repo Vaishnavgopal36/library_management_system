@@ -4,6 +4,7 @@
   gap: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 1rem;
 }
 
 /* Controls & Dropdown */
@@ -327,18 +328,26 @@
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
+@media (min-width: 1024px) {
+  .pageContainer { padding: 0 2rem; gap: 2rem; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pageContainer { padding: 0 1.5rem; }
   .colCategory { display: none; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
+  .pageContainer { padding: 0 0.75rem; gap: 1rem; }
+  .colCategory { display: none; }
+
   /* Hide the column headers on mobile — info embedded in each card */
   .listHeader { display: none; }
 
   /* Stack the book row columns vertically */
   .bookRow {
     flex-direction: column;
-    padding: 1rem 1.25rem;
+    padding: 1rem;
     gap: 0.75rem;
   }
   .colBook, .colCategory, .colStatus, .colAction {
@@ -348,14 +357,11 @@
   }
   .colAction { justify-content: flex-end; }
 
-  /* Two-column form back to one column */
-  .formRow { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 480px) {
-  .bookRow     { padding: 0.875rem 1rem; }
   .bookTitle   { font-size: 1rem; }
   .actionButtons { flex-wrap: wrap; }
+
+  /* Two-column form back to one column */
+  .formRow { grid-template-columns: 1fr; }
 }
 
 /* ── Archived book row dim ───────────────────────────────────────────────── */

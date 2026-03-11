@@ -19,7 +19,8 @@
   border-radius: 12px;
   width: 100%;
   max-width: 600px;
-  max-height: 90vh;
+  max-height: 85vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -58,9 +59,10 @@
 
 .body {
   padding: 1.5rem;
-  max-height: calc(90vh - 70px);
   overflow-y: auto;
   overflow-x: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 @keyframes fadeIn {
@@ -75,10 +77,10 @@
 
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .overlay     { padding: 0.5rem; align-items: flex-end; }
+  .overlay     { padding: 1rem; align-items: center; }
   .modalContent {
-    max-height: 95vh;
-    border-radius: 12px 12px 0 0; /* Bottom sheet on mobile */
+    max-height: 85vh;
+    border-radius: 12px;
   }
   .header { padding: 1rem 1.25rem; }
   .body   { padding: 1.25rem; }

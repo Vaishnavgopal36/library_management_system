@@ -14,6 +14,7 @@ import { bookService, type ApiBook } from '../../services/book.service';
 import { transactionService, type ApiTransaction } from '../../services/transaction.service';
 import { fineService, type ApiFine } from '../../services/fine.service';
 import { reservationService } from '../../services/reservation.service';
+import { truncateTitle } from '../../utils/textUtils';
 
 const computeDueIn = (dueDate: string): { label: string; variant: 'warning' | 'success' | 'error' } => {
   const days = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86400000);
@@ -26,9 +27,13 @@ const BookDisplay = ({
   title, author, rating, coverHash, onReserve, showReserveButton,
 }: { title: string; author: string; rating?: string; coverHash: string; onReserve?: () => void; showReserveButton?: boolean }) => (
   <div className={styles.bookDisplay} onClick={onReserve} style={{ cursor: onReserve ? 'pointer' : 'default' }}>
-    <DynamicBookCover title={coverHash} author="" width="130px" height="190px" />
+    {/* Wrapper constrains cover dimensions — fixed size on mobile (80×120px),
+        fluid on desktop so the column layout looks unchanged. */}
+    <div className={styles.bookCoverWrapper}>
+      <DynamicBookCover title={coverHash} author="" width="100%" height="100%" />
+    </div>
     <div className={styles.bookInfo}>
-      <h4 className={styles.bookTitle}>{title}</h4>
+      <h4 className={styles.bookTitle} title={title}>{truncateTitle(title)}</h4>
       <p className={styles.bookAuthor}>{author}</p>
       {rating && <span className={styles.bookRating}>★ {rating}</span>}
       {showReserveButton && onReserve && (

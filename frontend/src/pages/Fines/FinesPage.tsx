@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
+import { truncateTitle } from '../../utils/textUtils';
 import { AppRole } from '../../utils/types';
 import { useModal } from '../../hooks/useModal';
 import { useConfirmAction } from '../../hooks/useConfirmAction';
@@ -94,7 +95,15 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   };
 
   // ── Table columns ──
-  const bookCol: Column<ApiFine> = { header: 'Book', accessor: 'bookName' };
+  const bookCol: Column<ApiFine> = {
+    header: 'Book',
+    accessor: 'bookName',
+    render: (row) => (
+      <span title={row.bookName} style={{ display: 'block', maxWidth: '200px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        {truncateTitle(row.bookName)}
+      </span>
+    ),
+  };
   const memberCol: Column<ApiFine> = { header: 'Member', accessor: 'userName' };
   const amountCol: Column<ApiFine> = {
     header: 'Amount',

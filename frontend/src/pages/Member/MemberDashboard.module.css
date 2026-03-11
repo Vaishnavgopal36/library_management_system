@@ -4,12 +4,13 @@
   gap: 2.5rem;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 1rem; /* Task 3: content never touches viewport edge */
 }
 
 .topRow {
   display: flex;
   gap: 1.5rem;
-  min-height: 290px;
+  min-height: 220px;
 }
 
 .quoteCard {
@@ -41,6 +42,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Fixed width prevents the banner from shrinking or overlapping the cards */
+  width: 40px;
+  flex-shrink: 0;
 }
 
 .verticalText {
@@ -52,39 +56,99 @@
 
 .scrollContainer {
   display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  flex-wrap: nowrap;          /* cards never wrap — horizontal scroll only */
+  gap: 1rem;
+  padding: 1rem 1.25rem;
   overflow-x: auto;
-  overflow-y: hidden; 
+  overflow-y: hidden;
   align-items: stretch;
+  flex: 1;                    /* fill remaining width after the vertical banner */
+  min-width: 0;               /* allow flex child to shrink below content size */
+  /* Hide scrollbar for a cleaner look */
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE/Edge */
+}
+.scrollContainer::-webkit-scrollbar {
+  display: none;              /* Chrome / Safari / Webkit */
 }
 .scrollContainer::after {
   content: "";
-  padding-right: 0.1px; 
+  padding-right: 0.1px;
 }
 .sectionTitle { margin: 0 0 0.5rem 0; font-size: 1.75rem; color: var(--color-text-primary); }
 .subTitle { margin: 0 0 1.5rem 0; font-size: 1.125rem; font-weight: 500; color: var(--color-text-body); }
 
+/* CSS Grid — base (mobile-first): exactly 2 columns, scales up at breakpoints */
 .bookGrid {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* In grid context the cell controls width; restore column layout so cover + text + button stack */
+.bookGrid .bookDisplay {
+  width: 100%;
+  flex-direction: column;     /* override any inherited row-layout from mobile rules */
+  align-items: stretch;
+  min-width: 0;
+  flex-shrink: 1;
+  padding: 0.625rem;          /* inner breathing room so nothing touches card edges */
+  background-color: var(--color-surface-50);
+  border: 1px solid var(--color-border-muted);
+  border-radius: 10px;
+}
+
+/* In grid context, cover takes full card width */
+.bookGrid .bookCoverWrapper {
+  width: 100%;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+/* In grid context, title wraps to 2 lines max instead of 3 */
+.bookGrid .bookTitle {
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+}
+
+/* Reserve button fills the full card width in grid context */
+.bookGrid .reserveBtn {
+  width: 100%;
+  padding: 0.35rem 0.75rem;
+  white-space: nowrap;
 }
 
 .bookDisplay {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  width: 130px;
+  gap: 0.5rem;
+  width: 108px;
+  min-width: 108px;   /* ensures cards never squish inside the scroll container */
+  flex-shrink: 0;     /* cards hold their width; container scrolls, cards don't squeeze */
   cursor: pointer;
   transition: transform 0.2s;
 }
 
 .bookDisplay:hover { transform: translateY(-4px); }
 
-.bookInfo { display: flex; flex-direction: column; gap: 0.25rem; flex-grow: 1;}
-.bookTitle { margin: 0; font-size: 0.875rem; color: var(--color-text-primary); line-height: 1.3; font-weight: 600; }
-.bookAuthor { margin: 0; font-size: 0.75rem; color: var(--color-text-secondary); }
+/* Wrapper that enforces cover dimensions.
+   Desktop / scroll-container: fills bookDisplay width × 150px tall (column layout).
+   Mobile: overridden to a fixed 80×120px tile beside the text (row layout). */
+.bookCoverWrapper {
+  width: 100%;
+  height: 150px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;   /* clips the cover at the border-radius */
+}
+
+.bookInfo { display: flex; flex-direction: column; gap: 0.25rem; flex-grow: 1; min-width: 0; overflow: hidden; }
+.bookTitle { margin: 0; font-size: 0.875rem; color: var(--color-text-primary); line-height: 1.3; font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.bookAuthor { margin: 0; font-size: 0.75rem; color: var(--color-text-secondary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .bookRating { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; }
 
 .possessionCard {
@@ -304,30 +368,88 @@
   color: var(--color-text-secondary);
 }
 
-/* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .topRow { height: auto; }
-  .quoteCard { min-height: 180px; }
+/* ─────────────────────────────────────────────────────────────────
+   Strict Breakpoint Architecture
+   Desktop  : min-width 1024px
+   Tablet   : 768px – 1023px
+   Mobile   : max-width 767px
+──────────────────────────────────────────────────────────────────── */
+
+/* ── 480px+ : 3 columns ─────────────────────────────────────── */
+@media (min-width: 480px) {
+  .bookGrid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .bookGrid .bookCoverWrapper { height: 150px; }
 }
 
-@media (max-width: 768px) {
-  .topRow         { flex-direction: column; height: auto; gap: 1rem; }
-  .quoteCard      { min-height: 140px; }
-  .newArrivalsCard { min-height: 200px; }
-  .bookGrid       { flex-wrap: wrap; }
-  .finesList      { max-width: 100%; }
-  .fineCard       { padding: 0.875rem 1rem; }
+/* ── Tablet: 768px – 1023px : 4 columns ──────────────────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboardLayout { padding: 0 1.5rem; gap: 2rem; }
+  .topRow          { height: auto; }
+  .quoteCard       { min-height: 180px; }
+  .bookGrid        { grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .bookGrid .bookCoverWrapper { height: 160px; }
 }
 
-@media (max-width: 480px) {
-  .topRow         { gap: 0.75rem; }
-  .dashboardLayout { gap: 1.5rem; }
-  .sectionTitle   { font-size: 1.375rem; }
-  .subTitle       { font-size: 0.9375rem; }
-  .bookDisplay    { width: 110px; }
-  .fineCard       { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
-  .fineCardRight  { width: 100%; justify-content: space-between; }
-  .fineCardAmount { font-size: 1.125rem; }
-  .quoteHeader    { font-size: 1rem; }
-  .quoteText      { font-size: 1rem; }
+/* ── Desktop ≥ 1024px : 5+ columns, auto-fill ─────────────────── */
+@media (min-width: 1024px) {
+  .dashboardLayout { padding: 0 2rem; gap: 2.5rem; }
+  .bookGrid        { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1.25rem; }
+  .bookGrid .bookCoverWrapper { height: 170px; }
+}
+
+/* ── Mobile: ≤ 767px ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Task 3: minimum 1rem edge padding so cards never touch the viewport border */
+  .dashboardLayout { padding: 0 1rem; gap: 1.5rem; }
+
+  .topRow          { flex-direction: column; height: auto; gap: 1rem; }
+  .quoteCard       { min-height: 140px; }
+  .quoteHeader     { font-size: 1rem; }
+  .quoteText       { font-size: 1rem; }
+  .newArrivalsCard { min-height: 140px; }
+
+  /* Book grid: 2 strict columns on mobile (already set in base, kept for clarity) */
+  .bookGrid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+
+  /* Grid cards stay in column layout on mobile — row layout applies only to
+     scroll-container (New Arrivals) cards via the rules below. */
+  .bookGrid .bookDisplay {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.5rem;
+  }
+  .bookGrid .bookCoverWrapper { width: 100%; height: 130px; }
+  .bookGrid .bookInfo         { flex: unset; }
+
+  /* Scroll-container (New Arrivals) cards: thumbnail-left, text-right row layout */
+  .scrollContainer .bookDisplay {
+    flex-direction: row;
+    width: auto;      /* overrides the 108px base — let min-width hold it */
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+  }
+  .scrollContainer .bookCoverWrapper { width: 80px; height: 120px; flex-shrink: 0; }
+  .scrollContainer .bookInfo         { flex: 1; min-width: 0; overflow: hidden; }
+  .scrollContainer .bookTitle        {
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-clamp: 3;
+  }
+
+  .scrollContainer { gap: 0.75rem; padding: 0.75rem 0.875rem; }
+  .sectionTitle    { font-size: 1.375rem; }
+  .subTitle        { font-size: 0.9375rem; }
+  .finesList       { max-width: 100%; }
+  .fineCard        { padding: 0.875rem 1rem; flex-direction: column;
+                     align-items: flex-start; gap: 0.75rem; }
+  .fineCardRight   { width: 100%; justify-content: space-between; }
+  .fineCardAmount  { font-size: 1.125rem; }
 }

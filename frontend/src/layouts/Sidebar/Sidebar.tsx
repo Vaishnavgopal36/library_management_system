@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // 2. Dynamically inject the role into the paths!
   const navItems: { name: string; path: string; icon: IconName }[] = [
     { name: 'Dashboard', path: `/${role}/dashboard`, icon: 'home' },
-    { name: 'Search', path: `/${role}/search`, icon: 'search' },
+    { name: 'Books', path: `/${role}/search`, icon: 'search' },
     { name: role === 'admin' ? 'Transaction Ledger' : 'My History', path: `/${role}/history`, icon: 'clock' },
     { name: 'Fines & Payments', path: `/${role}/fines`, icon: 'credit-card' },
     { name: 'Reservations', path: `/${role}/reservations`, icon: 'calendar' },

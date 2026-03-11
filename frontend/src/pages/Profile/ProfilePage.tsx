@@ -4,6 +4,9 @@ import { AppRole } from '../../utils/types';
 import styles from './ProfilePage.module.css';
 import { Icon } from '../../components/atoms/Icon';
 import { AppShell } from '../../layouts/AppShell/AppShell';
+import { Modal } from '../../components/molecules/Modal/Modal';
+import { Toast } from '../../components/atoms/Toast/Toast';
+import { InputField } from '../../components/atoms/InputField/InputField';
 import { useAuth } from '../../context/AuthContext';
 import { reportService, type SystemAnalytics } from '../../services/report.service';
 import { transactionService } from '../../services/transaction.service';
@@ -72,6 +75,46 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
     navigate('/login');
   };
 
+  // ── Edit Profile modal ──────────────────────────────────────────────────
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editError, setEditError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveToast, setSaveToast] = useState('');
+
+  const openEditModal = () => {
+    setEditName(displayName);
+    setEditEmail(user?.email ?? '');
+    setEditPassword('');
+    setEditError('');
+    setIsEditOpen(true);
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id) return;
+    setIsSaving(true);
+    setEditError('');
+    try {
+      const payload: Record<string, string> = {};
+      if (editName.trim() && editName.trim() !== displayName) payload.fullName = editName.trim();
+      if (editEmail.trim() && editEmail.trim() !== user.email) payload.email = editEmail.trim();
+      if (editPassword.trim()) payload.password = editPassword.trim();
+      if (Object.keys(payload).length === 0) { setIsEditOpen(false); return; }
+      await userService.update(user.id, payload);
+      setFetchedName(payload.fullName ?? displayName);
+      setIsEditOpen(false);
+      setSaveToast('Profile updated successfully.');
+      setTimeout(() => setSaveToast(''), 3500);
+    } catch (err: any) {
+      setEditError(err?.message ?? 'Failed to update profile.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // ── Stats from API ──────────────────────────────────────────────────────
   const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null);
   const [txCount, setTxCount] = useState<number | null>(null);
@@ -121,11 +164,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
     : (isAdmin ? 'AD' : 'ME');
 
   return (
-    <AppShell
-      userName={displayName || (isAdmin ? 'Admin' : 'Member')}
-      activeNavItem="Profile"
-      role={role}
-    >
+    <>
+      <AppShell
+        userName={displayName || (isAdmin ? 'Admin' : 'Member')}
+        activeNavItem="Profile"
+        role={role}
+      >
       <div className={styles.pageContainer}>
 
         {/* ── Hero card ── */}
@@ -142,10 +186,18 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
               <span className={`${styles.rolePill} ${isAdmin ? styles.rolePillAdmin : styles.rolePillMember}`}>
                 {isAdmin ? 'Administrator' : 'Library Member'}
               </span>
-              <button className={styles.logoutBtn} onClick={handleLogout}>
-                <Icon name="log-out" size={15} strokeWidth={2} />
-                Logout
-              </button>
+              <div className={styles.heroActions}>
+                {!isAdmin && (
+                  <button className={styles.editBtn} onClick={openEditModal}>
+                    <Icon name="edit" size={15} strokeWidth={2} />
+                    Edit Profile
+                  </button>
+                )}
+                <button className={styles.logoutBtn} onClick={handleLogout}>
+                  <Icon name="log-out" size={15} strokeWidth={2} />
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -213,7 +265,42 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
 
       </div>
     </AppShell>
-  );
+
+    {/* ── Edit Profile Modal ── */}
+    {!isAdmin && (
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Profile">
+        <form onSubmit={handleEditSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <InputField
+            label="Full Name"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Your full name"
+          />
+          <InputField
+            label="Email"
+            type="email"
+            value={editEmail}
+            onChange={(e) => setEditEmail(e.target.value)}
+            placeholder="your@email.com"
+          />
+          <InputField
+            label="New Password"
+            type="password"
+            value={editPassword}
+            onChange={(e) => setEditPassword(e.target.value)}
+            placeholder="Leave blank to keep current"
+          />
+          {editError && <p style={{ margin: 0, color: 'var(--color-danger-600)', fontSize: '0.875rem' }}>{editError}</p>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.25rem' }}>
+            <button type="button" onClick={() => setIsEditOpen(false)} style={{ background: 'none', border: '1.5px solid var(--color-border-default)', borderRadius: '8px', padding: '0.4rem 1rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}>Cancel</button>
+            <button type="submit" disabled={isSaving} style={{ background: 'var(--color-info-600)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 1.25rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700, opacity: isSaving ? 0.65 : 1 }}>{isSaving ? 'Saving…' : 'Save Changes'}</button>
+          </div>
+        </form>
+      </Modal>
+    )}
+
+    {saveToast && <Toast message={saveToast} variant="success" onClose={() => setSaveToast('')} />}
+  </>);
 };
 
 // ── Helper component ──────────────────────────────────────────────────────────

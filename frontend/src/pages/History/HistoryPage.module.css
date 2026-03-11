@@ -115,6 +115,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .bookCellTitle {
@@ -123,6 +125,7 @@
   font-weight: 600;
   color: var(--color-text-primary);
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
   max-width: 220px;
 }
@@ -131,6 +134,10 @@
   margin: 0;
   font-size: 0.8125rem;
   color: var(--color-text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 220px;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
@@ -247,6 +254,7 @@
 @media (max-width: 1024px) {
   .headerRow     { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
   .bookCellTitle { max-width: 180px; }
+  .bookCellAuthor { max-width: 180px; }
 }
 
 @media (max-width: 768px) {
@@ -254,6 +262,7 @@
   .summaryRow    { gap: 0.5rem; }
   .tableCard     { border-radius: 12px; }
   .bookCellTitle { max-width: 130px; }
+  .bookCellAuthor { max-width: 130px; }
   .bookCell      { gap: 0.625rem; }
 }
 
@@ -261,6 +270,7 @@
   .pageTitle     { font-size: 1.25rem; }
   .statChip      { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
   .bookCellTitle { max-width: 90px; font-size: 0.875rem; }
+  .bookCellAuthor { max-width: 90px; }
   /* Hide the DynamicBookCover thumbnail to save horizontal space */
   .bookCell > *:first-child { display: none; }
 }
