@@ -28,6 +28,7 @@ export interface BookSearchParams {
   archivedOnly?: boolean;
   page?: number;
   size?: number;
+  semantic?: boolean;
 }
 
 // ── Book request (admin create/update) ───────────────────────────────────────
@@ -59,6 +60,7 @@ export const bookService = {
       archivedOnly:   params.archivedOnly ? 'true' : undefined,
       page:           params.page ?? 0,
       size:           params.size ?? 20,
+      semantic:       params.semantic ? 'true' : undefined,
     });
     return api.get<Page<ApiBook>>(`/book${query}`, false);
   },
@@ -105,5 +107,10 @@ export const bookService = {
       categoryNames: book.categories.map((c) => c.name),
       isArchived: false,
     });
+  },
+
+  /** GET /book/recommended?userId={id} — personalised recommendations based on borrowing history. */
+  getRecommendations(userId: string): Promise<ApiBook[]> {
+    return api.get<ApiBook[]>(`/book/recommended?userId=${userId}`, false);
   },
 };

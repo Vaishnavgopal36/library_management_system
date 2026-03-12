@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -114,6 +115,7 @@ public class FineService {
                 .filter(fr -> isPaid == null || fr.getIsPaid().equals(isPaid))
                 .filter(fr -> minAmount == null || fr.getAmount().compareTo(minAmount) >= 0)
                 .filter(fr -> maxAmount == null || fr.getAmount().compareTo(maxAmount) <= 0)
+                .sorted(Comparator.comparing(FineResponse::getIsPaid)) // unpaid (false) first; stable sort preserves dueDate DESC within each group
                 .collect(Collectors.toList());
     }
 

@@ -4,7 +4,7 @@ services:
   # Database (PostgreSQL)
   db:
     # Use a lightweight PostgreSQL image. The init.sql will create tables and seed data on first run.
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     # Mount a volume for data persistence and to run initialization scripts
     ports:
       - "5432:5432"

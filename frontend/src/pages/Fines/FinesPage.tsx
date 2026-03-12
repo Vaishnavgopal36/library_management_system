@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
 import { truncateTitle } from '../../utils/textUtils';
 import { AppRole } from '../../utils/types';
@@ -41,13 +42,11 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const { user } = useAuth();
 
   // ── Real API loading ──
-  const [fines, setFines] = useState<ApiFine[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const loadData = useCallback(() => {
-    setIsLoading(true);
-    fineService.list().then(setFines).catch(console.error).finally(() => setIsLoading(false));
-  }, []);
-  useEffect(() => { loadData(); }, [loadData]);
+  const queryClient = useQueryClient();
+  const { data: fines = [], isLoading } = useQuery({
+    queryKey: ['fines'],
+    queryFn: () => fineService.list(),
+  });
 
   // ── Search filter ──
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,16 +80,22 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
 
   // ── Mark Paid modal (admin) / Pay Fine modal (member) ──
   const payAction = useConfirmAction<ApiFine>();
+  const settleMutation = useMutation({
+    mutationFn: (id: string) => fineService.settle(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fines'] });
+      payAction.markConfirmed();
+    },
+    onError: (err: any) => {
+      payAction.dismiss();
+      alert(err?.message ?? 'Failed to settle fine.');
+    },
+  });
   const handlePay = () => {
     payAction.startProcessing();
-    fineService.settle(payAction.data!.id)
-      .then(() => payAction.markConfirmed())
-      .catch((err: any) => { payAction.dismiss(); alert(err?.message ?? 'Failed to settle fine.'); });
+    settleMutation.mutate(payAction.data!.id);
   };
   const handlePayDone = () => {
-    setFines(prev =>
-      prev.map(f => f.id === payAction.data?.id ? { ...f, isPaid: true } : f)
-    );
     payAction.dismiss();
   };
 

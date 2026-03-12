@@ -74,6 +74,17 @@ export const Topbar: React.FC<TopbarProps> = ({
 
         {/* Search Bar — only shown when the page provides searchConfig */}
         {searchConfig ? (
+          <>
+          {searchConfig?.onSmartSearchToggle && (
+            <button
+              type="button"
+              onClick={() => searchConfig.onSmartSearchToggle!(!searchConfig.isSmartSearch)}
+              className={`${styles.smartToggle} ${searchConfig.isSmartSearch ? styles.smartToggleActive : ''}`}
+              title="Toggle AI Semantic Search"
+            >
+              {searchConfig.isSmartSearch ? 'Semantic Search ON' : 'Semantic Search OFF  '}
+            </button>
+          )}
           <div className={styles.searchGroup}>
             {/* Search-by type selector (Title / Author / Category) */}
             {hasSearchTypes && (
@@ -144,6 +155,7 @@ export const Topbar: React.FC<TopbarProps> = ({
               </>
             )}
           </div>
+          </>
         ) : (
           <div className={styles.searchGroupPlaceholder} />
         )}

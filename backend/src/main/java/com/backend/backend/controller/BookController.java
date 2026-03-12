@@ -3,7 +3,11 @@ package com.backend.backend.controller;
 import com.backend.backend.dto.request.BookRequest;
 import com.backend.backend.dto.response.BookResponse;
 import com.backend.backend.service.BookService;
+import com.backend.backend.service.RecommendationService;
+import com.backend.backend.service.SemanticSearchService;
 import com.backend.backend.util.RestPage;
+
+import java.util.List;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +24,8 @@ import java.util.UUID;
 public class BookController {
 
     private final BookService bookService;
+    private final SemanticSearchService semanticSearchService;
+    private final RecommendationService recommendationService;
 
     @GetMapping
     public ResponseEntity<RestPage<BookResponse>> searchCatalog(
@@ -33,7 +39,15 @@ public class BookController {
             @RequestParam(defaultValue = "false") boolean includeArchived,
             @RequestParam(defaultValue = "false") boolean archivedOnly,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "false") boolean semantic) {
+
+        if (semantic && title != null && !title.isBlank()) {
+            List<BookResponse> smartResults = semanticSearchService.searchBooks(title);
+            int sizeOrOne = Math.max(1, smartResults.size());
+            RestPage<BookResponse> semanticPage = new RestPage<>(smartResults, 0, sizeOrOne, smartResults.size(), 1, true);
+            return ResponseEntity.ok(semanticPage);
+        }
 
         String effectiveCategory = (category == null || category.isBlank()) ? legacyCategory : category;
 
@@ -67,5 +81,17 @@ public class BookController {
     public ResponseEntity<Void> archiveAsset(@PathVariable UUID id) {
         bookService.archiveBook(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Returns personalised book recommendations for a user based on the
+     * semantic similarity of their 3 most recently borrowed titles.
+     * Falls back to a curated cold-start query for new members.
+     *
+     * Example: GET /api/v1/book/recommended?userId=<uuid>
+     */
+    @GetMapping("/recommended")
+    public ResponseEntity<List<BookResponse>> getRecommendations(@RequestParam UUID userId) {
+        return ResponseEntity.ok(recommendationService.getRecommendationsForUser(userId));
     }
 }

@@ -18,6 +18,9 @@ export interface SearchConfig {
   searchTypes?: string[];
   searchType?: string;
   onSearchTypeChange?: (type: string) => void;
+  /** AI semantic search toggle. */
+  isSmartSearch?: boolean;
+  onSmartSearchToggle?: (isSmart: boolean) => void;
 }
 
 export interface AppShellProps {

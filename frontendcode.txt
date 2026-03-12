@@ -10,6 +10,7 @@
 │   │   │   └── resources
 │   │   │       ├── db
 │   │   │       │   └── migration
+│   │   │       ├── META-INF
 │   │   │       ├── static
 │   │   │       ├── templates
 │   │   │       ├── application.properties
@@ -29,6 +30,7 @@
 │   ├── requirements.txt
 │   └── swagger.yaml
 ├── db
+│   ├── embedd.py
 │   └── init.sql
 ├── frontend
 │   ├── dist
@@ -102,6 +104,7 @@
 │   │   ├── hooks
 │   │   │   ├── useBooks.ts
 │   │   │   ├── useConfirmAction.ts
+│   │   │   ├── useDebounce.ts
 │   │   │   ├── useModal.ts
 │   │   │   └── usePagination.ts
 │   │   ├── layouts
@@ -197,6 +200,7 @@
 │   │   │   ├── badges.ts
 │   │   │   ├── constants.ts
 │   │   │   ├── dates.ts
+│   │   │   ├── textUtils.ts
 │   │   │   └── types.ts
 │   │   ├── App.css
 │   │   ├── App.tsx
@@ -319,6 +323,28 @@
 ```
 
 # File Contents
+
+## frontend/src/App.css
+
+```css
+/* App.css — intentionally empty. Global styles live in index.css. */
+
+```
+
+## frontend/src/App.tsx
+
+```tsx
+import { RouterProvider } from 'react-router-dom';
+import { router } from './routes';
+
+function App() {
+  return (
+    <RouterProvider router={router} />
+  );
+}
+
+export default App;
+```
 
 ## frontend/src/assets/react.svg
 
@@ -1038,14 +1064,16 @@ export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({
         <div style={{ paddingLeft: '8px' }}>
           <h3 style={{ 
             margin: 0, 
-            fontSize: '1.1rem', 
+            fontSize: '0.95rem', 
             fontWeight: 800, 
-            lineHeight: 1.2,
-            letterSpacing: '-0.025em',
+            lineHeight: 1.25,
+            letterSpacing: '-0.02em',
             display: '-webkit-box',
-            WebkitLineClamp: 4,
+            WebkitLineClamp: 3,
             WebkitBoxOrient: 'vertical',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            wordBreak: 'break-word',
+            overflowWrap: 'break-word',
           }}>
             {title}
           </h3>
@@ -1054,3041 +1082,15 @@ export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({
 
       {showText && (
         <div style={{ paddingLeft: '8px' }}>
-          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, opacity: 0.8 }}>
-            {author}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-};
-```
-
-## frontend/src/components/atoms/Icon/Icon.stories.tsx
-
-```tsx
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Icon } from './Icon';
-import type { IconName } from './iconPaths';
-
-const meta: Meta<typeof Icon> = {
-  title: 'Atoms/Icon',
-  component: Icon,
-  tags: ['autodocs'],
-  argTypes: {
-    name: {
-      control: 'select',
-      options: [
-        'hamburger', 'home', 'search', 'clock', 'credit-card', 'calendar',
-        'users', 'help-circle', 'x-close', 'book-open', 'book-logo', 'eye',
-        'eye-off', 'check', 'settings', 'star', 'user', 'mail', 'phone',
-        'briefcase', 'lock', 'edit', 'trash', 'trash-2', 'alert-triangle',
-        'slash', 'check-square', 'info', 'bell', 'chevron-down', 'chevron-left',
-        'chevron-right', 'archive', 'play',
-      ] satisfies IconName[],
-    },
-    size: { control: 'number' },
-  },
-};
-
-export default meta;
-
-export const Playground: StoryObj<typeof Icon> = {
-  args: {
-    name: 'book-open',
-    size: 24,
-  },
-};
-
-export const NavigationIcons: StoryObj = {
-  render: () => {
-    const navIcons: { name: IconName; label: string }[] = [
-      { name: 'home', label: 'Dashboard' },
-      { name: 'search', label: 'Search' },
-      { name: 'clock', label: 'History' },
-      { name: 'credit-card', label: 'Fines' },
-      { name: 'calendar', label: 'Reservations' },
-      { name: 'users', label: 'Members' },
-      { name: 'help-circle', label: 'Support' },
-    ];
-    return (
-      <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', padding: '1.5rem' }}>
-        {navIcons.map(({ name, label }) => (
-          <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', width: '70px' }}>
-            <Icon name={name} size={24} />
-            <span style={{ fontSize: '0.75rem', color: '#6b7280', textAlign: 'center' }}>{label}</span>
-          </div>
-        ))}
-      </div>
-    );
-  },
-};
-
-export const ActionIcons: StoryObj = {
-  render: () => {
-    const actionIcons: { name: IconName; label: string; color?: string }[] = [
-      { name: 'edit', label: 'Edit' },
-      { name: 'trash', label: 'Delete', color: 'var(--color-danger-600, #dc2626)' },
-      { name: 'archive', label: 'Archive', color: '#6b7280' },
-      { name: 'check', label: 'Confirm', color: '#16a34a' },
-      { name: 'x-close', label: 'Cancel', color: '#dc2626' },
-      { name: 'alert-triangle', label: 'Warning', color: '#d97706' },
-    ];
-    return (
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', padding: '1.5rem' }}>
-        {actionIcons.map(({ name, label, color }) => (
-          <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', width: '60px' }}>
-            <Icon name={name} size={20} stroke={color ?? 'currentColor'} />
-            <span style={{ fontSize: '0.75rem', color: '#6b7280', textAlign: 'center' }}>{label}</span>
-          </div>
-        ))}
-      </div>
-    );
-  },
-};
-
-export const SizeScale: StoryObj = {
-  render: () => (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1.5rem', padding: '1.5rem' }}>
-      {([12, 16, 20, 24, 32, 40, 48] as const).map((size) => (
-        <div key={size} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          <Icon name="book-open" size={size} />
-          <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>{size}px</span>
-        </div>
-      ))}
-    </div>
-  ),
-};
-
-export const FullCatalog: StoryObj = {
-  render: () => {
-    const allIcons: IconName[] = [
-      'hamburger', 'home', 'search', 'clock', 'credit-card', 'calendar',
-      'users', 'help-circle', 'x-close', 'book-open', 'book-logo', 'eye',
-      'eye-off', 'check', 'settings', 'star', 'user', 'mail', 'phone',
-      'briefcase', 'lock', 'edit', 'trash', 'trash-2', 'alert-triangle',
-      'slash', 'check-square', 'info', 'bell', 'chevron-down', 'chevron-left',
-      'chevron-right', 'archive', 'play',
-    ];
-    return (
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', padding: '1.5rem', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-        {allIcons.map((name) => (
-          <div
-            key={name}
-            style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              gap: '0.4rem', padding: '0.75rem', backgroundColor: '#fff',
-              borderRadius: '6px', border: '1px solid #e5e7eb', width: '88px',
-            }}
-          >
-            <Icon name={name} size={20} />
-            <span style={{ fontSize: '0.65rem', color: '#6b7280', textAlign: 'center', wordBreak: 'break-all' }}>
-              {name}
-            </span>
-          </div>
-        ))}
-      </div>
-    );
-  },
-};
-
-```
-
-## frontend/src/components/atoms/Icon/Icon.tsx
-
-````tsx
-import React from 'react';
-import { ICON_PATHS, type IconName, type SvgElement } from './iconPaths';
-
-export type { IconName } from './iconPaths';
-
-export interface IconProps extends Omit<React.SVGProps<SVGSVGElement>, 'children'> {
-  /** Icon identifier — must match a key in ICON_PATHS. */
-  name: IconName;
-  /** Rendered width & height in px (viewBox is always 0 0 24 24). */
-  size?: number;
-}
-
-/** Render a single SvgElement descriptor to a React element. */
-function renderElement(el: SvgElement, idx: number): React.ReactElement {
-  switch (el.tag) {
-    case 'path':
-      return <path key={idx} d={el.d} />;
-    case 'circle':
-      return <circle key={idx} cx={el.cx} cy={el.cy} r={el.r} />;
-    case 'line':
-      return <line key={idx} x1={el.x1} y1={el.y1} x2={el.x2} y2={el.y2} />;
-    case 'rect':
-      return <rect key={idx} x={el.x} y={el.y} width={el.width} height={el.height} rx={el.rx} ry={el.ry} />;
-    case 'polyline':
-      return <polyline key={idx} points={el.points} />;
-    case 'polygon':
-      return <polygon key={idx} points={el.points} />;
-  }
-}
-
-/**
- * Unified icon component that replaces all inline `<svg>` elements.
- *
- * @example
- * ```tsx
- * <Icon name="search" />
- * <Icon name="home" size={20} className="text-brand" />
- * <Icon name="alert-triangle" size={28} stroke="var(--color-danger-600)" />
- * ```
- */
-export const Icon: React.FC<IconProps> = ({
-  name,
-  size = 24,
-  strokeWidth = 2,
-  stroke = 'currentColor',
-  fill = 'none',
-  strokeLinecap = 'round',
-  strokeLinejoin = 'round',
-  className,
-  style,
-  ...rest
-}) => {
-  const elements = ICON_PATHS[name];
-
-  if (!elements) {
-    if (import.meta.env.DEV) {
-      console.warn(`[Icon] Unknown icon name: "${name}"`);
-    }
-    return null;
-  }
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill={fill}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-      strokeLinecap={strokeLinecap}
-      strokeLinejoin={strokeLinejoin}
-      className={className}
-      style={style}
-      {...rest}
-    >
-      {elements.map(renderElement)}
-    </svg>
-  );
-};
-
-````
-
-## frontend/src/components/atoms/Icon/iconPaths.ts
-
-```typescript
-/**
- * Centralized SVG path data for every icon in the application.
- * All icons share viewBox="0 0 24 24", fill="none", stroke-based rendering.
- *
- * Each entry is an array of SVG child-element descriptors so we can emit
- * the correct element type (`path`, `circle`, `line`, `rect`, `polyline`,
- * `polygon`).
- */
-
-export type SvgElement =
-  | { tag: 'path'; d: string }
-  | { tag: 'circle'; cx: number; cy: number; r: number }
-  | { tag: 'line'; x1: number; y1: number; x2: number; y2: number }
-  | { tag: 'rect'; x: number; y: number; width: number; height: number; rx?: number; ry?: number }
-  | { tag: 'polyline'; points: string }
-  | { tag: 'polygon'; points: string };
-
-export type IconName =
-  | 'hamburger'
-  | 'home'
-  | 'search'
-  | 'clock'
-  | 'credit-card'
-  | 'calendar'
-  | 'users'
-  | 'help-circle'
-  | 'x-close'
-  | 'book-open'
-  | 'book-logo'
-  | 'eye'
-  | 'eye-off'
-  | 'check'
-  | 'settings'
-  | 'star'
-  | 'user'
-  | 'mail'
-  | 'phone'
-  | 'briefcase'
-  | 'lock'
-  | 'edit'
-  | 'trash'
-  | 'trash-2'
-  | 'alert-triangle'
-  | 'slash'
-  | 'check-square'
-  | 'info'
-  | 'bell'
-  | 'chevron-down'
-  | 'chevron-left'
-  | 'chevron-right'
-  | 'archive'
-  | 'play';
-
-export const ICON_PATHS: Record<IconName, SvgElement[]> = {
-  hamburger: [
-    { tag: 'line', x1: 3, y1: 12, x2: 21, y2: 12 },
-    { tag: 'line', x1: 3, y1: 6, x2: 21, y2: 6 },
-    { tag: 'line', x1: 3, y1: 18, x2: 21, y2: 18 },
-  ],
-
-  home: [
-    { tag: 'path', d: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
-  ],
-
-  search: [
-    { tag: 'circle', cx: 11, cy: 11, r: 8 },
-    { tag: 'line', x1: 21, y1: 21, x2: 16.65, y2: 16.65 },
-  ],
-
-  clock: [
-    { tag: 'path', d: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-  ],
-
-  'credit-card': [
-    { tag: 'rect', x: 2, y: 5, width: 20, height: 14, rx: 2 },
-    { tag: 'line', x1: 2, y1: 10, x2: 22, y2: 10 },
-  ],
-
-  calendar: [
-    { tag: 'rect', x: 3, y: 4, width: 18, height: 18, rx: 2, ry: 2 },
-    { tag: 'line', x1: 16, y1: 2, x2: 16, y2: 6 },
-    { tag: 'line', x1: 8, y1: 2, x2: 8, y2: 6 },
-    { tag: 'line', x1: 3, y1: 10, x2: 21, y2: 10 },
-  ],
-
-  users: [
-    { tag: 'path', d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' },
-    { tag: 'circle', cx: 9, cy: 7, r: 4 },
-    { tag: 'path', d: 'M23 21v-2a4 4 0 0 0-3-3.87' },
-    { tag: 'path', d: 'M16 3.13a4 4 0 0 1 0 7.75' },
-  ],
-
-  'help-circle': [
-    { tag: 'circle', cx: 12, cy: 12, r: 10 },
-    { tag: 'path', d: 'M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3' },
-    { tag: 'line', x1: 12, y1: 17, x2: 12.01, y2: 17 },
-  ],
-
-  'x-close': [
-    { tag: 'path', d: 'M18 6L6 18' },
-    { tag: 'path', d: 'M6 6l12 12' },
-  ],
-
-  'book-open': [
-    { tag: 'path', d: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20' },
-    { tag: 'path', d: 'M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z' },
-  ],
-
-  'book-logo': [
-    { tag: 'path', d: 'M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20' },
-  ],
-
-  eye: [
-    { tag: 'path', d: 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z' },
-    { tag: 'circle', cx: 12, cy: 12, r: 3 },
-  ],
-
-  'eye-off': [
-    { tag: 'path', d: 'M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24' },
-    { tag: 'line', x1: 1, y1: 1, x2: 23, y2: 23 },
-  ],
-
-  check: [
-    { tag: 'polyline', points: '20 6 9 17 4 12' },
-  ],
-
-  settings: [
-    { tag: 'circle', cx: 12, cy: 12, r: 3 },
-    { tag: 'path', d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' },
-  ],
-
-  star: [
-    { tag: 'polygon', points: '12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2' },
-  ],
-
-  user: [
-    { tag: 'path', d: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' },
-    { tag: 'circle', cx: 12, cy: 7, r: 4 },
-  ],
-
-  mail: [
-    { tag: 'path', d: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' },
-    { tag: 'polyline', points: '22,6 12,13 2,6' },
-  ],
-
-  phone: [
-    { tag: 'path', d: 'M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.62 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.18z' },
-  ],
-
-  briefcase: [
-    { tag: 'rect', x: 2, y: 7, width: 20, height: 14, rx: 2, ry: 2 },
-    { tag: 'path', d: 'M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16' },
-  ],
-
-  lock: [
-    { tag: 'rect', x: 3, y: 11, width: 18, height: 11, rx: 2, ry: 2 },
-    { tag: 'path', d: 'M7 11V7a5 5 0 0 1 10 0v4' },
-  ],
-
-  edit: [
-    { tag: 'path', d: 'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7' },
-    { tag: 'path', d: 'M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z' },
-  ],
-
-  trash: [
-    { tag: 'polyline', points: '3 6 5 6 21 6' },
-    { tag: 'path', d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' },
-  ],
-
-  'trash-2': [
-    { tag: 'polyline', points: '3 6 5 6 21 6' },
-    { tag: 'path', d: 'M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6' },
-    { tag: 'path', d: 'M10 11v6' },
-    { tag: 'path', d: 'M14 11v6' },
-    { tag: 'path', d: 'M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2' },
-  ],
-
-  'alert-triangle': [
-    { tag: 'path', d: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z' },
-    { tag: 'line', x1: 12, y1: 9, x2: 12, y2: 13 },
-    { tag: 'line', x1: 12, y1: 17, x2: 12.01, y2: 17 },
-  ],
-
-  slash: [
-    { tag: 'circle', cx: 12, cy: 12, r: 10 },
-    { tag: 'line', x1: 4.93, y1: 4.93, x2: 19.07, y2: 19.07 },
-  ],
-
-  'check-square': [
-    { tag: 'polyline', points: '9 11 12 14 22 4' },
-    { tag: 'path', d: 'M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11' },
-  ],
-
-  info: [
-    { tag: 'circle', cx: 12, cy: 12, r: 10 },
-    { tag: 'line', x1: 12, y1: 8, x2: 12, y2: 12 },
-    { tag: 'line', x1: 12, y1: 16, x2: 12.01, y2: 16 },
-  ],
-
-  bell: [
-    { tag: 'path', d: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9' },
-    { tag: 'path', d: 'M13.73 21a2 2 0 0 1-3.46 0' },
-  ],
-
-  'chevron-down': [
-    { tag: 'polyline', points: '6 9 12 15 18 9' },
-  ],
-
-  'chevron-left': [
-    { tag: 'polyline', points: '15 18 9 12 15 6' },
-  ],
-
-  'chevron-right': [
-    { tag: 'polyline', points: '9 18 15 12 9 6' },
-  ],
-
-  archive: [
-    { tag: 'polyline', points: '21 8 21 21 3 21 3 8' },
-    { tag: 'rect', x: 1, y: 3, width: 22, height: 5 },
-    { tag: 'line', x1: 10, y1: 12, x2: 14, y2: 12 },
-  ],
-
-  play: [
-    { tag: 'polygon', points: '5 3 19 12 5 21 5 3' },
-  ],
-};
-
-```
-
-## frontend/src/components/atoms/Icon/index.ts
-
-```typescript
-export { Icon } from './Icon';
-export type { IconProps, IconName } from './Icon';
-
-```
-
-## frontend/src/components/atoms/InputField/InputField.module.css
-
-```css
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-label); /* Dark gray for readability */
-  margin-bottom: 0.375rem;
-}
-
-.inputContainer {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input {
-  width: 100%;
-  padding: 0.625rem 1rem;
-  font-family: inherit;
-  font-size: 0.9375rem;
-  color: var(--color-text-dark);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-surface-300); /* Light gray border */
-  border-radius: 8px; /* Matches the button corners */
-  outline: none;
-  transition: all 0.2s ease-in-out;
-}
-
-.input::placeholder {
-  color: var(--color-text-muted);
-}
-
-/* Focus state matching the vibrant primary blue */
-.input:focus {
-  border-color: var(--color-info-600);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-
-.input:disabled {
-  background-color: var(--color-surface-100);
-  color: var(--color-text-muted);
-  cursor: not-allowed;
-}
-
-/* Icon adjustments */
-.withIcon {
-  padding-left: 2.5rem; /* Make room for the icon on the left */
-}
-
-.iconWrapper {
-  position: absolute;
-  left: 0.75rem;
-  color: var(--color-text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none; /* Allows clicking through the icon to the input */
-}
-
-/* Error state */
-.inputError {
-  border-color: var(--color-danger);
-}
-
-.inputError:focus {
-  border-color: var(--color-danger);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-}
-
-.errorMessage {
-  font-size: 0.75rem;
-  color: var(--color-danger);
-  margin-top: 0.375rem;
-}
-
-.hintMessage {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-top: 0.25rem;
-}
-```
-
-## frontend/src/components/atoms/InputField/InputField.stories.tsx
-
-```tsx
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { InputField } from './InputField';
-import { Icon } from '../Icon/Icon';
-
-const meta: Meta<typeof InputField> = {
-  title: 'Atoms/InputField',
-  component: InputField,
-  tags: ['autodocs'],
-};
-
-export default meta;
-type Story = StoryObj<typeof InputField>;
-
-export const Default: Story = {
-  args: {
-    label: 'Username',
-    placeholder: 'username@bookstop.com',
-    type: 'text',
-  },
-};
-
-export const Password: Story = {
-  args: {
-    label: 'Password',
-    placeholder: '••••••••',
-    type: 'password',
-  },
-};
-
-export const Search: Story = {
-  args: {
-    placeholder: 'Search...',
-    type: 'text',
-    icon: <Icon name="search" size={16} />,
-  },
-};
-
-export const WithError: Story = {
-  args: {
-    label: 'Email',
-    placeholder: 'Enter your email',
-    type: 'email',
-    error: 'Please enter a valid email address.',
-  },
-};
-
-export const WithHint: Story = {
-  args: {
-    label: 'Author(s)',
-    placeholder: 'e.g. J.K. Rowling, George Orwell',
-    hint: 'Separate multiple authors with a comma.',
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    label: 'Member ID',
-    value: 'USR-00042',
-    disabled: true,
-  },
-};
-```
-
-## frontend/src/components/atoms/InputField/InputField.tsx
-
-```tsx
-import React from 'react';
-import styles from './InputField.module.css';
-
-export interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  icon?: React.ReactNode;
-  error?: string;
-  hint?: string;
-}
-
-export const InputField: React.FC<InputFieldProps> = ({
-  label,
-  icon,
-  error,
-  hint,
-  className = '',
-  ...props
-}) => {
-  const inputClasses = [
-    styles.input,
-    icon ? styles.withIcon : '',
-    error ? styles.inputError : '',
-    className
-  ].filter(Boolean).join(' ');
-
-  return (
-    <div className={styles.wrapper}>
-      {label && <label className={styles.label}>{label}</label>}
-      <div className={styles.inputContainer}>
-        {icon && <span className={styles.iconWrapper}>{icon}</span>}
-        <input className={inputClasses} {...props} />
-      </div>
-      {hint && !error && <span className={styles.hintMessage}>{hint}</span>}
-      {error && <span className={styles.errorMessage}>{error}</span>}
-    </div>
-  );
-};
-```
-
-## frontend/src/components/atoms/ProtectedRoute/ProtectedRoute.tsx
-
-```tsx
-import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
-import type { AppRole } from '../../utils/types';
-
-interface Props {
-  /** If supplied, only this role may access the route. */
-  role?: AppRole;
-  children: React.ReactNode;
-}
-
-/**
- * Wraps a route so unauthenticated users are sent to /login and
- * users with the wrong role are sent to their correct dashboard.
- */
-export const ProtectedRoute: React.FC<Props> = ({ role, children }) => {
-  const { user, isAuthenticated } = useAuth();
-  const location = useLocation();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  if (role && user?.role !== role) {
-    // Send them to their actual dashboard instead of showing a blank screen
-    const fallback = user?.role === 'admin' ? '/admin/dashboard' : '/member/dashboard';
-    return <Navigate to={fallback} replace />;
-  }
-
-  return <>{children}</>;
-};
-
-```
-
-## frontend/src/components/atoms/SearchDropdown/SearchDropdown.module.css
-
-```css
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-  position: relative;
-  width: 100%;
-}
-
-.label {
-  font-size: 0.813rem;
-  font-weight: 600;
-  color: var(--color-text-body);
-}
-
-.required {
-  color: var(--color-danger-600);
-}
-
-.inputWrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input {
-  width: 100%;
-  padding: 0.5rem 2rem 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  border: 1px solid var(--color-surface-300);
-  border-radius: 8px;
-  background: var(--color-surface-50, #fff);
-  color: var(--color-text-body);
-  outline: none;
-  transition: border-color 0.15s;
-  box-sizing: border-box;
-}
-
-.input:focus {
-  border-color: var(--color-primary-500, #6366f1);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
-}
-
-.inputError {
-  border-color: var(--color-danger-500) !important;
-}
-
-.errorMsg {
-  font-size: 0.75rem;
-  color: var(--color-danger-600);
-  margin: 0;
-}
-
-.spinner {
-  position: absolute;
-  right: 0.625rem;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--color-surface-300);
-  border-top-color: var(--color-primary-500, #6366f1);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 200;
-  background: var(--color-surface-50, #fff);
-  border: 1px solid var(--color-surface-300);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  list-style: none;
-  margin: 0;
-  padding: 0.375rem 0;
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-.dropdownItem {
-  display: flex;
-  flex-direction: column;
-  padding: 0.5rem 0.875rem;
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.dropdownItem:hover {
-  background: var(--color-primary-50, #eef2ff);
-}
-
-.optPrimary {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-body);
-}
-
-.optSecondary {
-  font-size: 0.75rem;
-  color: var(--color-text-label, #6b7280);
-  margin-top: 1px;
-}
-
-```
-
-## frontend/src/components/atoms/SearchDropdown/SearchDropdown.stories.tsx
-
-```tsx
-import React, { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { SearchDropdown, type SearchDropdownOption } from './SearchDropdown';
-
-const meta: Meta<typeof SearchDropdown> = {
-  title: 'Atoms/SearchDropdown',
-  component: SearchDropdown,
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-// ── Mock data pools ────────────────────────────────────────────────────────────
-const MOCK_BOOKS: SearchDropdownOption[] = [
-  { id: 'b1', primary: 'The Pragmatic Programmer', secondary: 'David Thomas, Andrew Hunt' },
-  { id: 'b2', primary: 'Clean Code', secondary: 'Robert C. Martin' },
-  { id: 'b3', primary: 'Design Patterns', secondary: 'Gang of Four' },
-  { id: 'b4', primary: 'You Don\'t Know JS', secondary: 'Kyle Simpson' },
-  { id: 'b5', primary: 'The Road to React', secondary: 'Robin Wieruch' },
-];
-
-const MOCK_MEMBERS: SearchDropdownOption[] = [
-  { id: 'u1', primary: 'Alice Johnson', secondary: 'alice@bookstop.com' },
-  { id: 'u2', primary: 'Bob Smith', secondary: 'bob@bookstop.com' },
-  { id: 'u3', primary: 'Charlie Brown', secondary: 'charlie@bookstop.com' },
-];
-
-/** Simulates a 400ms network search that filters the provided pool. */
-function mockSearch(pool: SearchDropdownOption[]) {
-  return (query: string): Promise<SearchDropdownOption[]> =>
-    new Promise((resolve) =>
-      setTimeout(() => {
-        resolve(
-          pool.filter(
-            (o) =>
-              o.primary.toLowerCase().includes(query.toLowerCase()) ||
-              (o.secondary?.toLowerCase().includes(query.toLowerCase()) ?? false),
-          ),
-        );
-      }, 400),
-    );
-}
-
-// ── Stateful wrapper ───────────────────────────────────────────────────────────
-const SearchDropdownWrapper = ({
-  label,
-  placeholder,
-  pool,
-  error,
-}: {
-  label: string;
-  placeholder?: string;
-  pool: SearchDropdownOption[];
-  error?: string;
-}) => {
-  const [value, setValue] = useState('');
-  const [selected, setSelected] = useState<SearchDropdownOption | null>(null);
-
-  return (
-    <div style={{ maxWidth: '420px', padding: '1.5rem' }}>
-      <SearchDropdown
-        label={label}
-        placeholder={placeholder}
-        value={value}
-        onChange={(v) => { setValue(v); setSelected(null); }}
-        onSelect={(opt) => { setSelected(opt); setValue(`${opt.primary}${opt.secondary ? ` (${opt.secondary})` : ''}`); }}
-        search={mockSearch(pool)}
-        error={error}
-      />
-      {selected && (
-        <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#374151' }}>
-          Selected ID: <code style={{ backgroundColor: '#f3f4f6', padding: '0.125rem 0.375rem', borderRadius: '4px' }}>{selected.id}</code>
-        </p>
-      )}
-    </div>
-  );
-};
-
-// ── Stories ────────────────────────────────────────────────────────────────────
-
-/** The "Issue Book to Member" modal search used in AdminSearchPage. */
-export const MemberSearch: StoryObj = {
-  render: () => (
-    <SearchDropdownWrapper
-      label="Member (optional — leave empty to issue to yourself)"
-      placeholder="Type name or email to search members…"
-      pool={MOCK_MEMBERS}
-    />
-  ),
-};
-
-/** Book lookup — demonstrates secondary text (author). */
-export const BookSearch: StoryObj = {
-  render: () => (
-    <SearchDropdownWrapper
-      label="Book Title"
-      placeholder="Type a title or author name…"
-      pool={MOCK_BOOKS}
-    />
-  ),
-};
-
-/** Validation error state — shown when member is not found. */
-export const WithError: StoryObj = {
-  render: () => (
-    <SearchDropdownWrapper
-      label="Member"
-      placeholder="Type name or email…"
-      pool={MOCK_MEMBERS}
-      error="No member found — please select from the dropdown."
-    />
-  ),
-};
-
-```
-
-## frontend/src/components/atoms/SearchDropdown/SearchDropdown.tsx
-
-```tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import styles from './SearchDropdown.module.css';
-
-export interface SearchDropdownOption {
-  id: string;
-  primary: string;   // main display text (e.g. book title or user full name)
-  secondary?: string; // sub text (e.g. author or email)
-}
-
-interface SearchDropdownProps {
-  label: string;
-  placeholder?: string;
-  value: string;
-  onChange: (value: string) => void;
-  onSelect: (option: SearchDropdownOption) => void;
-  /** Called to fetch results. Should be debounced externally or rely on internal debounce. */
-  search: (query: string) => Promise<SearchDropdownOption[]>;
-  error?: string;
-  required?: boolean;
-  autoFocus?: boolean;
-  disabled?: boolean;
-  /** Minimum characters before searching (default 1) */
-  minChars?: number;
-}
-
-export const SearchDropdown: React.FC<SearchDropdownProps> = ({
-  label,
-  placeholder = 'Type to search…',
-  value,
-  onChange,
-  onSelect,
-  search,
-  error,
-  required,
-  autoFocus,
-  disabled,
-  minChars = 1,
-}) => {
-  const [results, setResults] = useState<SearchDropdownOption[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const doSearch = useCallback(
-    (q: string) => {
-      if (q.trim().length < minChars) {
-        setResults([]);
-        setIsOpen(false);
-        return;
-      }
-      setIsSearching(true);
-      search(q.trim())
-        .then((res) => {
-          setResults(res);
-          setIsOpen(res.length > 0);
-        })
-        .catch(() => setResults([]))
-        .finally(() => setIsSearching(false));
-    },
-    [search, minChars],
-  );
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const q = e.target.value;
-    onChange(q);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => doSearch(q), 300);
-  };
-
-  const handleSelect = (opt: SearchDropdownOption) => {
-    onChange(opt.primary);
-    onSelect(opt);
-    setIsOpen(false);
-    setResults([]);
-  };
-
-  return (
-    <div className={styles.wrapper} ref={wrapRef}>
-      <label className={styles.label}>
-        {label}{required && <span className={styles.required}> *</span>}
-      </label>
-      <div className={styles.inputWrap}>
-        <input
-          className={`${styles.input} ${error ? styles.inputError : ''}`}
-          type="text"
-          value={value}
-          onChange={handleChange}
-          placeholder={placeholder}
-          autoFocus={autoFocus}
-          disabled={disabled}
-          autoComplete="off"
-          onFocus={() => { if (results.length > 0) setIsOpen(true); }}
-        />
-        {isSearching && <span className={styles.spinner} />}
-      </div>
-      {error && <p className={styles.errorMsg}>{error}</p>}
-      {isOpen && results.length > 0 && (
-        <ul className={styles.dropdown} role="listbox">
-          {results.map((opt) => (
-            <li
-              key={opt.id}
-              className={styles.dropdownItem}
-              role="option"
-              aria-selected={false}
-              onMouseDown={() => handleSelect(opt)}
-            >
-              <span className={styles.optPrimary}>{opt.primary}</span>
-              {opt.secondary && <span className={styles.optSecondary}>{opt.secondary}</span>}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
-```
-
-## frontend/src/components/atoms/Skeleton/Skeleton.module.css
-
-```css
-.skeleton {
-  display: block;
-  background-color: var(--color-surface-200); 
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.5) 20%,
-    rgba(255, 255, 255, 0.5) 60%,
-    rgba(255, 255, 255, 0)
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear;
-}
-
-.text {
-  border-radius: 4px;
-  height: 1.2em; 
-  margin-bottom: 0.5rem;
-}
-
-.circular {
-  border-radius: 50%;
-}
-
-.rectangular {
-  border-radius: 8px; 
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-```
-
-## frontend/src/components/atoms/Skeleton/Skeleton.stories.tsx
-
-```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { Skeleton } from './Skeleton';
-
-const meta: Meta<typeof Skeleton> = {
-  id: 'atoms-skeleton-component',
-  title: 'Atoms/Skeleton',
-  component: Skeleton,
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-export const TextLine: StoryObj<typeof Skeleton> = {
-  args: { variant: 'text', width: '80%' },
-};
-
-export const ProfileAvatar: StoryObj<typeof Skeleton> = {
-  args: { variant: 'circular', width: 64, height: 64 },
-};
-
-export const BookCover: StoryObj<typeof Skeleton> = {
-  args: { variant: 'rectangular', width: 120, height: 180 },
-};
-
-// Composing a full "Book Card" loading state
-export const BookCardSimulation: StoryObj = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '1rem', padding: '1rem', border: '1px solid #e5e7eb', borderRadius: '8px', maxWidth: '400px' }}>
-      <Skeleton variant="rectangular" width={100} height={150} />
-      <div style={{ flex: 1 }}>
-        <Skeleton variant="text" width="60%" />
-        <Skeleton variant="text" width="80%" />
-        <div style={{ marginTop: '2rem' }}>
-          <Skeleton variant="text" width="40%" />
-          <Skeleton variant="rectangular" width={120} height={40} style={{ marginTop: '1rem' }} />
-        </div>
-      </div>
-    </div>
-  ),
-};
-
-```
-
-## frontend/src/components/atoms/Skeleton/Skeleton.tsx
-
-```tsx
-import React from 'react';
-import styles from './Skeleton.module.css';
-
-// By extending React.HTMLAttributes, we tell TypeScript it's okay to accept 'style'
-export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'text' | 'circular' | 'rectangular';
-  width?: string | number;
-  height?: string | number;
-}
-
-export const Skeleton: React.FC<SkeletonProps> = ({
-  variant = 'text',
-  width,
-  height,
-  className = '',
-  style, // Pull the style prop out
-  ...props // Spread any remaining props (like aria-hidden)
-}) => {
-  const skeletonClasses = [
-    styles.skeleton,
-    styles[variant],
-    className
-  ].filter(Boolean).join(' ');
-
-  // Merge any custom styles passed in with our width/height calculations
-  const combinedStyle = {
-    width: width ?? (variant === 'text' ? '100%' : undefined),
-    height: height,
-    ...style, 
-  };
-
-  return <div className={skeletonClasses} style={combinedStyle} aria-hidden="true" {...props} />;
-};
-```
-
-## frontend/src/components/atoms/Toast/Toast.module.css
-
-```css
-.toast {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-width: 280px;
-  max-width: 400px;
-  padding: 1rem 1.25rem;
-  border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  font-family: inherit;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: auto;
-}
-
-/* Matching the Badge color palettes for consistency */
-.success { background-color: var(--color-success-100); color: var(--color-success-800); border-left: 4px solid var(--color-success-700, #16a34a); }
-.error { background-color: var(--color-danger-100); color: var(--color-danger-800); border-left: 4px solid var(--color-danger-600); }
-.info { background-color: var(--color-info-50); color: var(--color-info-800); border-left: 4px solid var(--color-info-600); }
-
-.message { flex-grow: 1; margin-right: 1rem; }
-
-.closeBtn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  color: inherit;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-  padding: 0;
-}
-
-.closeBtn:hover { opacity: 1; }
-
-@keyframes slideIn {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-```
-
-## frontend/src/components/atoms/Toast/Toast.stories.tsx
-
-```tsx
-import React, { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Toast } from './Toast';
-import { Button } from '../Button/Button';
-import { Skeleton } from '../Skeleton/Skeleton';
-
-const meta: Meta<typeof Toast> = {
-  title: 'Atoms/Toast',
-  component: Toast,
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-const AsyncSimulationWrapper = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-
-  const handleSimulateTimeout = () => {
-    setIsLoading(true);
-    setShowToast(false);
-
-    // Simulate a 2.5 second network request that fails
-    setTimeout(() => {
-      setIsLoading(false);
-      setShowToast(true);
-    }, 2500);
-  };
-
-  return (
-    <div style={{ padding: '2rem', border: '1px dashed #ccc', borderRadius: '8px', position: 'relative', height: '300px' }}>
-      
-      {/* Skeleton overlay when loading */}
-      {isLoading ? (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, padding: '2rem', backgroundColor: 'rgba(255,255,255,0.9)', zIndex: 50 }}>
-          <Skeleton variant="text" width="40%" height={24} style={{ marginBottom: '1rem' }} />
-          <Skeleton variant="text" width="80%" />
-          <Skeleton variant="rectangular" width={120} height={40} style={{ marginTop: '2rem' }} />
-        </div>
-      ) : (
-        <>
-          <h3>Simulate API Timeout</h3>
-          <p style={{ marginBottom: '1rem', color: '#666' }}>Click to simulate reserving a book. It will load for 2.5s, fail, and show an error toast.</p>
-          
-          <Button variant="primary" onClick={handleSimulateTimeout}>
-            Reserve Book
-          </Button>
-        </>
-      )}
-
-      {/* Floating container for the Toast */}
-      <div style={{ position: 'absolute', bottom: '1rem', right: '1rem', zIndex: 100 }}>
-        {showToast && (
-          <Toast 
-            message="Connection timeout: Failed to connect to the library server." 
-            variant="error" 
-            onClose={() => setShowToast(false)} 
-            duration={4000} 
-          />
-        )}
-      </div>
-    </div>
-  );
-};
-
-export const NetworkTimeoutSimulation: StoryObj = {
-  render: () => <AsyncSimulationWrapper />,
-};
-
-export const StaticSuccess: StoryObj<typeof Toast> = {
-  args: {
-    message: 'Book reserved successfully!',
-    variant: 'success',
-  },
-};
-
-export const StaticError: StoryObj<typeof Toast> = {
-  args: {
-    message: 'Failed to issue book. Active loans may conflict.',
-    variant: 'error',
-  },
-};
-
-export const StaticInfo: StoryObj<typeof Toast> = {
-  args: {
-    message: 'Your reservation has been queued. You will be notified when ready.',
-    variant: 'info',
-  },
-};
-```
-
-## frontend/src/components/atoms/Toast/Toast.tsx
-
-```tsx
-import React, { useEffect } from 'react';
-import styles from './Toast.module.css';
-
-export interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
-  message: string;
-  variant?: 'success' | 'error' | 'info';
-  onClose?: () => void;
-  duration?: number;
-}
-
-export const Toast: React.FC<ToastProps> = ({
-  message,
-  variant = 'info',
-  onClose,
-  duration = 3000,
-  className = '',
-  ...props
-}) => {
-  useEffect(() => {
-    if (!onClose || duration <= 0) {
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      onClose();
-    }, duration);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [duration, onClose]);
-
-  const toastClasses = [
-    styles.toast,
-    styles[variant],
-    className,
-  ].filter(Boolean).join(' ');
-
-  return (
-    <div className={toastClasses} role="alert" {...props}>
-      <span className={styles.message}>{message}</span>
-      {onClose && (
-        <button
-          type="button"
-          className={styles.closeBtn}
-          onClick={onClose}
-          aria-label="Close notification"
-        >
-          ×
-        </button>
-      )}
-    </div>
-  );
-};
-
-```
-
-## frontend/src/components/molecules/Card/Card.module.css
-
-```css
-.card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-surface-200);
-  border-radius: 12px; /* Slightly larger radius for the main containers */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  overflow: hidden; /* Ensures child images don't break the rounded corners */
-  transition: all 0.2s ease-in-out;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Padding variations */
-.padding-none { padding: 0; }
-.padding-sm { padding: 0.75rem; }
-.padding-md { padding: 1.5rem; }
-.padding-lg { padding: 2rem; }
-
-/* Interactive hover state */
-.interactive {
-  cursor: pointer;
-}
-
-.interactive:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: var(--color-surface-300);
-}
-```
-
-## frontend/src/components/molecules/Card/Card.stories.tsx
-
-```tsx
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Card } from './Card';
-import { Badge } from '../../atoms/Badge/Badge';
-import { Button } from '../../atoms/Button/Button';
-
-// Card accepts: interactive?, padding ('none'|'sm'|'md'|'lg')
-
-const meta: Meta<typeof Card> = {
-  title: 'Molecules/Card',
-  component: Card,
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-export const SimpleContentCard: StoryObj<typeof Card> = {
-  args: {
-    padding: 'md',
-    children: (
-      <div>
-        <h3 style={{ margin: '0 0 0.5rem 0', color: '#111827' }}>Library Hours</h3>
-        <p style={{ margin: 0, color: '#6B7280', fontSize: '0.9375rem' }}>
-          Monday - Friday: 08:00 AM - 08:00 PM<br/>
-          Saturday: 09:00 AM - 04:00 PM
-        </p>
-      </div>
-    ),
-  },
-};
-
-export const DashboardMetricCard: StoryObj<typeof Card> = {
-  args: {
-    padding: 'md',
-    style: { maxWidth: '250px', textAlign: 'center' },
-    children: (
-      <div>
-        <span style={{ display: 'block', fontSize: '2.5rem', fontWeight: 'bold', color: '#2563EB' }}>
-          14
-        </span>
-        <span style={{ color: '#6B7280', fontWeight: '500' }}>Active Reservations</span>
-      </div>
-    ),
-  },
-};
-
-// Composing Atoms into a Molecule
-export const BookListingCard: StoryObj<typeof Card> = {
-  args: {
-    padding: 'md',
-    interactive: true,
-    style: { maxWidth: '320px' },
-    children: (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <h3 style={{ margin: '0 0 0.25rem 0', color: '#111827' }}>The Pragmatic Programmer</h3>
-            <p style={{ margin: 0, color: '#6B7280', fontSize: '0.875rem' }}>David Thomas, Andrew Hunt</p>
-          </div>
-          <Badge variant="success">Available</Badge>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-          <Button variant="primary" size="sm" style={{ flex: 1 }}>Reserve</Button>
-          <Button variant="secondary" size="sm">Details</Button>
-        </div>
-      </div>
-    ),
-  },
-};
-
-export const PaddingShowcase: StoryObj = {
-  render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '400px' }}>
-      {(['none', 'sm', 'md', 'lg'] as const).map((p) => (
-        <Card key={p} padding={p}>
-          <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-            padding=<strong>'{p}'</strong>
-          </span>
-        </Card>
-      ))}
-    </div>
-  ),
-};
-```
-
-## frontend/src/components/molecules/Card/Card.tsx
-
-```tsx
-import React from 'react';
-import styles from './Card.module.css';
-
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  interactive?: boolean;
-  padding?: 'none' | 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
-}
-
-export const Card: React.FC<CardProps> = ({
-  interactive = false,
-  padding = 'md',
-  className = '',
-  children,
-  ...props
-}) => {
-  const cardClasses = [
-    styles.card,
-    interactive ? styles.interactive : '',
-    styles[`padding-${padding}`],
-    className
-  ].filter(Boolean).join(' ');
-
-  return (
-    <div className={cardClasses} {...props}>
-      {children}
-    </div>
-  );
-};
-```
-
-## frontend/src/components/molecules/Modal/Modal.module.css
-
-```css
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(17, 24, 39, 0.6); /* Dark semi-transparent backdrop */
-  backdrop-filter: blur(4px); /* Modern blur effect */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 1rem;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.modalContent {
-  background-color: var(--color-surface);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--color-surface-200);
-}
-
-.title {
-  margin: 0;
-  font-size: 1.25rem;
-  color: var(--color-text-primary);
-  font-weight: 600;
-}
-
-.closeButton {
-  background: none;
-  border: none;
-  font-size: 1.75rem;
-  line-height: 1;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.2s;
-}
-
-.closeButton:hover {
-  color: var(--color-text-primary);
-}
-
-.body {
-  padding: 1.5rem;
-  max-height: calc(90vh - 70px);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { transform: translateY(20px) scale(0.95); opacity: 0; }
-  to { transform: translateY(0) scale(1); opacity: 1; }
-}
-
-/* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 480px) {
-  .overlay     { padding: 0.5rem; align-items: flex-end; }
-  .modalContent {
-    max-height: 95vh;
-    border-radius: 12px 12px 0 0; /* Bottom sheet on mobile */
-  }
-  .header { padding: 1rem 1.25rem; }
-  .body   { padding: 1.25rem; }
-}
-```
-
-## frontend/src/components/molecules/Modal/Modal.stories.tsx
-
-```tsx
-import React, { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Modal } from './Modal';
-import { Button } from '../../atoms/Button/Button';
-import { InputField } from '../../atoms/InputField/InputField';
-
-const meta: Meta<typeof Modal> = {
-  title: 'Molecules/Modal',
-  component: Modal,
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-// Wrapper to manage the open/close state in Storybook
-const ModalWrapper = ({ title, children }: { title: string, children: React.ReactNode }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <div style={{ padding: '2rem', height: '200px' }}>
-      <Button variant="primary" onClick={() => setIsOpen(true)}>Open {title}</Button>
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={title}>
-        {children}
-        <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-          <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
-          <Button variant="primary" onClick={() => setIsOpen(false)}>Confirm</Button>
-        </div>
-      </Modal>
-    </div>
-  );
-};
-
-export const SimpleConfirmation: StoryObj = {
-  render: () => (
-    <ModalWrapper title="Return Book">
-      <p style={{ color: '#4b5563', margin: 0 }}>
-        Are you sure you want to mark "The Pragmatic Programmer" as returned? This will update the ledger and make the book available to other students.
-      </p>
-    </ModalWrapper>
-  ),
-};
-
-// Recreating the Payment Modal from the PDF
-export const PaymentFormModal: StoryObj = {
-  render: () => {
-    const [isOpen, setIsOpen] = useState(false);
-    return (
-      <div style={{ padding: '2rem', height: '200px' }}>
-        <Button variant="danger" onClick={() => setIsOpen(true)}>Pay Fine (₹100)</Button>
-        <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="VISA Payment">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <InputField label="Card Holder Name" placeholder="REINHARD KENSON" />
-            <InputField label="Credit Card Number" placeholder="XXXX XXXX XXXX 8014" />
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <InputField label="Expiry" placeholder="08/21" style={{ flex: 1 }} />
-              <InputField label="CVV" placeholder="XXX" type="password" style={{ flex: 1 }} />
-            </div>
-            <Button variant="primary" size="lg" style={{ marginTop: '1rem' }} onClick={() => setIsOpen(false)}>
-              PROCEED TO PAY ₹100
-            </Button>
-          </div>
-        </Modal>
-      </div>
-    );
-  },
-};
-```
-
-## frontend/src/components/molecules/Modal/Modal.tsx
-
-```tsx
-import React, { useEffect } from 'react';
-import styles from './Modal.module.css';
-
-export interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  children: React.ReactNode;
-}
-
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  // Prevent background scrolling when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className={styles.overlay} onClick={onClose}>
-      {/* stopPropagation prevents clicks inside the modal from closing it */}
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        
-        <div className={styles.header}>
-          {title && <h2 className={styles.title}>{title}</h2>}
-          <button className={styles.closeButton} onClick={onClose} aria-label="Close modal">
-            &times;
-          </button>
-        </div>
-        
-        <div className={styles.body}>
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-};
-```
-
-## frontend/src/components/molecules/Pagination/Pagination.module.css
-
-```css
-.paginationBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  gap: 0.75rem;
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-surface-200);
-  border-radius: 8px;
-  margin-top: 0.75rem;
-}
-
-/* Left: "Showing X–Y of Z" */
-.info {
-  white-space: nowrap;
-}
-
-.infoBold {
-  font-weight: 600;
-  color: var(--color-text-body);
-}
-
-/* Center: page buttons */
-.pageButtons {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-/* Arrow & number buttons share a base */
-.pageBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0 0.5rem;
-  border: 1px solid var(--color-surface-200);
-  border-radius: 6px;
-  background: var(--color-surface);
-  color: var(--color-text-body);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  user-select: none;
-}
-
-.pageBtn:hover:not(:disabled):not(.pageBtnActive) {
-  background-color: var(--color-surface-100);
-  border-color: var(--color-surface-300);
-}
-
-.pageBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.pageBtnActive {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #585656;
-  font-weight: 600;
-  pointer-events: none;
-}
-
-/* Ellipsis (non-interactive) */
-.ellipsis {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-  user-select: none;
-}
-
-/* Right: per-page selector (optional) */
-.perPage {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  white-space: nowrap;
-}
-
-.perPageSelect {
-  padding: 0.25rem 0.4rem;
-  border: 1px solid var(--color-surface-200);
-  border-radius: 6px;
-  background: var(--color-surface);
-  color: var(--color-text-body);
-  font-size: 0.8125rem;
-  cursor: pointer;
-}
-
-/* ── Responsive ── */
-@media (max-width: 640px) {
-  .paginationBar {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.625rem 0.75rem;
-  }
-
-  .info {
-    width: 100%;
-    text-align: center;
-    order: 2;
-  }
-
-  .pageButtons {
-    order: 1;
-  }
-
-  .perPage {
-    display: none; /* hide per-page on very small screens */
-  }
-}
-
-```
-
-## frontend/src/components/molecules/Pagination/Pagination.stories.tsx
-
-```tsx
-import React, { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Pagination } from './Pagination';
-
-const meta: Meta<typeof Pagination> = {
-  title: 'Molecules/Pagination',
-  component: Pagination,
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-const PAGE_SIZE = 10;
-
-/** Controlled wrapper — mirrors how every page component wires Pagination. */
-const PaginationWrapper = ({ totalItems }: { totalItems: number }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-  const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
-
-  return (
-    <div style={{ padding: '1.5rem', minWidth: '500px' }}>
-      <p style={{ marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
-        <strong>Page {currentPage}</strong> of {totalPages} — showing items {startIndex + 1}–{endIndex} of {totalItems}
-      </p>
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={totalItems}
-        startIndex={startIndex}
-        endIndex={endIndex}
-        onPageChange={setCurrentPage}
-      />
-    </div>
-  );
-};
-
-/** Typical book catalog with 3 pages. */
-export const FewPages: StoryObj = {
-  render: () => <PaginationWrapper totalItems={28} />,
-};
-
-/** Large catalog — exercises the ellipsis logic. */
-export const ManyPages: StoryObj = {
-  render: () => <PaginationWrapper totalItems={247} />,
-};
-
-/** Edge-case: only 1 page — Pagination renders nothing. */
-export const SinglePage: StoryObj = {
-  render: () => <PaginationWrapper totalItems={7} />,
-  parameters: { docs: { description: { story: 'Component intentionally renders `null` when `totalPages <= 1`.' } } },
-};
-
-/** Middle of a large set — shows neighbour pages around current. */
-export const MiddleOfLargeSet: StoryObj = {
-  render: () => {
-    const [currentPage, setCurrentPage] = useState(6);
-    const totalItems = 150;
-    const totalPages = Math.ceil(totalItems / PAGE_SIZE);
-    const startIndex = (currentPage - 1) * PAGE_SIZE;
-    const endIndex = Math.min(startIndex + PAGE_SIZE, totalItems);
-    return (
-      <div style={{ padding: '1.5rem', minWidth: '500px' }}>
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          startIndex={startIndex}
-          endIndex={endIndex}
-          onPageChange={setCurrentPage}
-        />
-      </div>
-    );
-  },
-};
-
-```
-
-## frontend/src/components/molecules/Pagination/Pagination.tsx
-
-```tsx
-import React, { useMemo } from 'react';
-import { Icon } from "../../atoms/Icon";
-import styles from './Pagination.module.css';
-
-export interface PaginationProps {
-  /** Current 1-based page */
-  currentPage: number;
-  /** Total number of pages */
-  totalPages: number;
-  /** Total item count */
-  totalItems: number;
-  /** 0-based start index of items on this page */
-  startIndex: number;
-  /** 0-based end index (exclusive) */
-  endIndex: number;
-  /** Called when user selects a page */
-  onPageChange: (page: number) => void;
-}
-
-/**
- * Build a compact page-number array with ellipses.
- * e.g. [1, '…', 4, 5, 6, '…', 10]
- */
-function getPageNumbers(current: number, total: number): (number | '…')[] {
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, i) => i + 1);
-  }
-
-  const pages: (number | '…')[] = [1];
-
-  if (current > 3) pages.push('…');
-
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-
-  for (let i = start; i <= end; i++) pages.push(i);
-
-  if (current < total - 2) pages.push('…');
-
-  pages.push(total);
-  return pages;
-}
-
-export const Pagination: React.FC<PaginationProps> = ({
-  currentPage,
-  totalPages,
-  totalItems,
-  startIndex,
-  endIndex,
-  onPageChange,
-}) => {
-  const pages = useMemo(() => getPageNumbers(currentPage, totalPages), [currentPage, totalPages]);
-
-  if (totalPages <= 1) return null; // no pagination needed for single page
-
-  return (
-    <div className={styles.paginationBar}>
-      {/* Info */}
-      <div className={styles.info}>
-        Showing{' '}
-        <span className={styles.infoBold}>{startIndex + 1}–{endIndex}</span>{' '}
-        of <span className={styles.infoBold}>{totalItems}</span>
-      </div>
-
-      {/* Page buttons */}
-      <div className={styles.pageButtons}>
-        {/* Prev */}
-        <button
-          className={styles.pageBtn}
-          disabled={currentPage === 1}
-          onClick={() => onPageChange(currentPage - 1)}
-          aria-label="Previous page"
-        >
-          <Icon name="chevron-left" size={14} strokeWidth={2.5} />
-        </button>
-
-        {/* Number buttons */}
-        {pages.map((p, i) =>
-          p === '…' ? (
-            <span key={`ellipsis-${i}`} className={styles.ellipsis}>…</span>
-          ) : (
-            <button
-              key={p}
-              className={`${styles.pageBtn} ${p === currentPage ? styles.pageBtnActive : ''}`}
-              onClick={() => onPageChange(p)}
-              aria-current={p === currentPage ? 'page' : undefined}
-            >
-              {p}
-            </button>
-          ),
-        )}
-
-        {/* Next */}
-        <button
-          className={styles.pageBtn}
-          disabled={currentPage === totalPages}
-          onClick={() => onPageChange(currentPage + 1)}
-          aria-label="Next page"
-        >
-          <Icon name="chevron-right" size={14} strokeWidth={2.5} />
-        </button>
-      </div>
-
-      {/* Right placeholder (keeps layout balanced) */}
-      <div className={styles.perPage} />
-    </div>
-  );
-};
-
-```
-
-## frontend/src/components/molecules/Pagination/index.ts
-
-```typescript
-export { Pagination } from './Pagination';
-export type { PaginationProps } from './Pagination';
-
-```
-
-## frontend/src/components/molecules/Table/Table.module.css
-
-```css
-.tableWrapper {
-  width: 100%;
-  overflow-x: auto; /* Enables horizontal scrolling on small screens */
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-surface-200);
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 0.9375rem;
-}
-
-.th {
-  padding: 0.75rem 1rem;
-  background-color: var(--color-surface-50); /* Light gray to separate headers */
-  color: var(--color-text-body);
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--color-surface-200);
-}
-
-.td {
-  padding: 1rem;
-  color: var(--color-text-dark);
-  border-bottom: 1px solid var(--color-surface-200);
-  vertical-align: middle;
-}
-
-/* Remove bottom border from the very last row to keep the wrapper clean */
-.table tbody tr:last-child .td {
-  border-bottom: none;
-}
-
-.tr {
-  background-color: var(--color-surface);
-}
-
-.trInteractive {
-  background-color: var(--color-surface);
-  transition: background-color 0.15s ease;
-  cursor: pointer;
-}
-
-.trInteractive:hover {
-  background-color: var(--color-surface-100); /* Subtle hover effect */
-}
-
-.emptyState {
-  padding: 2rem;
-  text-align: center;
-  color: var(--color-text-secondary);
-  font-style: italic;
-}
-```
-
-## frontend/src/components/molecules/Table/Table.stories.tsx
-
-```tsx
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Table, Column } from './Table';
-import { Badge } from '../../atoms/Badge/Badge';
-import { Button } from '../../atoms/Button/Button';
-
-const meta: Meta<typeof Table> = {
-  title: 'Molecules/Table',
-  component: Table,
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-// 1. Define our data structures
-interface PaymentRecord {
-  id: string;
-  title: string;
-  daysOverdue: number;
-  charge: number;
-}
-
-interface ReservationRecord {
-  id: string;
-  title: string;
-  author: string;
-  status: 'available' | 'waiting';
-}
-
-// 2. Mock Data
-const mockPayments: PaymentRecord[] = [
-  { id: '1', title: "Don't Make Me Think", daysOverdue: 3,  charge: 100 },
-  { id: '2', title: 'The Pragmatic Programmer', daysOverdue: 1,  charge: 25 },
-];
-
-const mockReservations: ReservationRecord[] = [
-  { id: '101', title: 'Design Patterns', author: 'Gang of Four', status: 'available' },
-  { id: '102', title: 'Clean Architecture', author: 'Robert C. Martin', status: 'waiting' },
-];
-
-// 3. Stories
-export const PendingPaymentsTable: StoryObj = {
-  render: () => {
-    // We define the columns and exactly how they should render the data
-    const columns: Column<PaymentRecord>[] = [
-      { header: 'Book Title', accessor: 'title' },
-      
-      { 
-        header: 'Penalties', 
-        accessor: 'daysOverdue',
-        render: (row) => <Badge variant="error">{row.daysOverdue} Days</Badge>
-      },
-      { 
-        header: 'Charges', 
-        accessor: 'charge',
-        render: (row) => <span style={{ fontWeight: 'bold' }}>₹{row.charge}</span>
-      },
-      { 
-        header: 'Action', 
-        accessor: 'action', // Dummy accessor since we use a custom render
-        render: () => <Button size="sm" variant="primary">Pay Now</Button>
-      },
-    ];
-
-    return <Table columns={columns} data={mockPayments} />;
-  },
-};
-
-export const ReservationsTable: StoryObj = {
-  render: () => {
-    const columns: Column<ReservationRecord>[] = [
-      { header: 'Title', accessor: 'title' },
-      { header: 'Author', accessor: 'author' },
-      { 
-        header: 'Status', 
-        accessor: 'status',
-        render: (row) => (
-          <Badge variant={row.status === 'available' ? 'success' : 'warning'}>
-            {row.status === 'available' ? 'Ready to Pick Up' : 'Waitlisted'}
-          </Badge>
-        )
-      },
-    ];
-
-    return <Table columns={columns} data={mockReservations} onRowClick={(row) => alert(`Clicked on ${row.title}`)} />;
-  },
-};
-```
-
-## frontend/src/components/molecules/Table/Table.tsx
-
-```tsx
-import React from 'react';
-import styles from './Table.module.css';
-
-// The configuration object for each column
-export interface Column<T> {
-  header: string;
-  accessor: keyof T | string; // The key in the data object, or a generic string if using a custom render
-  render?: (row: T) => React.ReactNode; // Optional function for custom UI (like adding buttons or badges)
-}
-
-// The generic table properties
-export interface TableProps<T> {
-  columns: Column<T>[];
-  data: T[];
-  onRowClick?: (row: T) => void;
-}
-
-export function Table<T extends Record<string, any>>({ columns, data, onRowClick }: TableProps<T>) {
-  return (
-    <div className={styles.tableWrapper}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            {columns.map((col, index) => (
-              <th key={index} className={styles.th}>
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={columns.length} className={styles.emptyState}>
-                No data available.
-              </td>
-            </tr>
-          ) : (
-            data.map((row, rowIndex) => (
-              <tr 
-                key={rowIndex} 
-                className={onRowClick ? styles.trInteractive : styles.tr}
-                onClick={() => onRowClick && onRowClick(row)}
-              >
-                {columns.map((col, colIndex) => (
-                  <td key={colIndex} className={styles.td}>
-                    {col.render ? col.render(row) : row[col.accessor as keyof T]}
-                  </td>
-                ))}
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-```
-
-## frontend/src/components/atoms/Badge/Badge.module.css
-
-```css
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 9999px; 
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  user-select: none;
-}
-
-
-.success {
-  background-color: var(--color-success-100);
-  color: var(--color-success-800);
-}
-
-
-.warning {
-  background-color: var(--color-warning-200, #fef08a);
-  color: var(--color-warning-yellow-800, #854d0e);
-}
-
-
-.error {
-  background-color: var(--color-danger-100);
-  color: var(--color-danger-800);
-}
-
-.info {
-  background-color: var(--color-info-100);
-  color: var(--color-info-800);
-}
-
-.neutral {
-  background-color: var(--color-surface-100);
-  color: var(--color-text-label);
-}
-```
-
-## frontend/src/components/atoms/Badge/Badge.stories.tsx
-
-```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { Badge } from './Badge';
-
-const meta: Meta<typeof Badge> = {
-  title: 'Atoms/Badge',
-  component: Badge,
-  tags: ['autodocs'],
-};
-
-export default meta;
-type Story = StoryObj<typeof Badge>;
-
-export const AvailableBook: Story = {
-  args: {
-    variant: 'success',
-    children: 'Available',
-  },
-};
-
-export const BorrowedBook: Story = {
-  args: {
-    variant: 'warning',
-    children: 'Borrowed',
-  },
-};
-
-export const OverdueBook: Story = {
-  args: {
-    variant: 'error',
-    children: 'Overdue',
-  },
-};
-
-export const AdminUser: Story = {
-  args: {
-    variant: 'info',
-    children: 'Admin',
-  },
-};
-
-export const MemberUser: Story = {
-  args: {
-    variant: 'neutral',
-    children: 'Member',
-  },
-};
-```
-
-## frontend/src/components/atoms/Badge/Badge.tsx
-
-```tsx
-import React from 'react';
-import styles from './Badge.module.css';
-
-export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'success' | 'warning' | 'error' | 'info' | 'neutral';
-  children: React.ReactNode;
-}
-
-export const Badge: React.FC<BadgeProps> = ({
-  variant = 'neutral',
-  className = '',
-  children,
-  ...props
-}) => {
-  const badgeClasses = [
-    styles.badge,
-    styles[variant],
-    className
-  ].filter(Boolean).join(' ');
-
-  return (
-    <span className={badgeClasses} {...props}>
-      {children}
-    </span>
-  );
-};
-```
-
-## frontend/src/components/atoms/Button/Button.module.css
-
-```css
-
-.base {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: inherit;
-  font-weight: 600; 
-  border: 1px solid transparent;
-  border-radius: 8px; 
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  outline: none;
-}
-
-.base:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-}
-
-
-.sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-}
-
-.md {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-}
-
-.lg {
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
-}
-
-
-.primary {
-  background-color: var(--color-coral-light); 
-  color: var(--color-surface);
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25); 
-}
-
-.primary:hover:not(:disabled) {
-  background-color: var(--color-coral-dark, #ee3a04);
-  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
-  transform: translateY(-1px); 
-}
-
-.secondary {
-  background-color: var(--color-surface);
-  color: var(--color-text-dark);
-  border-color: var(--color-surface-200);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.secondary:hover:not(:disabled) {
-  background-color: var(--color-surface-50);
-  border-color: var(--color-surface-300);
-}
-
-.danger {
-  background-color: var(--color-danger); 
-  color: var(--color-surface);
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
-}
-
-.danger:hover:not(:disabled) {
-  background-color: var(--color-danger-600);
-  transform: translateY(-1px);
-}
-
-.ghost {
-  background-color: transparent;
-  color: var(--color-text-secondary);
-}
-
-.ghost:hover:not(:disabled) {
-  background-color: var(--color-coral-light);
-  color: var(--color-surface);
-}
-```
-
-## frontend/src/components/atoms/Button/Button.stories.tsx
-
-```tsx
-import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from './Button';
-
-const meta: Meta<typeof Button> = {
-  title: 'Atoms/Button',
-  component: Button,
-  tags: ['autodocs'], // This automatically generates documentation for you
-  argTypes: {
-    variant: {
-      control: 'select',
-      options: ['primary', 'secondary', 'danger', 'ghost'],
-    },
-    size: {
-      control: 'radio',
-      options: ['sm', 'md', 'lg'],
-    },
-  },
-};
-
-export default meta;
-type Story = StoryObj<typeof Button>;
-
-export const Primary: Story = {
-  args: {
-    variant: 'primary',
-    size: 'md',
-    children: 'Primary Button',
-  },
-};
-
-export const Secondary: Story = {
-  args: {
-    variant: 'secondary',
-    size: 'md',
-    children: 'Secondary Button',
-  },
-};
-
-export const Ghost: Story = {
-  args: {
-    variant: 'ghost',
-    size: 'md',
-    children: 'Ghost Button',
-  },
-};
-
-export const Danger: Story = {
-  args: {
-    variant: 'danger',
-    size: 'md',
-    children: 'Danger Button',
-  },
-};
-
-export const Small: Story = {
-  args: {
-    variant: 'primary',
-    size: 'sm',
-    children: 'Small Button',
-  },
-};
-
-export const Large: Story = {
-  args: {
-    variant: 'primary',
-    size: 'lg',
-    children: 'Large Button',
-  },
-};
-
-export const Disabled: Story = {
-  args: {
-    variant: 'primary',
-    size: 'md',
-    children: 'Disabled Button',
-    disabled: true,
-  },
-};
-```
-
-## frontend/src/components/atoms/Button/Button.tsx
-
-```tsx
-import React from 'react';
-import styles from './Button.module.css';
-
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-}
-
-export const Button: React.FC<ButtonProps> = ({
-  variant = 'primary',
-  size = 'md',
-  className = '',
-  children,
-  ...props
-}) => {
-  const buttonClasses = [
-    styles.base,
-    styles[variant],
-    styles[size],
-    className
-  ].filter(Boolean).join(' ');
-
-  return (
-    <button className={buttonClasses} {...props}>
-      {children}
-    </button>
-  );
-};
-```
-
-## frontend/src/components/atoms/Dropdown/Dropdown.module.css
-
-```css
-.wrapper {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  position: relative;
-  margin-bottom: 1rem;
-}
-
-.label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-label);
-  margin-bottom: 0.375rem;
-}
-
-.trigger {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 0.625rem 1rem;
-  font-family: inherit;
-  font-size: 0.9375rem;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-surface-300);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  user-select: none;
-}
-
-.trigger:hover {
-  border-color: var(--color-text-muted);
-}
-
-.triggerActive {
-  border-color: var(--color-info-600);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-}
-
-.placeholder {
-  color: var(--color-text-muted);
-}
-
-.selectedText {
-  color: var(--color-text-dark);
-}
-
-.chevron {
-  color: var(--color-text-secondary);
-  transition: transform 0.2s ease;
-}
-
-.chevronOpen {
-  transform: rotate(180deg);
-}
-
-.menu {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 0;
-  width: 100%;
-  max-height: 250px;
-  overflow-y: auto;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-surface-200);
-  border-radius: 8px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 50;
-  margin: 0;
-  padding: 0.5rem 0;
-  list-style: none;
-}
-
-.menuItem {
-  padding: 0.5rem 1rem;
-  font-size: 0.9375rem;
-  color: var(--color-text-label);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.menuItem:hover {
-  background-color: var(--color-surface-100);
-}
-
-.menuItemActive {
-  background-color: var(--color-info-50);
-  color: var(--color-info-700, #1d4ed8);
-  font-weight: 500;
-}
-```
-
-## frontend/src/components/atoms/Dropdown/Dropdown.stories.tsx
-
-```tsx
-import React, { useState } from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { Dropdown, DropdownProps } from './Dropdown';
-
-const meta: Meta<typeof Dropdown> = {
-  title: 'Atoms/Dropdown',
-  component: Dropdown,
-  tags: ['autodocs'],
-};
-
-export default meta;
-
-const DropdownWithState = (args: DropdownProps) => {
-  const [selectedValue, setSelectedValue] = useState<string | undefined>(args.value);
-  return (
-    <div style={{ minHeight: '200px', maxWidth: '300px' }}>
-      <Dropdown {...args} value={selectedValue} onChange={setSelectedValue} />
-    </div>
-  );
-};
-
-export const SearchCategory: StoryObj<typeof Dropdown> = {
-  render: (args) => <DropdownWithState {...args} />,
-  args: {
-    label: 'Search By',
-    placeholder: 'All Categories ▾',
-    options: [
-      { label: 'All Categories', value: 'all' },
-      { label: 'Book Title', value: 'title' },
-      { label: 'Author Name', value: 'author' },
-      { label: 'ISBN Number', value: 'isbn' },
-    ],
-  },
-};
-
-export const UserRoleSelection: StoryObj<typeof Dropdown> = {
-  render: (args) => <DropdownWithState {...args} />,
-  args: {
-    label: 'Assign User Role',
-    placeholder: 'Select role',
-    options: [
-      { label: 'Member', value: 'ROLE_MEMBER' },
-      { label: 'Librarian (Admin)', value: 'ROLE_ADMIN' },
-    ],
-  },
-};
-
-export const PhysicalBookStatus: StoryObj<typeof Dropdown> = {
-  render: (args) => <DropdownWithState {...args} />,
-  args: {
-    label: 'Filter by Status',
-    placeholder: 'Any Status',
-    options: [
-      { label: 'Available on Shelf', value: 'available' },
-      { label: 'Currently Borrowed', value: 'borrowed' },
-      { label: 'Overdue', value: 'overdue' },
-      { label: 'Lost / Maintenance', value: 'lost' },
-    ],
-  },
-};
-```
-
-## frontend/src/components/atoms/Dropdown/Dropdown.tsx
-
-```tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { Icon } from '../Icon';
-import styles from './Dropdown.module.css';
-
-export interface DropdownOption {
-  label: string;
-  value: string;
-}
-
-export interface DropdownProps {
-  options: DropdownOption[];
-  value?: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  label?: string;
-}
-
-export const Dropdown: React.FC<DropdownProps> = ({
-  options,
-  value,
-  onChange,
-  placeholder = 'Select an option',
-  label
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const selectedOption = options.find(opt => opt.value === value);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSelect = (optionValue: string) => {
-    onChange(optionValue);
-    setIsOpen(false);
-  };
-
-  return (
-    <div className={styles.wrapper} ref={dropdownRef}>
-      {label && <label className={styles.label}>{label}</label>}
-      
-      <div 
-        className={`${styles.trigger} ${isOpen ? styles.triggerActive : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className={selectedOption ? styles.selectedText : styles.placeholder}>
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        
-        <Icon
-          name="chevron-down"
-          size={16}
-          className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`}
-        />
-      </div>
-
-      {isOpen && (
-        <ul className={styles.menu}>
-          {options.map((option) => (
-            <li 
-              key={option.value}
-              className={`${styles.menuItem} ${value === option.value ? styles.menuItemActive : ''}`}
-              onClick={() => handleSelect(option.value)}
-            >
-              {option.label}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-```
-
-## frontend/src/components/atoms/DynamicBookCover/DynamicBookCover.stories.tsx
-
-```tsx
-import React from 'react';
-import type { Meta, StoryObj } from '@storybook/react';
-import { DynamicBookCover } from './DynamicBookCover';
-
-const meta: Meta<typeof DynamicBookCover> = {
-  title: 'Atoms/DynamicBookCover',
-  component: DynamicBookCover,
-  tags: ['autodocs'],
-  argTypes: {
-    width: { control: 'text' },
-    height: { control: 'text' },
-  },
-};
-
-export default meta;
-
-// 1. A standard single book cover
-export const Default: StoryObj<typeof DynamicBookCover> = {
-  args: {
-    title: 'The Pragmatic Programmer',
-    author: 'David Thomas, Andrew Hunt',
-  },
-};
-
-// 2. Testing how it handles very long titles (CSS Line Clamping)
-export const LongTitle: StoryObj<typeof DynamicBookCover> = {
-  args: {
-    title: 'Design Patterns: Elements of Reusable Object-Oriented Software',
-    author: 'Erich Gamma, Richard Helm',
-  },
-};
-
-// 3. Testing custom dimensions
-export const CustomSize: StoryObj<typeof DynamicBookCover> = {
-  args: {
-    title: 'Clean Code',
-    author: 'Robert C. Martin',
-    width: '200px',
-    height: '280px',
-  },
-};
-
-// 4. Testing showText={false} — used in list rows where thumbnails stand alone
-export const ThumbnailOnly: StoryObj<typeof DynamicBookCover> = {
-  args: {
-    title: 'The Pragmatic Programmer',
-    author: 'David Thomas',
-    width: '96px',
-    height: '135px',
-    showText: false,
-  },
-};
-
-// 5. A gallery showing the deterministic gradients in action
-export const CoverGallery: StoryObj = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', padding: '2rem', backgroundColor: '#f9fafb' }}>
-      <DynamicBookCover title="Don't Make Me Think" author="Steve Krug" />
-      <DynamicBookCover title="The Road to React" author="Robin Wieruch" />
-      <DynamicBookCover title="Rich Dad Poor Dad" author="Robert T. Kiyosaki" />
-      <DynamicBookCover title="Harry Potter" author="J.K. Rowling" />
-      <DynamicBookCover title="You Don't Know JS" author="Kyle Simpson" />
-      <DynamicBookCover title="Sprint" author="Jake Knapp" />
-      <DynamicBookCover title="The Design of Everyday Things" author="Don Norman" />
-    </div>
-  ),
-};
-```
-
-## frontend/src/components/atoms/DynamicBookCover/DynamicBookCover.tsx
-
-```tsx
-import React from 'react';
-
-export interface DynamicBookCoverProps {
-  title: string;
-  author: string;
-  width?: string;
-  height?: string;
-  
-  showText?: boolean;
-}
-
-const hashString = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash);
-};
-
-const GRADIENT_PALETTES = [
-  'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)', // Soft Pink
-  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)', // Purple/Pink
-  'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)', // Mint/Blue
-  'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)', // Orange/Purple
-  'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)', // Lavender
-  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', // Deep Blue
-  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Vibrant Green
-  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Coral/Yellow
-];
-
-export const DynamicBookCover: React.FC<DynamicBookCoverProps> = ({ 
-  title, 
-  author, 
-  width = '140px', 
-  height = '200px',
-  showText = true,
-}) => {
-  const gradientIndex = hashString(title) % GRADIENT_PALETTES.length;
-  const background = GRADIENT_PALETTES[gradientIndex];
-
-  return (
-    <div style={{
-      width,
-      height,
-      background,
-      borderRadius: '8px',
-      padding: '1rem',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-      color: 'var(--color-text-primary)',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {/* Decorative spine line */}
-      <div style={{ position: 'absolute', left: '10px', top: 0, bottom: 0, width: '2px', backgroundColor: 'rgba(255,255,255,0.4)' }} />
-      
-      {showText && (
-        <div style={{ paddingLeft: '8px' }}>
-          <h3 style={{ 
+          <p style={{ 
             margin: 0, 
-            fontSize: '1.1rem', 
-            fontWeight: 800, 
-            lineHeight: 1.2,
-            letterSpacing: '-0.025em',
-            display: '-webkit-box',
-            WebkitLineClamp: 4,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden'
+            fontSize: '0.7rem', 
+            fontWeight: 600, 
+            opacity: 0.8,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}>
-            {title}
-          </h3>
-        </div>
-      )}
-
-      {showText && (
-        <div style={{ paddingLeft: '8px' }}>
-          <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 600, opacity: 0.8 }}>
             {author}
           </p>
         </div>
@@ -4759,7 +1761,7 @@ export const InputField: React.FC<InputFieldProps> = ({
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
-import type { AppRole } from '../../utils/types';
+import type { AppRole } from '/home/vaishnavgpal/Code/projects/library-management-system/frontend/src/utils/types.ts';
 
 interface Props {
   /** If supplied, only this role may access the route. */
@@ -5285,11 +2287,15 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
 ```css
 .toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: space-between;
   min-width: 280px;
-  max-width: 400px;
+  max-width: 420px;
   padding: 1rem 1.25rem;
   border-radius: 8px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -5660,7 +2666,8 @@ export const Card: React.FC<CardProps> = ({
   border-radius: 12px;
   width: 100%;
   max-width: 600px;
-  max-height: 90vh;
+  max-height: 85vh;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -5699,9 +2706,10 @@ export const Card: React.FC<CardProps> = ({
 
 .body {
   padding: 1.5rem;
-  max-height: calc(90vh - 70px);
   overflow-y: auto;
   overflow-x: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 @keyframes fadeIn {
@@ -5716,10 +2724,10 @@ export const Card: React.FC<CardProps> = ({
 
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .overlay     { padding: 0.5rem; align-items: flex-end; }
+  .overlay     { padding: 1rem; align-items: center; }
   .modalContent {
-    max-height: 95vh;
-    border-radius: 12px 12px 0 0; /* Bottom sheet on mobile */
+    max-height: 85vh;
+    border-radius: 12px;
   }
   .header { padding: 1rem 1.25rem; }
   .body   { padding: 1.25rem; }
@@ -6561,6 +3569,42 @@ export function useConfirmAction<T>(): UseConfirmActionReturn<T> {
 
 ```
 
+## frontend/src/hooks/useDebounce.ts
+
+```typescript
+import { useState, useEffect } from 'react';
+
+/**
+ * Delays propagating a value until `delay` ms have elapsed since the last change.
+ * Use this to prevent API spam on rapid-fire keystroke events.
+ *
+ * @param value - The live value to debounce (e.g. a search input string).
+ * @param delay - Milliseconds to wait before the debounced value updates (default 500).
+ * @returns The debounced value, held stable until the user stops typing.
+ *
+ * @example
+ *   const [query, setQuery] = useState('');
+ *   const debouncedQuery = useDebounce(query, 500);
+ *
+ *   useEffect(() => {
+ *     // Only fires 500ms after the user stops typing
+ *     fetchResults(debouncedQuery);
+ *   }, [debouncedQuery]);
+ */
+export function useDebounce<T>(value: T, delay = 500): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    // Cancel the pending timer if value or delay changes before it fires
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+```
+
 ## frontend/src/hooks/useModal.ts
 
 ```typescript
@@ -6695,18 +3739,141 @@ export function usePagination<T>(
 
 ```
 
+## frontend/src/index.css
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  font-size: 12px; 
+}
+
+@layer base {
+  :root {
+    /* ── Neutrals ────────────────────────────────────────── */
+    --color-surface: #ffffff;
+    --color-surface-50: #f9fafb;
+    --color-surface-100: #f3f4f6;
+    --color-surface-200: #e5e7eb;
+    --color-surface-300: #d1d5db;
+
+    --color-text-primary: #111827;
+    --color-text-secondary: #6b7280;
+    --color-text-body: #4b5563;
+    --color-text-muted: #9ca3af;
+    --color-text-dark: #1f2937;
+    --color-text-label: #374151;
+
+    --color-border-default: #e5e7eb;
+    --color-border-muted: #d1d5db;
+
+    /* ── Brand (Rose/Magenta) ────────────────────────────── */
+    --color-brand: #9b2c5e;
+    --color-brand-light: #fdf2f8;
+    --color-brand-100: #fbcfe8;
+    --color-brand-200: #f3a8cc;
+    --color-brand-500: #c0507e;
+    --color-brand-dark: #7e2350;
+    --color-brand-darker: #6d1f3e;
+
+    /* ── Coral accent ────────────────────────────────────── */
+    --color-coral: #f26a4f;
+    --color-coral-light: #fa7c54;
+    --color-coral-hover: #e05a40;
+    --color-coral-soft: #ff8c6b;
+
+    /* ── Danger (Red) ────────────────────────────────────── */
+    --color-danger-50: #fef2f2;
+    --color-danger-100: #fee2e2;
+    --color-danger-200: #fecaca;
+    --color-danger-300: #fca5a5;
+    --color-danger: #ef4444;
+    --color-danger-600: #dc2626;
+    --color-danger-800: #991b1b;
+
+    /* ── Success (Green) ─────────────────────────────────── */
+    --color-success-50: #ecfdf5;
+    --color-success-100: #dcfce7;
+    --color-success-200: #d1fae5;
+    --color-success-300: #6ee7b7;
+    --color-success: #22c55e;
+    --color-success-600: #059669;
+    --color-success-800: #166534;
+    --color-success-900: #065f46;
+
+    /* ── Warning (Amber) ─────────────────────────────────── */
+    --color-warning-50: #fffbeb;
+    --color-warning: #f59e0b;
+    --color-warning-100: #fef3c7;
+    --color-warning-300: #fcd34d;
+    --color-warning-800: #92400e;
+
+    /* ── Info (Blue) ─────────────────────────────────────── */
+    --color-info-50: #eff6ff;
+    --color-info-100: #dbeafe;
+    --color-info-300: #93c5fd;
+    --color-info-600: #2563eb;
+    --color-info-800: #1e40af;
+
+    /* ── Violet ──────────────────────────────────────────── */
+    --color-violet-50: #f5f3ff;
+    --color-violet-100: #ede9fe;
+    --color-violet-300: #c4b5fd;
+    --color-violet-800: #5b21b6;
+
+    /* ── Cyan ────────────────────────────────────────────── */
+    --color-cyan-50: #ecfeff;
+    --color-cyan-800: #155e75;
+
+    /* ── Shadows ─────────────────────────────────────────── */
+    --shadow-subtle: 0 1px 3px rgba(0,0,0,0.04);
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.05);
+    --shadow-elevated: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-focus-blue: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    --shadow-focus-brand: 0 0 0 3px rgba(155, 44, 94, 0.12);
+    --shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.15);
+
+    /* ── Orange ───────────────────────────────────────────── */
+    --color-orange-50: #fff7ed;
+    --color-orange-200: #fed7aa;
+    --color-orange-800: #9a3412;
+
+    /* ── App background ──────────────────────────────────── */
+    --color-app-bg: #f5f6f8;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+```
+
 ## frontend/src/layouts/AppShell/AppShell.module.css
 
 ```css
-/* The Coral/Orange Background Frame */
+/* Background Frame */
 .themeWrapper {
   height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, var(--color-coral) 0%, var(--color-coral-soft) 100%);
+  background: var(--color-app-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 1.5rem; /* This dictates the thickness of the coral frame */
+  padding: 0;
   overflow: hidden;
 }
 
@@ -6715,9 +3882,9 @@ export function usePagination<T>(
   display: flex;
   height: 100%;
   width: 100%;
-  background-color: var(--color-app-bg); /* Soft background from the mockup */
-  border-radius: 16px; /* Smooth rounded corners */
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  background-color: var(--color-app-bg);
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
 }
 
@@ -6747,7 +3914,7 @@ export function usePagination<T>(
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .themeWrapper { padding: 0.5rem 0.75rem; }
+  .themeWrapper { padding: 0; }
   .contentArea  { padding: 1rem 1.5rem 2rem; }
 }
 
@@ -7276,7 +4443,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // 2. Dynamically inject the role into the paths!
   const navItems: { name: string; path: string; icon: IconName }[] = [
     { name: 'Dashboard', path: `/${role}/dashboard`, icon: 'home' },
-    { name: 'Search', path: `/${role}/search`, icon: 'search' },
+    { name: 'Books', path: `/${role}/search`, icon: 'search' },
     { name: role === 'admin' ? 'Transaction Ledger' : 'My History', path: `/${role}/history`, icon: 'clock' },
     { name: 'Fines & Payments', path: `/${role}/fines`, icon: 'credit-card' },
     { name: 'Reservations', path: `/${role}/reservations`, icon: 'calendar' },
@@ -7478,6 +4645,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   display: flex;
   align-items: center;
   gap: 1.25rem;
+  flex-shrink: 0; /* never squish the bell / profile / clock */
 }
 
 /* Bell / notifications button */
@@ -7513,7 +4681,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   font-weight: 700;
   line-height: 16px;
   text-align: center;
-  background-color: var(--color-danger-600, #dc2626);
+  background-color: var(--color-danger-600, #0a0a0a);
   color: var(--color-surface);
   border-radius: 999px;
   pointer-events: none;
@@ -7576,31 +4744,63 @@ export const Sidebar: React.FC<SidebarProps> = ({
   color: var(--color-text-primary);
 }
 
-/* ── Responsive ────────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .topbar      { padding: 0 1.25rem; height: 60px; }
-  .searchGroup { max-width: 360px; }
+/* ─────────────────────────────────────────────────────────────────
+   Strict Breakpoint Architecture
+   Desktop  : min-width 1024px  (base styles already cover this)
+   Tablet   : 768px – 1023px
+   Mobile   : max-width 767px
+──────────────────────────────────────────────────────────────────── */
+
+/* ── Desktop ≥ 1024px ──────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .topbar      { padding: 0 2rem; height: 64px; gap: 1.5rem; }
+  .searchGroup { max-width: 480px; }
 }
 
-@media (max-width: 768px) {
-  .topbar      { padding: 0 1rem; height: 54px; gap: 0.5rem; }
-  .searchGroup { max-width: 240px; }
-  .hamburgerBtn { display: flex; }
-  /* Hide the date — keep the clock */
+/* ── Tablet: 768px – 1023px ────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .topbar      { padding: 0 1.25rem; height: 60px; gap: 1rem; }
+  .searchGroup { max-width: 320px; }
   .date        { display: none; }
-  .lang        { display: none; }
-  .systemInfo  { gap: 0.75rem; }
 }
 
+/* ── Mobile: ≤ 767px ────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Single-row layout:
+     [Hamburger flex-none] [Search flex-1] [Bell+Avatar flex-none]
+     No wrapping — everything stays on one line at any mobile width. */
+  .topbar {
+    padding: 0 1rem;
+    height: auto;
+    min-height: 54px;
+    flex-wrap: nowrap;          /* enforce single row */
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Left anchor — hamburger never shrinks */
+  .hamburgerBtn { display: flex; flex-shrink: 0; }
+
+  /* Middle — search bar stretches to fill all available space */
+  .leftGroup    { flex: 1; min-width: 0; }
+  .searchGroup  { max-width: none; height: 36px; width: 100%; }
+
+  /* Right anchor — bell + avatar never shrink */
+  .systemInfo   { flex-shrink: 0; gap: 0.5rem; margin-left: 0; }
+
+  /* Hide less-critical info on small screens */
+  .date { display: none; }
+  .lang { display: none; }
+}
+
+/* ── Narrow mobile: ≤ 480px ────────────────────────────────────── */
 @media (max-width: 480px) {
-  .topbar      { padding: 0 0.75rem; height: 50px; }
-  /* Let search fill remaining space in leftGroup instead of hard-limiting it */
-  .searchGroup { max-width: none; flex: 1; }
-  /* Hide clock too; only profile avatar remains */
-  .dateTime    { display: none; }
-  /* Trim profile section */
-  .profile     { padding: 0.25rem 0.5rem 0.25rem 0.75rem; gap: 0.5rem; }
-  .userName    { display: none; }
+  .topbar       { padding: 0.375rem 0.75rem; gap: 0.375rem; }
+  .searchGroup  { height: 32px; }
+  .dateTime     { display: none; }
+  .profile      { padding: 0.25rem 0.375rem; gap: 0.375rem; border-left: none; }
+  .userName     { display: none; }
 }
 ```
 
@@ -7690,7 +4890,7 @@ import { Icon } from '../../components/atoms/Icon';
 import styles from './Topbar.module.css';
 import type { SearchConfig } from '../AppShell/AppShell';
 import { notificationService } from '../../services/notification.service';
-import { TOKEN_KEY } from '../../services/api';
+import { USER_KEY } from '../../services/api';
 
 export interface TopbarProps {
   userName?: string;
@@ -7717,7 +4917,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem(TOKEN_KEY)) return;
+    if (!localStorage.getItem(USER_KEY)) return;
     const fetchCount = () =>
       notificationService.unreadCount()
         .then(setUnreadCount)
@@ -7743,17 +4943,20 @@ export const Topbar: React.FC<TopbarProps> = ({
   return (
     <header className={styles.topbar}>
 
-      {/* Left group: hamburger (mobile only) + search bar */}
+      {/* Hamburger — direct topbar child so it lands in Row 1 on mobile
+          (order: 1 in the topbar flex context, not buried inside leftGroup) */}
+      {onMenuClick && (
+        <button
+          className={styles.hamburgerBtn}
+          onClick={onMenuClick}
+          aria-label="Open navigation menu"
+        >
+          <Icon name="hamburger" size={20} />
+        </button>
+      )}
+
+      {/* Left group: search bar only (hamburger moved out above) */}
       <div className={styles.leftGroup}>
-        {onMenuClick && (
-          <button
-            className={styles.hamburgerBtn}
-            onClick={onMenuClick}
-            aria-label="Open navigation menu"
-          >
-            <Icon name="hamburger" size={20} />
-          </button>
-        )}
 
         {/* Search Bar — only shown when the page provides searchConfig */}
         {searchConfig ? (
@@ -7868,6 +5071,33 @@ export const Topbar: React.FC<TopbarProps> = ({
     </header>
   );
 };
+```
+
+## frontend/src/main.tsx
+
+```tsx
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import './index.css'
+import App from './App'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </StrictMode>,
+)
 ```
 
 ## frontend/src/pages/About/AboutPage.module.css
@@ -8493,6 +5723,7 @@ import { bookService } from '../../services/book.service';
 import { userService } from '../../services/user.service';
 import { fmtDate } from '../../utils/dates';
 import { txBadgeVariant } from '../../utils/badges';
+import { truncateTitle } from '../../utils/textUtils';
 import { SearchDropdown, type SearchDropdownOption } from '../../components/atoms/SearchDropdown/SearchDropdown';
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -8642,8 +5873,8 @@ export const AdminDashboard: React.FC = () => {
 
   // ── Table columns ───────────────────────────────────────────────────────────
   const txColumns: Column<ApiTransaction>[] = [
-    { header: 'Member', accessor: 'userName' },
-    { header: 'Book', accessor: 'bookName' },
+    { header: 'Member', accessor: 'userName', render: (row) => <span title={row.userName}>{truncateTitle(row.userName)}</span> },
+    { header: 'Book',   accessor: 'bookName', render: (row) => <span title={row.bookName}>{truncateTitle(row.bookName)}</span> },
     { header: 'Date', accessor: 'checkoutDate', render: (row) => <span>{fmtDate(row.checkoutDate)}</span> },
     { header: 'Status', accessor: 'status', render: (row) => (
       <Badge variant={txBadgeVariant(row.status)}>{cap(row.status)}</Badge>
@@ -8651,8 +5882,8 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   const fineColumns: Column<ApiFine>[] = [
-    { header: 'Member', accessor: 'userName' },
-    { header: 'Book', accessor: 'bookName' },
+    { header: 'Member', accessor: 'userName', render: (row) => <span title={row.userName}>{truncateTitle(row.userName)}</span> },
+    { header: 'Book',   accessor: 'bookName', render: (row) => <span title={row.bookName}>{truncateTitle(row.bookName)}</span> },
     { header: 'Amount', accessor: 'amount', render: (row) => <span style={{ fontWeight: 600 }}>₹{row.amount}</span> },
     { header: 'Action', accessor: 'id', render: (row) => (
       <div className={styles.actionGroup}>
@@ -9154,6 +6385,7 @@ export const AdminDashboard: React.FC = () => {
 ```tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
+import { truncateTitle } from '../../utils/textUtils';
 import { AppRole } from '../../utils/types';
 import { useModal } from '../../hooks/useModal';
 import { useConfirmAction } from '../../hooks/useConfirmAction';
@@ -9222,7 +6454,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   const pagination = usePagination(filtered, { pageSize: 5 });
 
   const unpaidCount = fines.filter(f => !f.isPaid).length;
-  const totalUnpaid = fines.filter(f => !f.isPaid).reduce((s, f) => s + f.amount, 0);
+  const totalUnpaid = fines.filter(f => !f.isPaid).reduce((s, f) => s + f.remainingAmount, 0);
 
   // ── Notify modal (admin only) ──
   const notifyModal = useModal<ApiFine>();
@@ -9248,7 +6480,15 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   };
 
   // ── Table columns ──
-  const bookCol: Column<ApiFine> = { header: 'Book', accessor: 'bookName' };
+  const bookCol: Column<ApiFine> = {
+    header: 'Book',
+    accessor: 'bookName',
+    render: (row) => (
+      <span title={row.bookName} style={{ display: 'block', maxWidth: '200px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        {truncateTitle(row.bookName)}
+      </span>
+    ),
+  };
   const memberCol: Column<ApiFine> = { header: 'Member', accessor: 'userName' };
   const amountCol: Column<ApiFine> = {
     header: 'Amount',
@@ -9583,6 +6823,8 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .bookCellTitle {
@@ -9591,6 +6833,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   font-weight: 600;
   color: var(--color-text-primary);
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
   max-width: 220px;
 }
@@ -9599,6 +6842,10 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   margin: 0;
   font-size: 0.8125rem;
   color: var(--color-text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 220px;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
@@ -9715,6 +6962,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
 @media (max-width: 1024px) {
   .headerRow     { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
   .bookCellTitle { max-width: 180px; }
+  .bookCellAuthor { max-width: 180px; }
 }
 
 @media (max-width: 768px) {
@@ -9722,6 +6970,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   .summaryRow    { gap: 0.5rem; }
   .tableCard     { border-radius: 12px; }
   .bookCellTitle { max-width: 130px; }
+  .bookCellAuthor { max-width: 130px; }
   .bookCell      { gap: 0.625rem; }
 }
 
@@ -9729,6 +6978,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
   .pageTitle     { font-size: 1.25rem; }
   .statChip      { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
   .bookCellTitle { max-width: 90px; font-size: 0.875rem; }
+  .bookCellAuthor { max-width: 90px; }
   /* Hide the DynamicBookCover thumbnail to save horizontal space */
   .bookCell > *:first-child { display: none; }
 }
@@ -9738,6 +6988,7 @@ export const FinesPage: React.FC<FinesPageProps> = ({ role = 'member' }) => {
 
 ```tsx
 import React, { useState, useEffect, useCallback } from 'react';
+import { truncateTitle } from '../../utils/textUtils';
 import { fmtDate } from '../../utils/dates';
 import { FINE_RATE_PER_DAY } from '../../utils/constants';
 import { AppRole, TxStatus } from '../../utils/types';
@@ -9851,7 +7102,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
       <div className={styles.bookCell}>
         <DynamicBookCover title={row.bookName} author="" width="48px" height="64px" showText={false} />
         <div className={styles.bookCellText}>
-          <p className={styles.bookCellTitle}>{row.bookName}</p>
+          <p className={styles.bookCellTitle} title={row.bookName}>{truncateTitle(row.bookName)}</p>
         </div>
       </div>
     ),
@@ -9871,8 +7122,8 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ role = 'member' }) => 
     header: 'Returned',
     accessor: 'returnedDate',
     render: (row) => (
-      <span className={row.returnedDate ? 'text-text-primary' : 'text-text-muted'}>
-        {row.returnedDate ? fmtDate(row.returnedDate) : '—'}
+      <span className={row.returnDate ? 'text-text-primary' : 'text-text-muted'}>
+        {row.returnDate ? fmtDate(row.returnDate) : '—'}
       </span>
     ),
   };
@@ -10390,12 +7641,13 @@ export const LoginPage: React.FC = () => {
   gap: 2.5rem;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 1rem; /* Task 3: content never touches viewport edge */
 }
 
 .topRow {
   display: flex;
   gap: 1.5rem;
-  min-height: 290px;
+  min-height: 220px;
 }
 
 .quoteCard {
@@ -10427,6 +7679,9 @@ export const LoginPage: React.FC = () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Fixed width prevents the banner from shrinking or overlapping the cards */
+  width: 40px;
+  flex-shrink: 0;
 }
 
 .verticalText {
@@ -10438,39 +7693,99 @@ export const LoginPage: React.FC = () => {
 
 .scrollContainer {
   display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  flex-wrap: nowrap;          /* cards never wrap — horizontal scroll only */
+  gap: 1rem;
+  padding: 1rem 1.25rem;
   overflow-x: auto;
-  overflow-y: hidden; 
+  overflow-y: hidden;
   align-items: stretch;
+  flex: 1;                    /* fill remaining width after the vertical banner */
+  min-width: 0;               /* allow flex child to shrink below content size */
+  /* Hide scrollbar for a cleaner look */
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE/Edge */
+}
+.scrollContainer::-webkit-scrollbar {
+  display: none;              /* Chrome / Safari / Webkit */
 }
 .scrollContainer::after {
   content: "";
-  padding-right: 0.1px; 
+  padding-right: 0.1px;
 }
 .sectionTitle { margin: 0 0 0.5rem 0; font-size: 1.75rem; color: var(--color-text-primary); }
 .subTitle { margin: 0 0 1.5rem 0; font-size: 1.125rem; font-weight: 500; color: var(--color-text-body); }
 
+/* CSS Grid — base (mobile-first): exactly 2 columns, scales up at breakpoints */
 .bookGrid {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* In grid context the cell controls width; restore column layout so cover + text + button stack */
+.bookGrid .bookDisplay {
+  width: 100%;
+  flex-direction: column;     /* override any inherited row-layout from mobile rules */
+  align-items: stretch;
+  min-width: 0;
+  flex-shrink: 1;
+  padding: 0.625rem;          /* inner breathing room so nothing touches card edges */
+  background-color: var(--color-surface-50);
+  border: 1px solid var(--color-border-muted);
+  border-radius: 10px;
+}
+
+/* In grid context, cover takes full card width */
+.bookGrid .bookCoverWrapper {
+  width: 100%;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+/* In grid context, title wraps to 2 lines max instead of 3 */
+.bookGrid .bookTitle {
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+}
+
+/* Reserve button fills the full card width in grid context */
+.bookGrid .reserveBtn {
+  width: 100%;
+  padding: 0.35rem 0.75rem;
+  white-space: nowrap;
 }
 
 .bookDisplay {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  width: 130px;
+  gap: 0.5rem;
+  width: 108px;
+  min-width: 108px;   /* ensures cards never squish inside the scroll container */
+  flex-shrink: 0;     /* cards hold their width; container scrolls, cards don't squeeze */
   cursor: pointer;
   transition: transform 0.2s;
 }
 
 .bookDisplay:hover { transform: translateY(-4px); }
 
-.bookInfo { display: flex; flex-direction: column; gap: 0.25rem; flex-grow: 1;}
-.bookTitle { margin: 0; font-size: 0.875rem; color: var(--color-text-primary); line-height: 1.3; font-weight: 600; }
-.bookAuthor { margin: 0; font-size: 0.75rem; color: var(--color-text-secondary); }
+/* Wrapper that enforces cover dimensions.
+   Desktop / scroll-container: fills bookDisplay width × 150px tall (column layout).
+   Mobile: overridden to a fixed 80×120px tile beside the text (row layout). */
+.bookCoverWrapper {
+  width: 100%;
+  height: 150px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;   /* clips the cover at the border-radius */
+}
+
+.bookInfo { display: flex; flex-direction: column; gap: 0.25rem; flex-grow: 1; min-width: 0; overflow: hidden; }
+.bookTitle { margin: 0; font-size: 0.875rem; color: var(--color-text-primary); line-height: 1.3; font-weight: 600; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.bookAuthor { margin: 0; font-size: 0.75rem; color: var(--color-text-secondary); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .bookRating { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; }
 
 .possessionCard {
@@ -10690,33 +8005,92 @@ export const LoginPage: React.FC = () => {
   color: var(--color-text-secondary);
 }
 
-/* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .topRow { height: auto; }
-  .quoteCard { min-height: 180px; }
+/* ─────────────────────────────────────────────────────────────────
+   Strict Breakpoint Architecture
+   Desktop  : min-width 1024px
+   Tablet   : 768px – 1023px
+   Mobile   : max-width 767px
+──────────────────────────────────────────────────────────────────── */
+
+/* ── 480px+ : 3 columns ─────────────────────────────────────── */
+@media (min-width: 480px) {
+  .bookGrid { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .bookGrid .bookCoverWrapper { height: 150px; }
 }
 
-@media (max-width: 768px) {
-  .topRow         { flex-direction: column; height: auto; gap: 1rem; }
-  .quoteCard      { min-height: 140px; }
-  .newArrivalsCard { min-height: 200px; }
-  .bookGrid       { flex-wrap: wrap; }
-  .finesList      { max-width: 100%; }
-  .fineCard       { padding: 0.875rem 1rem; }
+/* ── Tablet: 768px – 1023px : 4 columns ──────────────────────── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .dashboardLayout { padding: 0 1.5rem; gap: 2rem; }
+  .topRow          { height: auto; }
+  .quoteCard       { min-height: 180px; }
+  .bookGrid        { grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+  .bookGrid .bookCoverWrapper { height: 160px; }
 }
 
-@media (max-width: 480px) {
-  .topRow         { gap: 0.75rem; }
-  .dashboardLayout { gap: 1.5rem; }
-  .sectionTitle   { font-size: 1.375rem; }
-  .subTitle       { font-size: 0.9375rem; }
-  .bookDisplay    { width: 110px; }
-  .fineCard       { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
-  .fineCardRight  { width: 100%; justify-content: space-between; }
-  .fineCardAmount { font-size: 1.125rem; }
-  .quoteHeader    { font-size: 1rem; }
-  .quoteText      { font-size: 1rem; }
+/* ── Desktop ≥ 1024px : 5+ columns, auto-fill ─────────────────── */
+@media (min-width: 1024px) {
+  .dashboardLayout { padding: 0 2rem; gap: 2.5rem; }
+  .bookGrid        { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1.25rem; }
+  .bookGrid .bookCoverWrapper { height: 170px; }
 }
+
+/* ── Mobile: ≤ 767px ──────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Task 3: minimum 1rem edge padding so cards never touch the viewport border */
+  .dashboardLayout { padding: 0 1rem; gap: 1.5rem; }
+
+  .topRow          { flex-direction: column; height: auto; gap: 1rem; }
+  .quoteCard       { min-height: 140px; }
+  .quoteHeader     { font-size: 1rem; }
+  .quoteText       { font-size: 1rem; }
+  .newArrivalsCard { min-height: 140px; }
+
+  /* Book grid: 2 strict columns on mobile (already set in base, kept for clarity) */
+  .bookGrid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+
+  /* Grid cards stay in column layout on mobile — row layout applies only to
+     scroll-container (New Arrivals) cards via the rules below. */
+  .bookGrid .bookDisplay {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.5rem;
+  }
+  .bookGrid .bookCoverWrapper { width: 100%; height: 130px; }
+  .bookGrid .bookInfo         { flex: unset; }
+
+  /* Scroll-container (New Arrivals) cards: thumbnail-left, text-right row layout */
+  .scrollContainer .bookDisplay {
+    flex-direction: row;
+    width: auto;      /* overrides the 108px base — let min-width hold it */
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+  }
+  .scrollContainer .bookCoverWrapper { width: 80px; height: 120px; flex-shrink: 0; }
+  .scrollContainer .bookInfo         { flex: 1; min-width: 0; overflow: hidden; }
+  .scrollContainer .bookTitle        {
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-clamp: 3;
+  }
+
+  .scrollContainer { gap: 0.75rem; padding: 0.75rem 0.875rem; }
+  .sectionTitle    { font-size: 1.375rem; }
+  .subTitle        { font-size: 0.9375rem; }
+  .finesList       { max-width: 100%; }
+  .fineCard        { padding: 0.875rem 1rem; flex-direction: column;
+                     align-items: flex-start; gap: 0.75rem; }
+  .fineCardRight   { width: 100%; justify-content: space-between; }
+  .fineCardAmount  { font-size: 1.125rem; }
+}
+
 ```
 
 ## frontend/src/pages/Member/MemberDashboard.tsx
@@ -10733,10 +8107,12 @@ import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/Dynami
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { Button } from '../../components/atoms/Button/Button';
 import { Modal } from '../../components/molecules/Modal/Modal';
+import { Toast } from '../../components/atoms/Toast/Toast';
 import { bookService, type ApiBook } from '../../services/book.service';
 import { transactionService, type ApiTransaction } from '../../services/transaction.service';
 import { fineService, type ApiFine } from '../../services/fine.service';
 import { reservationService } from '../../services/reservation.service';
+import { truncateTitle } from '../../utils/textUtils';
 
 const computeDueIn = (dueDate: string): { label: string; variant: 'warning' | 'success' | 'error' } => {
   const days = Math.ceil((new Date(dueDate).getTime() - Date.now()) / 86400000);
@@ -10749,9 +8125,13 @@ const BookDisplay = ({
   title, author, rating, coverHash, onReserve, showReserveButton,
 }: { title: string; author: string; rating?: string; coverHash: string; onReserve?: () => void; showReserveButton?: boolean }) => (
   <div className={styles.bookDisplay} onClick={onReserve} style={{ cursor: onReserve ? 'pointer' : 'default' }}>
-    <DynamicBookCover title={coverHash} author="" width="130px" height="190px" />
+    {/* Wrapper constrains cover dimensions — fixed size on mobile (80×120px),
+        fluid on desktop so the column layout looks unchanged. */}
+    <div className={styles.bookCoverWrapper}>
+      <DynamicBookCover title={coverHash} author="" width="100%" height="100%" />
+    </div>
     <div className={styles.bookInfo}>
-      <h4 className={styles.bookTitle}>{title}</h4>
+      <h4 className={styles.bookTitle} title={title}>{truncateTitle(title)}</h4>
       <p className={styles.bookAuthor}>{author}</p>
       {rating && <span className={styles.bookRating}>★ {rating}</span>}
       {showReserveButton && onReserve && (
@@ -10787,11 +8167,16 @@ export const MemberDashboard: React.FC = () => {
 
   // ── Reserve Book modal ───────────────────────────────────────────────────
   const reserveModal = useModal<ApiBook>();
+  const [reserveToast, setReserveToast] = useState('');
   const handleReserveConfirm = () => {
     reserveModal.setProcessing(true);
     reservationService.create(reserveModal.data!.id)
       .then(() => { reserveModal.close(); loadData(); })
-      .catch((err: any) => { reserveModal.setProcessing(false); alert(err?.message ?? 'Failed to reserve.'); });
+      .catch((err: any) => {
+        reserveModal.setProcessing(false);
+        reserveModal.close();
+        setReserveToast(err?.message ?? 'Failed to reserve.');
+      });
   };
 
   // ── Return Book modal ─────────────────────────────────────────────────────
@@ -10984,6 +8369,14 @@ export const MemberDashboard: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {reserveToast && (
+        <Toast
+          message={reserveToast}
+          variant="error"
+          onClose={() => setReserveToast('')}
+        />
+      )}
 
     </AppShell>
   );
@@ -11528,6 +8921,7 @@ import { Icon } from '../../components/atoms/Icon';
 import { AppShell } from '../../layouts/AppShell/AppShell';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 import { notificationService } from '../../services/notification.service';
+import { Toast } from '../../components/atoms/Toast/Toast';
 
 // ── Derived status ─────────────────────────────────────────────────────────────
 type MemberFilter = 'Active' | 'Blacklisted';
@@ -11561,23 +8955,37 @@ function SkeletonRows({ rows }: { rows: number }) {
 }
 
 // ── Edit modal ────────────────────────────────────────────────────────────────
+interface EditSaveData {
+  fullName?: string;
+  email?: string;
+  password?: string;
+}
+
 interface EditModalProps {
   member: UserResponse;
-  onSave: (fullName: string) => Promise<void>;
+  onSave: (data: EditSaveData) => Promise<void>;
   onClose: () => void;
 }
 
 function EditMemberModal({ member, onSave, onClose }: EditModalProps) {
-  const [fullName, setFullName] = useState(member.fullName);
+  const [fullName, setFullName] = useState(member.fullName ?? '');
+  const [email, setEmail] = useState(member.email ?? '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim()) return;
+    if (!email.trim()) { setError('Username / Email is required.'); return; }
+    if (password && password !== confirmPassword) { setError('Passwords do not match.'); return; }
     setIsSaving(true); setError('');
+    const data: EditSaveData = {};
+    if (fullName.trim()) data.fullName = fullName.trim();
+    if (email.trim() !== member.email) data.email = email.trim();
+    if (password) data.password = password;
     try {
-      await onSave(fullName.trim());
+      await onSave(data);
     } catch (err: any) {
       setError(err?.message ?? 'Update failed.');
       setIsSaving(false);
@@ -11596,10 +9004,50 @@ function EditMemberModal({ member, onSave, onClose }: EditModalProps) {
         <form onSubmit={handleSubmit} className={styles.modalForm}>
           {error && <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', margin: 0 }}>{error}</p>}
           <label className={styles.fieldLabel}>
-            Full Name *
-            <input className={styles.fieldInput} value={fullName} onChange={e => setFullName(e.target.value)} placeholder="e.g. John Doe" required autoFocus />
+            Full Name
+            <input
+              className={styles.fieldInput}
+              value={fullName}
+              onChange={e => setFullName(e.target.value)}
+              placeholder="e.g. John Doe"
+              autoFocus
+            />
           </label>
-          <p className={styles.privacyNote}>Only the member's display name can be updated here.</p>
+          <label className={styles.fieldLabel}>
+            Username / Email *
+            <input
+              className={styles.fieldInput}
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="e.g. john@example.com"
+              required
+            />
+          </label>
+          <label className={styles.fieldLabel}>
+            New Password
+            <input
+              className={styles.fieldInput}
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="Leave blank to keep current password"
+              autoComplete="new-password"
+            />
+          </label>
+          {password && (
+            <label className={styles.fieldLabel}>
+              Confirm New Password
+              <input
+                className={styles.fieldInput}
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter new password"
+                autoComplete="new-password"
+              />
+            </label>
+          )}
           <div className={styles.modalActions}>
             <button type="button" className={styles.btnSecondary} onClick={onClose} disabled={isSaving}>Cancel</button>
             <button type="submit" className={styles.btnPrimary} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</button>
@@ -11647,7 +9095,7 @@ function NotifyModal({ member, onClose }: NotifyModalProps) {
         </div>
         <form onSubmit={handleSend} className={styles.modalForm}>
           <p style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
-            Send a notification to <strong>{member.fullName}</strong>.
+            Send a notification to <strong>{member.fullName || member.email}</strong>.
           </p>
           {error && <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', margin: 0 }}>{error}</p>}
           {success && <p style={{ color: 'var(--color-success-700, #15803d)', fontSize: '0.875rem', margin: 0 }}>Notification sent!</p>}
@@ -11685,11 +9133,17 @@ interface DeleteModalProps {
 
 function DeleteModal({ memberName, onConfirm, onClose }: DeleteModalProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleConfirm = async () => {
     setIsDeleting(true);
-    try { await onConfirm(); }
-    catch { setIsDeleting(false); }
+    setError('');
+    try {
+      await onConfirm();
+    } catch (err: any) {
+      setError(err?.message ?? 'Could not deactivate this member. Please try again.');
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -11704,6 +9158,11 @@ function DeleteModal({ memberName, onConfirm, onClose }: DeleteModalProps) {
         <p className={styles.deleteMsg}>
           Deactivate <strong>{memberName}</strong>? They will lose access to the library system.
         </p>
+        {error && (
+          <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', margin: '0 0 0.5rem' }}>
+            {error}
+          </p>
+        )}
         <div className={styles.modalActions}>
           <button className={styles.btnSecondary} onClick={onClose} disabled={isDeleting}>Cancel</button>
           <button className={styles.btnDanger} onClick={handleConfirm} disabled={isDeleting}>
@@ -11726,6 +9185,7 @@ export function MemberDirectoryPage() {
   const [deleteTarget, setDeleteTarget] = useState<UserResponse | null>(null);
   const [notifyTarget, setNotifyTarget] = useState<UserResponse | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [errorToast, setErrorToast] = useState('');
 
   const loadMembers = useCallback(() => {
     setIsLoading(true);
@@ -11737,9 +9197,13 @@ export function MemberDirectoryPage() {
 
   useEffect(() => { loadMembers(); }, [loadMembers]);
 
-  const handleEdit = async (fullName: string) => {
-    await userService.update(editTarget!.id, { fullName });
-    setMembers(prev => prev.map(m => m.id === editTarget!.id ? { ...m, fullName } : m));
+  const handleEdit = async (data: { fullName?: string; email?: string; password?: string }) => {
+    await userService.update(editTarget!.id, data);
+    setMembers(prev => prev.map(m =>
+      m.id === editTarget!.id
+        ? { ...m, ...(data.fullName !== undefined && { fullName: data.fullName }), ...(data.email !== undefined && { email: data.email }) }
+        : m
+    ));
     setEditTarget(null);
   };
 
@@ -11755,7 +9219,7 @@ export function MemberDirectoryPage() {
       const updated = await userService.update(member.id, { isActive: !member.isActive });
       setMembers(prev => prev.map(m => m.id === member.id ? { ...m, isActive: updated.isActive } : m));
     } catch (err: any) {
-      alert(err?.message ?? 'Failed to update member status.');
+      setErrorToast(err?.message ?? 'Failed to update member status.');
     } finally {
       setTogglingId(null);
     }
@@ -11771,8 +9235,8 @@ export function MemberDirectoryPage() {
       .filter(m => m.isActive === isActive)
       .filter(m =>
         !q ||
-        m.fullName.toLowerCase().includes(q) ||
-        m.email.toLowerCase().includes(q),
+        (m.fullName ?? '').toLowerCase().includes(q) ||
+        (m.email ?? '').toLowerCase().includes(q),
       );
   }, [members, activeFilter, searchQuery]);
 
@@ -11835,10 +9299,10 @@ export function MemberDirectoryPage() {
                     <td className={styles.td}>
                       <div className={styles.memberCell}>
                         <div className={styles.avatar}>
-                          {member.fullName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          {(member.fullName || member.email || '?').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <div className={styles.memberName}>{member.fullName}</div>
+                          <div className={styles.memberName}>{member.fullName || <em style={{ color: 'var(--color-text-tertiary, #9ca3af)' }}>No name set</em>}</div>
                           <div className={styles.memberEmail}>{member.email}</div>
                         </div>
                       </div>
@@ -11858,29 +9322,39 @@ export function MemberDirectoryPage() {
                       </button>
                     </td>
                     <td className={styles.td}>
-                      <div className={styles.actionRow}>
+                      {member.isActive ? (
+                        <div className={styles.actionRow}>
+                          <button
+                            className={styles.actionBtn}
+                            title="Send notification"
+                            onClick={() => setNotifyTarget(member)}
+                          >
+                            <Icon name="bell" size={15} />
+                          </button>
+                          <button
+                            className={styles.actionBtn}
+                            title="Edit name"
+                            onClick={() => setEditTarget(member)}
+                          >
+                            <Icon name="edit" size={15} />
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                            title="Deactivate member"
+                            onClick={() => setDeleteTarget(member)}
+                          >
+                            <Icon name="trash-2" size={15} />
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          className={styles.actionBtn}
-                          title="Send notification"
-                          onClick={() => setNotifyTarget(member)}
+                          className={styles.btnPrimary}
+                          disabled={togglingId === member.id}
+                          onClick={() => handleToggleStatus(member)}
                         >
-                          <Icon name="bell" size={15} />
+                          {togglingId === member.id ? 'Activating…' : 'Activate User'}
                         </button>
-                        <button
-                          className={styles.actionBtn}
-                          title="Edit name"
-                          onClick={() => setEditTarget(member)}
-                        >
-                          <Icon name="edit" size={15} />
-                        </button>
-                        <button
-                          className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                          title="Deactivate member"
-                          onClick={() => setDeleteTarget(member)}
-                        >
-                          <Icon name="trash-2" size={15} />
-                        </button>
-                      </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -11905,9 +9379,16 @@ export function MemberDirectoryPage() {
       )}
       {deleteTarget && (
         <DeleteModal
-          memberName={deleteTarget.fullName}
+          memberName={deleteTarget.fullName || deleteTarget.email}
           onConfirm={handleDelete}
           onClose={() => setDeleteTarget(null)}
+        />
+      )}
+      {errorToast && (
+        <Toast
+          message={errorToast}
+          variant="error"
+          onClose={() => setErrorToast('')}
         />
       )}
     </AppShell>
@@ -12328,10 +9809,61 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ role = 'me
 }
 
 .heroMeta {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding-bottom: 0.25rem;
+  gap: 0.5rem;
+}
+
+.heroActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1.5px solid var(--color-info-400, #60a5fa);
+  color: var(--color-info-700, #1d4ed8);
+  border-radius: 8px;
+  padding: 0.35rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.editBtn:hover {
+  background: var(--color-info-50, #eff6ff);
+  border-color: var(--color-info-500, #3b82f6);
+}
+
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: none;
+  border: 1.5px solid var(--color-danger-400, #f87171);
+  color: var(--color-danger-600, #dc2626);
+  border-radius: 8px;
+  padding: 0.35rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.logoutBtn:hover {
+  background: var(--color-danger-50, #fef2f2);
+  border-color: var(--color-danger-500, #ef4444);
 }
 
 .heroName {
@@ -12537,15 +10069,20 @@ export const NotificationsPage: React.FC<NotificationsPageProps> = ({ role = 'me
 
 ```tsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppRole } from '../../utils/types';
 import styles from './ProfilePage.module.css';
 import { Icon } from '../../components/atoms/Icon';
 import { AppShell } from '../../layouts/AppShell/AppShell';
+import { Modal } from '../../components/molecules/Modal/Modal';
+import { Toast } from '../../components/atoms/Toast/Toast';
+import { InputField } from '../../components/atoms/InputField/InputField';
 import { useAuth } from '../../context/AuthContext';
 import { reportService, type SystemAnalytics } from '../../services/report.service';
 import { transactionService } from '../../services/transaction.service';
 import { fineService } from '../../services/fine.service';
 import { reservationService } from '../../services/reservation.service';
+import { userService } from '../../services/user.service';
 
 export interface ProfilePageProps {
   role?: AppRole;
@@ -12587,8 +10124,66 @@ const MEMBER_BADGES: BadgeInfo[] = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAdmin = role === 'admin';
+  const navigate = useNavigate();
+
+  // Fetch fresh profile so fullName is always up-to-date (even for old sessions)
+  const [fetchedName, setFetchedName] = useState<string | null>(null);
+  useEffect(() => {
+    if (user?.id) {
+      userService.getById(user.id)
+        .then(p => { if (p?.fullName) setFetchedName(p.fullName); })
+        .catch(() => {/* ignore */});
+    }
+  }, [user?.id]);
+
+  const displayName = fetchedName || user?.fullName || '';
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // ── Edit Profile modal ──────────────────────────────────────────────────
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editError, setEditError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveToast, setSaveToast] = useState('');
+
+  const openEditModal = () => {
+    setEditName(displayName);
+    setEditEmail(user?.email ?? '');
+    setEditPassword('');
+    setEditError('');
+    setIsEditOpen(true);
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id) return;
+    setIsSaving(true);
+    setEditError('');
+    try {
+      const payload: Record<string, string> = {};
+      if (editName.trim() && editName.trim() !== displayName) payload.fullName = editName.trim();
+      if (editEmail.trim() && editEmail.trim() !== user.email) payload.email = editEmail.trim();
+      if (editPassword.trim()) payload.password = editPassword.trim();
+      if (Object.keys(payload).length === 0) { setIsEditOpen(false); return; }
+      await userService.update(user.id, payload);
+      setFetchedName(payload.fullName ?? displayName);
+      setIsEditOpen(false);
+      setSaveToast('Profile updated successfully.');
+      setTimeout(() => setSaveToast(''), 3500);
+    } catch (err: any) {
+      setEditError(err?.message ?? 'Failed to update profile.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // ── Stats from API ──────────────────────────────────────────────────────
   const [analytics, setAnalytics] = useState<SystemAnalytics | null>(null);
@@ -12634,15 +10229,17 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
 
   const stats = isAdmin ? adminStats : memberStats;
   const badges = isAdmin ? ADMIN_BADGES : MEMBER_BADGES;
-  const avatarInitials = user?.fullName
-    ?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() ?? '?';
+  const avatarInitials = displayName
+    ? displayName.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    : (isAdmin ? 'AD' : 'ME');
 
   return (
-    <AppShell
-      userName={user?.fullName ?? (isAdmin ? 'Admin' : 'Member')}
-      activeNavItem="Profile"
-      role={role}
-    >
+    <>
+      <AppShell
+        userName={displayName || (isAdmin ? 'Admin' : 'Member')}
+        activeNavItem="Profile"
+        role={role}
+      >
       <div className={styles.pageContainer}>
 
         {/* ── Hero card ── */}
@@ -12655,10 +10252,22 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
               </div>
             </div>
             <div className={styles.heroMeta}>
-              <h2 className={styles.heroName}>{user?.fullName ?? '—'}</h2>
+              <h2 className={styles.heroName}>{displayName || (isAdmin ? 'Administrator' : 'Member')}</h2>
               <span className={`${styles.rolePill} ${isAdmin ? styles.rolePillAdmin : styles.rolePillMember}`}>
                 {isAdmin ? 'Administrator' : 'Library Member'}
               </span>
+              <div className={styles.heroActions}>
+                {!isAdmin && (
+                  <button className={styles.editBtn} onClick={openEditModal}>
+                    <Icon name="edit" size={15} strokeWidth={2} />
+                    Edit Profile
+                  </button>
+                )}
+                <button className={styles.logoutBtn} onClick={handleLogout}>
+                  <Icon name="log-out" size={15} strokeWidth={2} />
+                  Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -12673,7 +10282,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
               <DetailRow
               icon={<Icon name="user" size={16} />}
                 label="Full Name"
-                value={user?.fullName ?? '—'}
+                value={displayName || '—'}
               />
               <DetailRow
               icon={<Icon name="mail" size={16} />}
@@ -12726,7 +10335,42 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ role = 'member' }) => 
 
       </div>
     </AppShell>
-  );
+
+    {/* ── Edit Profile Modal ── */}
+    {!isAdmin && (
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Profile">
+        <form onSubmit={handleEditSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <InputField
+            label="Full Name"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Your full name"
+          />
+          <InputField
+            label="Email"
+            type="email"
+            value={editEmail}
+            onChange={(e) => setEditEmail(e.target.value)}
+            placeholder="your@email.com"
+          />
+          <InputField
+            label="New Password"
+            type="password"
+            value={editPassword}
+            onChange={(e) => setEditPassword(e.target.value)}
+            placeholder="Leave blank to keep current"
+          />
+          {editError && <p style={{ margin: 0, color: 'var(--color-danger-600)', fontSize: '0.875rem' }}>{editError}</p>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.25rem' }}>
+            <button type="button" onClick={() => setIsEditOpen(false)} style={{ background: 'none', border: '1.5px solid var(--color-border-default)', borderRadius: '8px', padding: '0.4rem 1rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}>Cancel</button>
+            <button type="submit" disabled={isSaving} style={{ background: 'var(--color-info-600)', color: '#fff', border: 'none', borderRadius: '8px', padding: '0.4rem 1.25rem', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 700, opacity: isSaving ? 0.65 : 1 }}>{isSaving ? 'Saving…' : 'Save Changes'}</button>
+          </div>
+        </form>
+      </Modal>
+    )}
+
+    {saveToast && <Toast message={saveToast} variant="success" onClose={() => setSaveToast('')} />}
+  </>);
 };
 
 // ── Helper component ──────────────────────────────────────────────────────────
@@ -13197,6 +10841,8 @@ export const RegisterPage: React.FC = () => {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .bookCellTitle {
@@ -13205,6 +10851,7 @@ export const RegisterPage: React.FC = () => {
   font-weight: 600;
   color: var(--color-text-primary);
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
   max-width: 200px;
 }
@@ -13213,6 +10860,10 @@ export const RegisterPage: React.FC = () => {
   margin: 0;
   font-size: 0.8125rem;
   color: var(--color-text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────────────── */
@@ -13358,12 +11009,14 @@ export const RegisterPage: React.FC = () => {
   .summaryRow    { gap: 0.5rem; }
   .tableCard     { border-radius: 12px; }
   .bookCellTitle { max-width: 140px; }
+  .bookCellAuthor { max-width: 140px; }
 }
 
 @media (max-width: 480px) {
   .pageTitle     { font-size: 1.25rem; }
   .statChip      { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
   .bookCellTitle { max-width: 90px; font-size: 0.875rem; }
+  .bookCellAuthor { max-width: 90px; }
   .bookCell > *:first-child { display: none; }
 }
 ```
@@ -13376,6 +11029,7 @@ import { fmtDate } from '../../utils/dates';
 import { AppRole, ResStatus } from '../../utils/types';
 import { resBadgeVariant } from '../../utils/badges';
 import { useAuth } from '../../context/AuthContext';
+import { truncateTitle } from '../../utils/textUtils';
 import { reservationService, type ApiReservation } from '../../services/reservation.service';
 import styles from './ReservationsPage.module.css';
 import { AppShell } from '../../layouts/AppShell/AppShell';
@@ -13497,7 +11151,7 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
       <div className={styles.bookCell}>
         <DynamicBookCover title={row.book.title} author="" width="48px" height="64px" showText={false} />
         <div className={styles.bookCellText}>
-          <p className={styles.bookCellTitle}>{row.book.title}</p>
+          <p className={styles.bookCellTitle} title={row.book.title}>{truncateTitle(row.book.title)}</p>
           <p className={styles.bookCellAuthor}>{row.book.authors[0]?.name ?? '—'}</p>
         </div>
       </div>
@@ -13672,6 +11326,7 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
   gap: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 0 1rem;
 }
 
 /* Controls & Dropdown */
@@ -13995,18 +11650,26 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
-@media (max-width: 1024px) {
+@media (min-width: 1024px) {
+  .pageContainer { padding: 0 2rem; gap: 2rem; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .pageContainer { padding: 0 1.5rem; }
   .colCategory { display: none; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
+  .pageContainer { padding: 0 0.75rem; gap: 1rem; }
+  .colCategory { display: none; }
+
   /* Hide the column headers on mobile — info embedded in each card */
   .listHeader { display: none; }
 
   /* Stack the book row columns vertically */
   .bookRow {
     flex-direction: column;
-    padding: 1rem 1.25rem;
+    padding: 1rem;
     gap: 0.75rem;
   }
   .colBook, .colCategory, .colStatus, .colAction {
@@ -14016,14 +11679,11 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
   }
   .colAction { justify-content: flex-end; }
 
-  /* Two-column form back to one column */
-  .formRow { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 480px) {
-  .bookRow     { padding: 0.875rem 1rem; }
   .bookTitle   { font-size: 1rem; }
   .actionButtons { flex-wrap: wrap; }
+
+  /* Two-column form back to one column */
+  .formRow { grid-template-columns: 1fr; }
 }
 
 /* ── Archived book row dim ───────────────────────────────────────────────── */
@@ -14089,7 +11749,7 @@ export const ReservationsPage: React.FC<ReservationsPageProps> = ({ role = 'memb
 ## frontend/src/pages/Search/AdminSearchPage.tsx
 
 ```tsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppRole } from '../../utils/types';
 import styles from './AdminSearchPage.module.css';
 import { Icon } from '../../components/atoms/Icon';
@@ -14098,16 +11758,19 @@ import { Button } from '../../components/atoms/Button/Button';
 import { Badge } from '../../components/atoms/Badge/Badge';
 import { DynamicBookCover } from '../../components/atoms/DynamicBookCover/DynamicBookCover';
 import { Modal } from '../../components/molecules/Modal/Modal';
+import { Toast } from '../../components/atoms/Toast/Toast';
 import { InputField } from '../../components/atoms/InputField/InputField';
 import { Pagination } from '../../components/molecules/Pagination';
 import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 import { SearchDropdown, SearchDropdownOption } from '../../components/atoms/SearchDropdown/SearchDropdown';
 import { bookService, type ApiBook, type BookSearchParams } from '../../services/book.service';
 import { useBooks } from '../../hooks/useBooks';
+import { useDebounce } from '../../hooks/useDebounce';
 import { transactionService } from '../../services/transaction.service';
 import { reservationService } from '../../services/reservation.service';
 import { userService } from '../../services/user.service';
 import { useAuth } from '../../context/AuthContext';
+import { truncateTitle } from '../../utils/textUtils';
 
 interface BookFormData {
   title: string;
@@ -14163,12 +11826,14 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   const PAGE_SIZE = 10;
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [searchQuery, setSearchQuery] = useState('');
-  /* debouncedQuery drives the React Query key — updated 350ms after user input */
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  /* useDebounce delays API calls by 500ms after the user stops typing */
+  const debouncedQuery = useDebounce(searchQuery, 500);
   const [searchBy, setSearchBy] = useState<'title' | 'author' | 'category'>('title');
   const [allCategories, setAllCategories] = useState<string[]>(['All Categories']);
   const [bookFilter, setBookFilter] = useState<'active' | 'inactive'>('active');
-  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset to page 0 whenever the debounced query actually changes
+  useEffect(() => { setCurrentPage(0); }, [debouncedQuery]);
 
   const queryParams: BookSearchParams = {
     title: searchBy === 'title' ? debouncedQuery.trim() || undefined : undefined,
@@ -14183,7 +11848,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
 
   // Fetch all categories once for the dropdown
   useEffect(() => {
-    bookService.search({ size: 500 }).then(p => {
+    bookService.search({ size: 800 }).then(p => {
       const cats = Array.from(new Set(p.content.flatMap(b => b.categories.map(c => c.name)))).sort();
       setAllCategories(['All Categories', ...cats]);
     }).catch(console.error);
@@ -14193,18 +11858,13 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
     const t = type as 'title' | 'author' | 'category';
     setSearchBy(t);
     setSearchQuery('');
-    setDebouncedQuery('');
     setSelectedCategory('All Categories');
     setCurrentPage(0);
   };
 
   const handleSearchChange = (q: string) => {
     setSearchQuery(q);
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => {
-      setCurrentPage(0);
-      setDebouncedQuery(q);
-    }, 350);
+    // page reset is handled by the useEffect that watches debouncedQuery
   };
 
   const handleCategoryChange = (cat: string) => {
@@ -14357,17 +12017,18 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
   const [reserveBook, setReserveBook] = useState<ApiBook | null>(null);
   const [isReserving, setIsReserving] = useState(false);
-  const [reserveError, setReserveError] = useState('');
+  const [reserveToast, setReserveToast] = useState('');
 
-  const openReserveModal = (book: ApiBook) => { setReserveBook(book); setReserveError(''); setIsReserveModalOpen(true); };
-  const closeReserveModal = () => { setIsReserveModalOpen(false); setReserveBook(null); setReserveError(''); };
+  const openReserveModal = (book: ApiBook) => { setReserveBook(book); setIsReserveModalOpen(true); };
+  const closeReserveModal = () => { setIsReserveModalOpen(false); setReserveBook(null); };
   const handleReserveConfirm = async () => {
-    setIsReserving(true); setReserveError('');
+    setIsReserving(true);
     try {
       await reservationService.create(reserveBook!.id);
       closeReserveModal();
     } catch (err: any) {
-      setReserveError(err?.message ?? 'Failed to create reservation.');
+      closeReserveModal();
+      setReserveToast(err?.message ?? 'Failed to create reservation.');
     } finally { setIsReserving(false); }
   };
 
@@ -14375,7 +12036,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   return (
     <AppShell
       userName={user?.fullName ?? (isAdmin ? 'Admin' : 'Member')}
-      activeNavItem="Search"
+      activeNavItem="Books"
       role={role}
       searchConfig={{
         placeholder: searchBy === 'author' ? 'Search by author name…' : 'Search by book title…',
@@ -14441,7 +12102,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
                       <div className={styles.bookInfoWrapper}>
                         <DynamicBookCover title={book.title} author="" width="96px" height="135px" showText={false} />
                         <div className={styles.bookText}>
-                          <h3 className={styles.bookTitle}>{book.title}</h3>
+                          <h3 className={styles.bookTitle} title={book.title}>{truncateTitle(book.title)}</h3>
                           <p className={styles.bookAuthor}>{book.authors.map(a => a.name).join(', ')}</p>
                           <p className={styles.bookEdition}>{book.isbn}</p>
                         </div>
@@ -14633,7 +12294,6 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
       <Modal isOpen={isReserveModalOpen} onClose={closeReserveModal} title="Reserve Book">
         {reserveBook && (
           <div className={styles.issueForm}>
-            {reserveError && <p style={{ color: 'var(--color-danger-600)', fontSize: '0.875rem', margin: 0 }}>{reserveError}</p>}
             <div className={styles.issueBookPreview}>
               <DynamicBookCover title={reserveBook.title} author="" width="72px" height="100px" showText={false} />
               <div className={styles.issueBookMeta}>
@@ -14658,6 +12318,14 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
           </div>
         )}
       </Modal>
+
+      {reserveToast && (
+        <Toast
+          message={reserveToast}
+          variant="error"
+          onClose={() => setReserveToast('')}
+        />
+      )}
 
     </AppShell>
   );
@@ -14684,7 +12352,7 @@ export const AdminSearchPage = () => <SearchPage role="admin" />;
   display: flex;
   align-items: flex-start;
   gap: 1.25rem;
-  background: white;
+  background: rgb(253, 252, 252);
   border: 1px solid var(--color-surface-200);
   border-radius: 20px;
   padding: 2rem;
@@ -15705,14 +13373,14 @@ export const router = createBrowserRouter([
 /**
  * Base API client.
  * - Reads VITE_API_URL from environment.
- * - Attaches Bearer JWT from localStorage on every authenticated call.
+ * - Sends the HttpOnly JWT cookie automatically via credentials:'include' on every request.
  * - Throws ApiError on non-2xx responses so callers can .catch() cleanly.
- * - Redirects to /login on 401 (expired / missing token).
+ * - Redirects to /login on 401 (expired / missing cookie session).
  */
 
 export const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api/v1';
 
-export const TOKEN_KEY = 'bookstop_token';
+// User profile key — only non-sensitive metadata (name, role, userId), never the token.
 export const USER_KEY  = 'bookstop_user';
 
 // ── Stored auth user shape ────────────────────────────────────────────────────
@@ -15759,17 +13427,17 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  if (auth) {
-    const token = localStorage.getItem(TOKEN_KEY);
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  // credentials:'include' tells the browser to attach the HttpOnly JWT cookie
+  // automatically on every request — no manual Bearer header needed.
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
 
   // Only treat 401 as "session expired" on authenticated requests.
   // Public endpoints (auth = false, e.g. login) should surface the error normally.
   if (res.status === 401 && auth) {
-    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     window.location.href = '/login';
     throw new ApiError(401, 'Session expired. Please log in again.');
@@ -15778,9 +13446,16 @@ async function request<T>(
   if (!res.ok) {
     let body: unknown;
     try { body = await res.json(); } catch { body = await res.text(); }
-    const msg = (body as Record<string, string>)?.error
-      ?? (body as Record<string, string>)?.message
-      ?? `HTTP ${res.status}`;
+    // RFC 7807 ProblemDetail uses 'detail' (human sentence) and 'title' (short label).
+    // Fall back to legacy 'error' / 'message' keys so non-ProblemDetail responses
+    // are still handled gracefully during any transition period.
+    const pd = body as Record<string, unknown>;
+    const msg =
+      (typeof pd?.detail  === 'string' && pd.detail)  ||
+      (typeof pd?.title   === 'string' && pd.title)   ||
+      (typeof pd?.error   === 'string' && pd.error)   ||
+      (typeof pd?.message === 'string' && pd.message) ||
+      `HTTP ${res.status}`;
     throw new ApiError(res.status, msg, body);
   }
 
@@ -15823,7 +13498,7 @@ export function qs(params: Record<string, string | number | boolean | undefined 
 ## frontend/src/services/auth.service.ts
 
 ```typescript
-import { api, StoredUser, TOKEN_KEY, USER_KEY } from './api';
+import { api, StoredUser, USER_KEY } from './api';
 
 // ── Request/Response shapes ───────────────────────────────────────────────────
 export interface LoginRequest {
@@ -15838,9 +13513,10 @@ export interface RegisterRequest {
 }
 
 interface RawAuthResponse {
-  token: string;
-  type: string;
-  role: string; // "ADMIN" | "MEMBER" — uppercase from backend
+  /** Normalised role: "ADMIN" | "MEMBER" — uppercase from backend */
+  role: string;
+  /** UUID of the authenticated user — safe to store client-side */
+  userId: string;
 }
 
 // ── Auth service ──────────────────────────────────────────────────────────────
@@ -15852,19 +13528,19 @@ export const authService = {
   async login(req: LoginRequest): Promise<StoredUser> {
     const raw = await api.post<RawAuthResponse>('/auth/login', req, false);
 
-    localStorage.setItem(TOKEN_KEY, raw.token);
-
-    // Decode userId from JWT payload (middle segment, base64)
-    let userId = '';
-    try {
-      const payload = JSON.parse(atob(raw.token.split('.')[1]));
-      userId = payload.userId ?? '';
-    } catch { /* ignore decode failures */ }
-
+    // JWT is delivered as an HttpOnly cookie — it is never present in the response
+    // body, so there is nothing to store in localStorage.
     const normalizedRole = raw.role.toLowerCase() as 'admin' | 'member';
+    const user: StoredUser = { id: raw.userId, email: req.email, fullName: '', role: normalizedRole };
 
-    // We don't have fullName from Auth response — will be fetched lazily
-    const user: StoredUser = { id: userId, email: req.email, fullName: '', role: normalizedRole };
+    // Fetch fullName from the user profile endpoint right after login
+    if (raw.userId) {
+      try {
+        const profilePage = await api.get<{ content: Array<{ fullName: string }> }>(`/user?userId=${raw.userId}`);
+        user.fullName = profilePage.content[0]?.fullName ?? '';
+      } catch { /* ignore — profile fetch is best-effort */ }
+    }
+
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     return user;
   },
@@ -15878,7 +13554,9 @@ export const authService = {
   },
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
+    // Tell the server to expire the HttpOnly jwt cookie (maxAge=0).
+    // Fire-and-forget: local state is cleared regardless of network outcome.
+    api.post('/auth/logout', {}, false).catch(() => { /* ignore */ });
     localStorage.removeItem(USER_KEY);
   },
 
@@ -15889,7 +13567,7 @@ export const authService = {
   },
 
   isAuthenticated(): boolean {
-    return !!localStorage.getItem(TOKEN_KEY);
+    return !!localStorage.getItem(USER_KEY);
   },
 };
 
@@ -16023,7 +13701,8 @@ export interface ApiFine {
   userId: string;
   bookName: string;
   userName: string;
-  amount: number;
+  amount: number;          // canonical total fine (daysLate × 2)
+  remainingAmount: number; // amount still owed (canonical − already paid)
   isPaid: boolean;
 }
 
@@ -16445,12 +14124,13 @@ interface AuthState {
 
   login: (req: LoginRequest) => Promise<StoredUser>;
   logout: () => void;
-  syncFromStorage: () => void;
 }
 
 // ── Store ─────────────────────────────────────────────────────────────────────
-// No persist middleware — authService already writes token + user to localStorage.
-// The store is initialised from localStorage on every page load via getStoredUser().
+// No persist middleware — authService writes the non-sensitive user profile to
+// localStorage (USER_KEY). The JWT lives exclusively in an HttpOnly cookie; it
+// is never touched from JS. The store is hydrated from localStorage on every
+// page load via getStoredUser().
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: authService.getStoredUser(),
 
@@ -16467,76 +14147,8 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     authService.logout();
     set({ user: null });
   },
-
-  syncFromStorage: () => {
-    set({ user: authService.getStoredUser() });
-  },
 }));
 
-// Cross-tab sync: when another tab logs in/out, update this tab's store
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'bookstop_token' || e.key === 'bookstop_user') {
-      useAuthStore.getState().syncFromStorage();
-    }
-  });
-}
-
-```
-
-## frontend/src/store/authStore.ts
-
-```typescript
-import { create } from 'zustand';
-import { authService } from '../services/auth.service';
-import type { StoredUser } from '../services/api';
-import type { LoginRequest } from '../services/auth.service';
-
-// ── Store shape ───────────────────────────────────────────────────────────────
-interface AuthState {
-  user: StoredUser | null;
-
-  isAuthenticated: () => boolean;
-  isAdmin: () => boolean;
-
-  login: (req: LoginRequest) => Promise<StoredUser>;
-  logout: () => void;
-  syncFromStorage: () => void;
-}
-
-// ── Store ─────────────────────────────────────────────────────────────────────
-// No persist middleware — authService already writes token + user to localStorage.
-// The store is initialised from localStorage on every page load via getStoredUser().
-export const useAuthStore = create<AuthState>()((set, get) => ({
-  user: authService.getStoredUser(),
-
-  isAuthenticated: () => get().user !== null,
-  isAdmin: () => get().user?.role === 'admin',
-
-  login: async (req: LoginRequest): Promise<StoredUser> => {
-    const stored = await authService.login(req);
-    set({ user: stored });
-    return stored;
-  },
-
-  logout: () => {
-    authService.logout();
-    set({ user: null });
-  },
-
-  syncFromStorage: () => {
-    set({ user: authService.getStoredUser() });
-  },
-}));
-
-// Cross-tab sync: when another tab logs in/out, update this tab's store
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'bookstop_token' || e.key === 'bookstop_user') {
-      useAuthStore.getState().syncFromStorage();
-    }
-  });
-}
 
 ```
 
@@ -16702,6 +14314,30 @@ export const fmtDate = (iso: string): string =>
 
 ```
 
+## frontend/src/utils/textUtils.ts
+
+```typescript
+/**
+ * Truncates a book title (or any string) to `maxLength` characters.
+ * Appends "..." when the string exceeds the limit.
+ *
+ * @param title     - The string to truncate.
+ * @param maxLength - Maximum number of characters before truncation (default 20).
+ * @returns The original string if ≤ maxLength, otherwise the first `maxLength`
+ *          characters followed by "...".
+ *
+ * @example
+ *   truncateTitle("The Great Gatsby")           // "The Great Gatsby"   (16 chars, unchanged)
+ *   truncateTitle("The Adventures of Tom Sawyer") // "The Adventures of To..."
+ *   truncateTitle(null)                           // ""
+ */
+export function truncateTitle(title: string | null | undefined, maxLength = 20): string {
+  if (!title) return '';
+  return title.length <= maxLength ? title : title.slice(0, maxLength) + '...';
+}
+
+```
+
 ## frontend/src/utils/types.ts
 
 ```typescript
@@ -16854,178 +14490,6 @@ export interface Notification {
   createdAt: string;
 }
 
-```
-
-## frontend/src/App.css
-
-```css
-/* App.css — intentionally empty. Global styles live in index.css. */
-
-```
-
-## frontend/src/App.tsx
-
-```tsx
-import { RouterProvider } from 'react-router-dom';
-import { router } from './routes';
-
-function App() {
-  return (
-    <RouterProvider router={router} />
-  );
-}
-
-export default App;
-```
-
-## frontend/src/index.css
-
-```css
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-html {
-  font-size: 12px; 
-}
-
-@layer base {
-  :root {
-    /* ── Neutrals ────────────────────────────────────────── */
-    --color-surface: #ffffff;
-    --color-surface-50: #f9fafb;
-    --color-surface-100: #f3f4f6;
-    --color-surface-200: #e5e7eb;
-    --color-surface-300: #d1d5db;
-
-    --color-text-primary: #111827;
-    --color-text-secondary: #6b7280;
-    --color-text-body: #4b5563;
-    --color-text-muted: #9ca3af;
-    --color-text-dark: #1f2937;
-    --color-text-label: #374151;
-
-    --color-border-default: #e5e7eb;
-    --color-border-muted: #d1d5db;
-
-    /* ── Brand (Rose/Magenta) ────────────────────────────── */
-    --color-brand: #9b2c5e;
-    --color-brand-light: #fdf2f8;
-    --color-brand-100: #fbcfe8;
-    --color-brand-200: #f3a8cc;
-    --color-brand-500: #c0507e;
-    --color-brand-dark: #7e2350;
-    --color-brand-darker: #6d1f3e;
-
-    /* ── Coral accent ────────────────────────────────────── */
-    --color-coral: #f26a4f;
-    --color-coral-light: #fa7c54;
-    --color-coral-hover: #e05a40;
-    --color-coral-soft: #ff8c6b;
-
-    /* ── Danger (Red) ────────────────────────────────────── */
-    --color-danger-50: #fef2f2;
-    --color-danger-100: #fee2e2;
-    --color-danger-200: #fecaca;
-    --color-danger-300: #fca5a5;
-    --color-danger: #ef4444;
-    --color-danger-600: #dc2626;
-    --color-danger-800: #991b1b;
-
-    /* ── Success (Green) ─────────────────────────────────── */
-    --color-success-50: #ecfdf5;
-    --color-success-100: #dcfce7;
-    --color-success-200: #d1fae5;
-    --color-success-300: #6ee7b7;
-    --color-success: #22c55e;
-    --color-success-600: #059669;
-    --color-success-800: #166534;
-    --color-success-900: #065f46;
-
-    /* ── Warning (Amber) ─────────────────────────────────── */
-    --color-warning-50: #fffbeb;
-    --color-warning: #f59e0b;
-    --color-warning-100: #fef3c7;
-    --color-warning-300: #fcd34d;
-    --color-warning-800: #92400e;
-
-    /* ── Info (Blue) ─────────────────────────────────────── */
-    --color-info-50: #eff6ff;
-    --color-info-100: #dbeafe;
-    --color-info-300: #93c5fd;
-    --color-info-600: #2563eb;
-    --color-info-800: #1e40af;
-
-    /* ── Violet ──────────────────────────────────────────── */
-    --color-violet-50: #f5f3ff;
-    --color-violet-100: #ede9fe;
-    --color-violet-300: #c4b5fd;
-    --color-violet-800: #5b21b6;
-
-    /* ── Cyan ────────────────────────────────────────────── */
-    --color-cyan-50: #ecfeff;
-    --color-cyan-800: #155e75;
-
-    /* ── Shadows ─────────────────────────────────────────── */
-    --shadow-subtle: 0 1px 3px rgba(0,0,0,0.04);
-    --shadow-card: 0 1px 3px rgba(0,0,0,0.05);
-    --shadow-elevated: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
-    --shadow-focus-blue: 0 0 0 3px rgba(37, 99, 235, 0.15);
-    --shadow-focus-brand: 0 0 0 3px rgba(155, 44, 94, 0.12);
-    --shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.15);
-
-    /* ── Orange ───────────────────────────────────────────── */
-    --color-orange-50: #fff7ed;
-    --color-orange-200: #fed7aa;
-    --color-orange-800: #9a3412;
-
-    /* ── App background ──────────────────────────────────── */
-    --color-app-bg: #f5f6f8;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    min-width: 320px;
-    min-height: 100vh;
-    font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-}
-
-```
-
-## frontend/src/main.tsx
-
-```tsx
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import './index.css'
-import App from './App'
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </StrictMode>,
-)
 ```
 
 ## frontend/src/vite-env.d.ts

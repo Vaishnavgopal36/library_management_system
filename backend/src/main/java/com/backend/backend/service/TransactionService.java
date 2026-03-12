@@ -145,7 +145,10 @@ public class TransactionService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        return transactionRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "checkoutDate")).stream()
+        return transactionRepository.findAll(spec,
+                Sort.by(Sort.Direction.ASC, "status")         // active statuses (issued, lost, overdue) sort before returned alphabetically
+                    .and(Sort.by(Sort.Direction.DESC, "checkoutDate"))) // newest first within each group
+                .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }

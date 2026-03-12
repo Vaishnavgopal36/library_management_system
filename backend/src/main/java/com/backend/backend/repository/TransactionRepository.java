@@ -28,6 +28,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID>,
     /** All transactions with a given status — used by ReportService for analytics. */
     List<Transaction> findByStatus(TransactionStatus status);
 
+    /**
+     * Fetches the 3 most-recently-issued transactions for a user, ordered by
+     * checkout date descending.  Used by RecommendationService to build a
+     * personalised semantic query from the user's reading history.
+     *
+     * Spring Data JPA resolves User_Id by traversing the @ManyToOne user
+     * association and filtering on user.id.
+     */
+    List<Transaction> findTop3ByUser_IdOrderByCheckoutDateDesc(UUID userId);
+
     @Query("""
             SELECT t.book.id, t.book.title, COUNT(t.id)
             FROM Transaction t

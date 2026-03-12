@@ -9,7 +9,33 @@
   padding: 0;
   overflow: hidden;
 }
+.smartToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
 
+.smartToggle:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.smartToggleActive {
+  background: linear-gradient(135deg, #f3e8ff, #e0e7ff);
+  border: 1px solid #c7d2fe;
+  color: #4338ca;
+}
 /* The White App Canvas */
 .appShell {
   display: flex;

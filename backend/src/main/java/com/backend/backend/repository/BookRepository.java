@@ -94,4 +94,32 @@ public interface BookRepository extends JpaRepository<Book, UUID>, JpaSpecificat
         "WHERE b.book_id IN :bookIds",
         nativeQuery = true)
     List<Object[]> getTrueAvailableStockBatch(@Param("bookIds") Collection<UUID> bookIds);
+
+    /**
+     * HNSW-accelerated semantic search using cosine distance (<=>).
+     *
+     * The query vector is passed as a plain String and cast to the pgvector
+     * type inside the SQL to avoid JDBC binding type ambiguity with the
+     * vector(384) column.
+     *
+     * Similarity is defined as (1 - cosine_distance), so 1.0 = identical
+     * and 0.0 = orthogonal. Only non-archived books with similarity >= minSimilarity
+     * are returned, ordered by ascending distance (most similar first).
+     *
+     * @param queryVector   pgvector literal, e.g. "[0.1,0.2,...]"
+     * @param minSimilarity cosine similarity floor (0.0 – 1.0)
+     * @param limit         maximum number of results to return
+     */
+    @Query(value =
+        "SELECT b.* " +
+        "FROM books b " +
+        "WHERE b.is_archived = false " +
+        "  AND (1 - (b.embedding <=> CAST(:queryVector AS vector))) >= :minSimilarity " +
+        "ORDER BY b.embedding <=> CAST(:queryVector AS vector) " +
+        "LIMIT :limit",
+        nativeQuery = true)
+    List<Book> findBySemanticSimilarity(
+            @Param("queryVector") String queryVector,
+            @Param("minSimilarity") double minSimilarity,
+            @Param("limit") int limit);
 }

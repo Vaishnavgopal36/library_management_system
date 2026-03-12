@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -105,4 +108,15 @@ public class Book {
     )
     @BatchSize(size = 50)
     private Set<Category> categories;
+
+    /**
+     * 384-dimensional sentence embedding from all-MiniLM-L6-v2.
+     * Stored as pgvector(384); used exclusively for semantic search.
+     * Excluded from Envers audit history — binary vector data has no
+     * meaningful business audit trail and would bloat the audit table.
+     */
+    @NotAudited
+    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Column(columnDefinition = "vector(384)")
+    private float[] embedding;
 }

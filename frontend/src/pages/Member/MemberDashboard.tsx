@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useModal } from '../../hooks/useModal';
 import { useConfirmAction } from '../../hooks/useConfirmAction';
 import { useAuth } from '../../context/AuthContext';
@@ -14,6 +15,7 @@ import { bookService, type ApiBook } from '../../services/book.service';
 import { transactionService, type ApiTransaction } from '../../services/transaction.service';
 import { fineService, type ApiFine } from '../../services/fine.service';
 import { reservationService } from '../../services/reservation.service';
+import { Skeleton } from '../../components/atoms/Skeleton/Skeleton';
 import { truncateTitle } from '../../utils/textUtils';
 
 const computeDueIn = (dueDate: string): { label: string; variant: 'warning' | 'success' | 'error' } => {
@@ -65,7 +67,14 @@ export const MemberDashboard: React.FC = () => {
   useEffect(() => { loadData(); }, [loadData]);
 
   const newArrivals = allBooks.slice(0, 8);
-  const recommendedBooks = allBooks.slice(8, 16).length ? allBooks.slice(8, 16) : allBooks.slice(0, 8);
+
+  // ── Personalised recommendations via semantic search ───────────────────
+  const { data: recommendedBooks = [], isLoading: isRecommendationsLoading } = useQuery({
+    queryKey: ['recommendedBooks', user?.id],
+    queryFn: () => bookService.getRecommendations(user!.id),
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5, // cache for 5 minutes
+  });
 
   // ── Reserve Book modal ───────────────────────────────────────────────────
   const reserveModal = useModal<ApiBook>();
@@ -143,16 +152,30 @@ export const MemberDashboard: React.FC = () => {
           <h2 className={styles.sectionTitle}>Good Morning</h2>
           <h3 className={styles.subTitle}>Recommended for You</h3>
           <div className={styles.bookGrid}>
-            {recommendedBooks.map((book) => (
-              <BookDisplay
-                key={book.id}
-                title={book.title}
-                author={book.authors.map(a => a.name).join(', ')}
-                coverHash={book.title}
-                onReserve={() => reserveModal.open(book)}
-                showReserveButton
-              />
-            ))}
+            {isRecommendationsLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className={styles.bookDisplay}>
+                  <div className={styles.bookCoverWrapper}>
+                    <Skeleton variant="rectangular" width="100%" height="100%" style={{ borderRadius: '6px' }} />
+                  </div>
+                  <div className={styles.bookInfo}>
+                    <Skeleton variant="text" width="90%" height="14px" />
+                    <Skeleton variant="text" width="60%" height="12px" style={{ marginTop: '0.4rem' }} />
+                  </div>
+                </div>
+              ))
+            ) : (
+              recommendedBooks.map((book) => (
+                <BookDisplay
+                  key={book.id}
+                  title={book.title}
+                  author={book.authors.map(a => a.name).join(', ')}
+                  coverHash={book.title}
+                  onReserve={() => reserveModal.open(book)}
+                  showReserveButton
+                />
+              ))
+            )}
           </div>
         </div>
 

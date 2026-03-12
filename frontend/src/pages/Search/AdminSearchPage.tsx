@@ -80,17 +80,19 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
   const [searchBy, setSearchBy] = useState<'title' | 'author' | 'category'>('title');
   const [allCategories, setAllCategories] = useState<string[]>(['All Categories']);
   const [bookFilter, setBookFilter] = useState<'active' | 'inactive'>('active');
+  const [isSmartSearch, setIsSmartSearch] = useState(false);
 
   // Reset to page 0 whenever the debounced query actually changes
   useEffect(() => { setCurrentPage(0); }, [debouncedQuery]);
 
   const queryParams: BookSearchParams = {
-    title: searchBy === 'title' ? debouncedQuery.trim() || undefined : undefined,
-    author: searchBy === 'author' ? debouncedQuery.trim() || undefined : undefined,
-    category: searchBy === 'category' ? (selectedCategory !== 'All Categories' ? selectedCategory : undefined) : undefined,
+    title: (isSmartSearch || searchBy === 'title') ? debouncedQuery.trim() || undefined : undefined,
+    author: (!isSmartSearch && searchBy === 'author') ? debouncedQuery.trim() || undefined : undefined,
+    category: (!isSmartSearch && searchBy === 'category') ? (selectedCategory !== 'All Categories' ? selectedCategory : undefined) : undefined,
     archivedOnly: bookFilter === 'inactive' || undefined,
     page: currentPage,
     size: PAGE_SIZE,
+    semantic: isSmartSearch || undefined,
   };
 
   const { books, totalElements, isLoading, refetch } = useBooks(queryParams);
@@ -288,7 +290,9 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
       activeNavItem="Books"
       role={role}
       searchConfig={{
-        placeholder: searchBy === 'author' ? 'Search by author name…' : 'Search by book title…',
+        placeholder: isSmartSearch
+          ? 'Describe a concept, theme, or plot…'
+          : (searchBy === 'author' ? 'Search by author name…' : 'Search by book title…'),
         query: searchQuery,
         onQueryChange: handleSearchChange,
         searchTypes: ['title', 'author', 'category'],
@@ -297,6 +301,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
         categories: allCategories,
         selectedCategory,
         onCategoryChange: handleCategoryChange,
+        isSmartSearch: isSmartSearch,
+        onSmartSearchToggle: setIsSmartSearch,
       }}
     >
       <div className={styles.pageContainer}>
@@ -418,7 +424,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ role = 'member' }) => {
                   </div>
                 ))}
 
-                {totalPages > 1 && (
+                {!isSmartSearch && totalPages > 1 && (
                   <Pagination
                     currentPage={currentPage + 1}
                     totalPages={totalPages}
